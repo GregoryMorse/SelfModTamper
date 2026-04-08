@@ -35,7 +35,7 @@ keywords:
   - tamper proofing
   - protection mechanisms
 license: MIT
-year-released: 2023
+year-released: 2022
 preferred-citation:
   type: unpublished
   title: "Tamper-Proofing with Self-Modifying Code"
@@ -44,12 +44,22 @@ preferred-citation:
       given-names: Gregory
       email: gregory.morse@live.com
       orcid: "https://orcid.org/0000-0002-0231-6557"
-      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
+      affiliation: "E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE), Budapest, Hungary"
     - family-names: Kozsik
-      given-names: Tamás
+      given-names: Tam\u00e1s
       email: kto@elte.hu
       orcid: "https://orcid.org/0000-0003-4484-9172"
-      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
-  year: 2023
-  notes: "Manuscript submitted for publication"
+      affiliation: "E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE), Budapest, Hungary"
+  year: 2022
+  month: 6
+  conference:
+    name: "CECC 2022"
+    location: "Smolenice, Slovakia"
+    date-start: 2022-06-28
+    date-end: 2022-06-28
+  notes: >-
+    Presented at CECC 2022, Smolenice, Slovakia, 28 June 2022.
+    Full manuscript unpublished and not yet available on arXiv;
+    forms part of a doctoral dissertation under review at
+    E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE).
   url: "https://github.com/GregoryMorse/SelfModTamper"

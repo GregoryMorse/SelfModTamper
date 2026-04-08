@@ -1,6 +1,6 @@
 # Tamper-Proofing with Self-Modifying Code
 
-> Polymorphic self-modifying code (SMC) as a runtime integrity mechanism on x86-64 — companion code for the paper and conference presentation by Gregory Morse and Tamás Kozsik.
+> Polymorphic self-modifying code (SMC) as a runtime integrity mechanism on x86-64 — companion code for the talk presented at **CECC 2022** (Smolenice, Slovakia) and the accompanying dissertation chapter by Gregory Morse and Tamás Kozsik.
 
 ## Overview
 
@@ -16,6 +16,14 @@ Key contributions:
 ## Paper Abstract
 
 Self-modifying code (SMC) creates unique challenges when it comes to timing semantics on modern hardware for accurate emulation by a maximally efficient non-SMC equivalent.  We investigate the efficacy of using polymorphic SMC to produce a tamper-proofing mechanism that utilises high-accuracy timing measurements which cannot be reproduced by translating the code from the von Neumann architecture to a Harvard architecture.  Our experimental results show that the dynamic SMC variant runs **90× faster** than its non-SMC counterpart while the basic static variant runs **~8× slower** — demonstrating a design space where, with the right unrolling strategy and page-offset selection, SMC achieves smaller size *and* higher performance than any equivalent non-SMC checksum.
+
+## Presentation & Publication Status
+
+This work was presented at:
+
+> Morse, G.; Kozsik, T. **Tamper-Proofing with Self-Modifying Code**. *CECC 2022*, Smolenice, Slovakia, 28 June 2022.
+
+The full manuscript is currently **unpublished** — it is not yet available on arXiv or in any journal proceedings — and forms part of Gregory Morse's doctoral dissertation, which is under review at Eötvös Loránd University (ELTE).
 
 ## Requirements
 
@@ -176,15 +184,17 @@ The SMC checksum cycles between `ADC`, `SBB`, `XOR`, and `CMP` (values 2, 3, 6, 
 
 ## Citation
 
-If you use this code or reference the paper, please cite:
+If you use this code or reference the work, please cite the conference presentation:
 
 ```bibtex
-@unpublished{morse2023tamper,
-  author    = {Gregory Morse and Tam{\'a}s Kozsik},
-  title     = {Tamper-Proofing with Self-Modifying Code},
-  year      = {2023},
-  note      = {Manuscript submitted for publication},
-  url       = {https://github.com/GregoryMorse/SelfModTamper}
+@misc{morse2022tamper,
+  author       = {Gregory Morse and Tam{\'a}s Kozsik},
+  title        = {Tamper-Proofing with Self-Modifying Code},
+  howpublished = {Presented at CECC 2022, Smolenice, Slovakia},
+  month        = jun,
+  year         = {2022},
+  note         = {Full manuscript unpublished; part of doctoral dissertation under review at E\"{o}tv\"{o}s Lor\'{a}nd University (ELTE)},
+  url          = {https://github.com/GregoryMorse/SelfModTamper},
 }
 ```
 
