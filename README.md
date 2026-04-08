@@ -151,16 +151,22 @@ Visual Studio 2022 and later detect `CMakeLists.txt` and `CMakePresets.json` whe
 The original `SelfModTamper.sln` / `.vcxproj` remain for users who prefer the MSBuild
 workflow.  AsmJit paths are resolved via `PropertySheet.props`.
 
-**Using vcpkg integration (easiest):**
+**Providing AsmJit via vcpkg (required):**
+
+Either run `vcpkg integrate install` once (applies vcpkg to all VS projects on this machine):
 
 ```bat
 vcpkg integrate install
 ```
 
-Then open `SelfModTamper.sln`, select **x64 | Debug** or **x64 | Release**, and build.
-Copy `WinRing0x64.sys` next to the resulting executable manually.
+Or set `VCPKG_ROOT` and restart Visual Studio — `PropertySheet.props` bridges it to MSBuild
+automatically, installs packages from `vcpkg.json`, and copies `asmjit.dll` to the output.
 
-**Using a manual AsmJit build:**
+Run `scripts\Get-WinRing0.ps1` once to place `WinRing0x64.sys` in the repository root (the
+build copies it next to the executable automatically).  Then open `SelfModTamper.sln`, select
+**x64 | Debug** or **x64 | Release**, and build.
+
+**Using a manual AsmJit build (without vcpkg):**
 
 Set `ASMJIT_DIR` as described in [Dependencies → AsmJit](#asmjit) and restart Visual Studio.
 `PropertySheet.props` picks up the variable automatically.

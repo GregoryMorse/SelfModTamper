@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  AsmJit dependency paths for the legacy .vcxproj build.
+  Build support for the legacy .vcxproj workflow.
 
   Option A (recommended): CMake + vcpkg
     See README.md — no changes needed here.
 
-  Option B: vcpkg Visual Studio integration
-    Run once: vcpkg integrate install
-    AsmJit include and library paths are injected by vcpkg automatically.
-    No changes needed here.
+  Option B: VCPKG_ROOT environment variable  (this file handles it automatically)
+    Set VCPKG_ROOT to your vcpkg installation root, e.g. in PowerShell:
+      [System.Environment]::SetEnvironmentVariable("VCPKG_ROOT", "C:\vcpkg", "User")
+    Then restart Visual Studio.  vcpkg.json at the repository root declares all
+    dependencies; they are installed automatically before the first build.
+
+    Alternatively, run 'vcpkg integrate install' once — Visual Studio picks up the
+    integration from the user-level property sheet without any environment variable.
 
   Option C: Manual AsmJit build (set ASMJIT_DIR environment variable)
-    Set ASMJIT_DIR to the root of your AsmJit checkout (the directory
-    that contains the 'src' subfolder), e.g. in PowerShell:
+    Use this only if you are not using vcpkg at all.
+    Set ASMJIT_DIR to the root of your AsmJit checkout (the directory that contains
+    the 'src' subfolder), e.g.:
       [System.Environment]::SetEnvironmentVariable("ASMJIT_DIR", "C:\path\to\asmjit", "User")
     The CMake build sub-directory is expected at $(AsmJitDir)\build_vs2022_x64\.
     Override by setting AsmJitBuildSubDir before this sheet is imported.
@@ -20,12 +25,28 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <!-- Map the ASMJIT_DIR environment variable to an MSBuild property. -->
+    <!-- vcpkg: bridge VCPKG_ROOT environment variable to the VcpkgRoot MSBuild property.
+         Only activates when 'vcpkg integrate install' has NOT already set VcpkgRoot via
+         the user-level property sheet ($(UserRootDir)\Microsoft.Cpp.$(Platform).user.props). -->
+    <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\</VcpkgRoot>
+    <!-- Enable vcpkg manifest mode so dependencies from vcpkg.json are auto-installed. -->
+    <VcpkgManifestEnabled Condition="'$(VcpkgRoot)'!=''">true</VcpkgManifestEnabled>
+    <!-- vcpkg.json lives one level up from this file (the repository root). -->
+    <VcpkgManifestRoot Condition="'$(VcpkgManifestRoot)'=='' and '$(VcpkgRoot)'!=''">$(MSBuildThisFileDirectory)..\</VcpkgManifestRoot>
+    <!-- Dynamic x64-windows triplet — matches the CMake preset. -->
+    <VcpkgTriplet Condition="'$(VcpkgTriplet)'==''">x64-windows</VcpkgTriplet>
+    <VcpkgHostTriplet Condition="'$(VcpkgHostTriplet)'==''">x64-windows</VcpkgHostTriplet>
+    <!-- Option C: manual AsmJit build paths. -->
     <AsmJitDir Condition="'$(AsmJitDir)'=='' and '$(ASMJIT_DIR)'!=''">$(ASMJIT_DIR)</AsmJitDir>
     <AsmJitBuildSubDir Condition="'$(AsmJitBuildSubDir)'==''">build_vs2022_x64</AsmJitBuildSubDir>
   </PropertyGroup>
   <PropertyGroup />
-  <!-- Include path — applied to all configurations when ASMJIT_DIR is set. -->
+  <!-- Import vcpkg MSBuild props: injects include/lib paths for all vcpkg.json dependencies.
+       VcpkgCurrentInstalledDir is set by vcpkg.props itself, so the condition prevents a
+       double-import when 'vcpkg integrate install' has already applied the user-level sheet. -->
+  <Import Project="$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.props"
+          Condition="'$(VcpkgRoot)'!='' and '$(VcpkgCurrentInstalledDir)'=='' and Exists('$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.props')" />
+  <!-- Option C only: AsmJit include/lib paths from a manual build. -->
   <ItemDefinitionGroup Condition="'$(AsmJitDir)'!=''">
     <ClCompile>
       <AdditionalIncludeDirectories>$(AsmJitDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -47,5 +68,13 @@
       <Command>copy "$(AsmJitDir)\$(AsmJitBuildSubDir)\Release\asmjit.dll" "$(OutDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
+  <!-- Copy WinRing0x64.sys from the repository root to the output directory.
+       Run scripts\Get-WinRing0.ps1 once to place the file in the repository root. -->
+  <Target Name="CopyWinRing0Driver" AfterTargets="Build"
+          Condition="'$(Platform)'=='x64' and Exists('$(MSBuildThisFileDirectory)..\WinRing0x64.sys')">
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\WinRing0x64.sys"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
   <ItemGroup />
 </Project>
