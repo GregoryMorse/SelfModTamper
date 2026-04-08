@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "selfmodtamper",
   "version": "0.1.0",
+  "builtin-baseline": "ffffe619563988cbcfda2b8db2c142654d12eaf5",
   "dependencies": [
     "asmjit"
   ]
