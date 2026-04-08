@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use this software or reference the accompanying paper, please cite it as below."
+type: software
+title: "Tamper-Proofing with Self-Modifying Code"
+authors:
+  - family-names: Morse
+    given-names: Gregory
+    email: gregory.morse@live.com
+    orcid: "https://orcid.org/0000-0002-0231-6557"
+    affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
+  - family-names: Kozsik
+    given-names: Tamás
+    email: kto@elte.hu
+    orcid: "https://orcid.org/0000-0003-4484-9172"
+    affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
+repository-code: "https://github.com/GregoryMorse/SelfModTamper"
+abstract: >-
+  Self-modifying code (SMC) creates unique challenges when it comes to timing
+  semantics on modern hardware for accurate emulation by a maximally efficient
+  non-SMC equivalent. We investigate the efficacy of using polymorphic SMC to
+  produce a tamper-proofing mechanism that utilises high-accuracy timing
+  measurements which cannot be reproduced by translating the code from the von
+  Neumann architecture to a Harvard architecture. Our experimental results
+  demonstrate that a dynamically generated loop-unrolled SMC checksum runs
+  approximately 90x faster than its non-SMC counterpart on x86-64 hardware,
+  showing that well-designed SMC can simultaneously be smaller and faster while
+  remaining infeasible to emulate without triggering measurable timing
+  discrepancies.
+keywords:
+  - x86
+  - x86-64
+  - assembly language
+  - self-modifying code
+  - software protection
+  - tamper proofing
+  - protection mechanisms
+license: MIT
+year-released: 2023
+preferred-citation:
+  type: unpublished
+  title: "Tamper-Proofing with Self-Modifying Code"
+  authors:
+    - family-names: Morse
+      given-names: Gregory
+      email: gregory.morse@live.com
+      orcid: "https://orcid.org/0000-0002-0231-6557"
+      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
+    - family-names: Kozsik
+      given-names: Tamás
+      email: kto@elte.hu
+      orcid: "https://orcid.org/0000-0003-4484-9172"
+      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
+  year: 2023
+  notes: "Manuscript submitted for publication"
+  url: "https://github.com/GregoryMorse/SelfModTamper"
