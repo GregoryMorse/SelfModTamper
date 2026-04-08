@@ -40,7 +40,7 @@
     <!-- vcpkg: bridge VCPKG_ROOT environment variable to the VcpkgRoot MSBuild property.
          Only activates when 'vcpkg integrate install' has NOT already set VcpkgRoot via
          the user-level property sheet ($(UserRootDir)\Microsoft.Cpp.$(Platform).user.props).
-         VcpkgManifestEnabled/Root/Triplet/HostTriplet are set earlier in Directory.Build.props
+         VcpkgEnableManifest/ManifestRoot/Triplet/HostTriplet are set earlier in Directory.Build.props
          so they are in place before vcpkg.props (from vcpkg integrate install) evaluates them. -->
     <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\</VcpkgRoot>
     <!-- Option C: manual AsmJit build paths. -->

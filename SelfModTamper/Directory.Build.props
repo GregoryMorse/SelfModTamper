@@ -12,8 +12,8 @@
       rather than defaulting to $(MSBuildProjectDirectory) (the SelfModTamper\
       subfolder, which has no vcpkg.json).
 
-    - VcpkgManifestEnabled / VcpkgTriplet are set before any vcpkg.props import
-      regardless of whether 'vcpkg integrate install' or VCPKG_ROOT is used.
+    - VcpkgEnableManifest is set to true before vcpkg.props imports it with a default of
+      false, enabling the VcpkgInstallManifestDependencies target to run before ClCompile.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
@@ -21,8 +21,11 @@
          run, VcpkgRoot is still empty at this stage (the user-level sheet that sets
          it has not been imported yet), so this fires for both code paths. -->
     <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\</VcpkgRoot>
-    <!-- Enable manifest mode so vcpkg installs packages from vcpkg.json on build. -->
-    <VcpkgManifestEnabled Condition="'$(VcpkgManifestEnabled)'==''">true</VcpkgManifestEnabled>
+    <!-- Enable manifest mode so vcpkg installs packages from vcpkg.json on build.
+         The property name in this version of vcpkg is VcpkgEnableManifest (defaults to
+         false in vcpkg.props).  Must be set here — before vcpkg.props is imported — so
+         the condition "== ''" in vcpkg.props does not reset it to false. -->
+    <VcpkgEnableManifest Condition="'$(VcpkgEnableManifest)'==''">true</VcpkgEnableManifest>
     <!-- vcpkg.json is in the repository root — one level above this file.
          Without this override vcpkg.props defaults to $(MSBuildProjectDirectory)
          (the SelfModTamper\ subfolder), causing RunVcpkg to fail silently and
