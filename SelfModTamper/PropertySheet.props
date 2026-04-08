@@ -5,7 +5,7 @@
   Option A (recommended): CMake + vcpkg
     See README.md — no changes needed here.
 
-  Option B: VCPKG_ROOT environment variable  (this file handles it automatically)
+  Option B: VCPKG_ROOT environment variable  (handled automatically by two files)
     Set VCPKG_ROOT to your vcpkg installation root, e.g. in PowerShell:
       [System.Environment]::SetEnvironmentVariable("VCPKG_ROOT", "C:\vcpkg", "User")
     Then restart Visual Studio.  vcpkg.json at the repository root declares all
@@ -14,12 +14,24 @@
     Alternatively, run 'vcpkg integrate install' once — Visual Studio picks up the
     integration from the user-level property sheet without any environment variable.
 
+    Two-file split explanation:
+      Directory.Build.props  — MSBuild auto-imports this via Microsoft.Common.props
+        BEFORE the PropertySheets phase.  It sets VcpkgManifestRoot to the repo root
+        (one level up) so that when vcpkg.props (injected by 'vcpkg integrate install')
+        runs, it finds vcpkg.json in the right place.  Without this file, vcpkg.props
+        defaults VcpkgManifestRoot to $(MSBuildProjectDirectory) (the SelfModTamper\
+        subfolder), which has no vcpkg.json, silently skipping all package installation.
+      PropertySheet.props (this file) — imported in the PropertySheets phase.  Bridges
+        VCPKG_ROOT to VcpkgRoot and imports vcpkg.props for the VCPKG_ROOT code path
+        (guarded so it does not double-import when 'vcpkg integrate install' already
+        applied it via the user-level sheet).
+
   Option C: Manual AsmJit build (set ASMJIT_DIR environment variable)
     Use this only if you are not using vcpkg at all.
     Set ASMJIT_DIR to the root of your AsmJit checkout (the directory that contains
     the 'src' subfolder), e.g.:
       [System.Environment]::SetEnvironmentVariable("ASMJIT_DIR", "C:\path\to\asmjit", "User")
-    The CMake build sub-directory is expected at $(AsmJitDir)\build_vs2022_x64\.
+    The CMake build sub-directory is expected at $(AsmJitDir)\build_$(VisualStudioVersion)_x64\.
     Override by setting AsmJitBuildSubDir before this sheet is imported.
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -27,18 +39,13 @@
   <PropertyGroup Label="UserMacros">
     <!-- vcpkg: bridge VCPKG_ROOT environment variable to the VcpkgRoot MSBuild property.
          Only activates when 'vcpkg integrate install' has NOT already set VcpkgRoot via
-         the user-level property sheet ($(UserRootDir)\Microsoft.Cpp.$(Platform).user.props). -->
+         the user-level property sheet ($(UserRootDir)\Microsoft.Cpp.$(Platform).user.props).
+         VcpkgManifestEnabled/Root/Triplet/HostTriplet are set earlier in Directory.Build.props
+         so they are in place before vcpkg.props (from vcpkg integrate install) evaluates them. -->
     <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\</VcpkgRoot>
-    <!-- Enable vcpkg manifest mode so dependencies from vcpkg.json are auto-installed. -->
-    <VcpkgManifestEnabled Condition="'$(VcpkgRoot)'!=''">true</VcpkgManifestEnabled>
-    <!-- vcpkg.json lives one level up from this file (the repository root). -->
-    <VcpkgManifestRoot Condition="'$(VcpkgManifestRoot)'=='' and '$(VcpkgRoot)'!=''">$(MSBuildThisFileDirectory)..\</VcpkgManifestRoot>
-    <!-- Dynamic x64-windows triplet — matches the CMake preset. -->
-    <VcpkgTriplet Condition="'$(VcpkgTriplet)'==''">x64-windows</VcpkgTriplet>
-    <VcpkgHostTriplet Condition="'$(VcpkgHostTriplet)'==''">x64-windows</VcpkgHostTriplet>
     <!-- Option C: manual AsmJit build paths. -->
     <AsmJitDir Condition="'$(AsmJitDir)'=='' and '$(ASMJIT_DIR)'!=''">$(ASMJIT_DIR)</AsmJitDir>
-    <AsmJitBuildSubDir Condition="'$(AsmJitBuildSubDir)'==''">build_vs2022_x64</AsmJitBuildSubDir>
+    <AsmJitBuildSubDir Condition="'$(AsmJitBuildSubDir)'==''">build_$(VisualStudioVersion)_x64</AsmJitBuildSubDir>
   </PropertyGroup>
   <PropertyGroup />
   <!-- Import vcpkg MSBuild props: injects include/lib paths for all vcpkg.json dependencies.

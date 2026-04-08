@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSBuild early-initialization hook for vcpkg manifest mode.
+
+  This file is discovered and imported automatically by MSBuild (via
+  Microsoft.Common.props -> Microsoft.Cpp.Default.props) before any
+  PropertySheet or user-level property sheet — including the one injected
+  by 'vcpkg integrate install'.  Setting the vcpkg manifest properties here
+  ensures they are already in place when vcpkg.props evaluates them, so:
+
+    - VcpkgManifestRoot  points at the repository root (where vcpkg.json lives)
+      rather than defaulting to $(MSBuildProjectDirectory) (the SelfModTamper\
+      subfolder, which has no vcpkg.json).
+
+    - VcpkgManifestEnabled / VcpkgTriplet are set before any vcpkg.props import
+      regardless of whether 'vcpkg integrate install' or VCPKG_ROOT is used.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Bridge VCPKG_ROOT env var early.  When 'vcpkg integrate install' has been
+         run, VcpkgRoot is still empty at this stage (the user-level sheet that sets
+         it has not been imported yet), so this fires for both code paths. -->
+    <VcpkgRoot Condition="'$(VcpkgRoot)'=='' and '$(VCPKG_ROOT)'!=''">$(VCPKG_ROOT)\</VcpkgRoot>
+    <!-- Enable manifest mode so vcpkg installs packages from vcpkg.json on build. -->
+    <VcpkgManifestEnabled Condition="'$(VcpkgManifestEnabled)'==''">true</VcpkgManifestEnabled>
+    <!-- vcpkg.json is in the repository root — one level above this file.
+         Without this override vcpkg.props defaults to $(MSBuildProjectDirectory)
+         (the SelfModTamper\ subfolder), causing RunVcpkg to fail silently and
+         leaving all vcpkg include/lib paths pointing at a non-existent location. -->
+    <VcpkgManifestRoot Condition="'$(VcpkgManifestRoot)'==''">$(MSBuildThisFileDirectory)..\</VcpkgManifestRoot>
+    <!-- Use the dynamic x64-windows triplet to match the CMake preset. -->
+    <VcpkgTriplet Condition="'$(VcpkgTriplet)'==''">x64-windows</VcpkgTriplet>
+    <VcpkgHostTriplet Condition="'$(VcpkgHostTriplet)'==''">x64-windows</VcpkgHostTriplet>
+  </PropertyGroup>
+</Project>

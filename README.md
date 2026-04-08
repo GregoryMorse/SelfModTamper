@@ -159,8 +159,8 @@ Either run `vcpkg integrate install` once (applies vcpkg to all VS projects on t
 vcpkg integrate install
 ```
 
-Or set `VCPKG_ROOT` and restart Visual Studio — `PropertySheet.props` bridges it to MSBuild
-automatically, installs packages from `vcpkg.json`, and copies `asmjit.dll` to the output.
+Or set `VCPKG_ROOT` and restart Visual Studio — `Directory.Build.props` and `PropertySheet.props`
+automatically bridge it to MSBuild, install packages from `vcpkg.json`, and copy `asmjit.dll` to the output.
 
 Run `scripts\Get-WinRing0.ps1` once to place `WinRing0x64.sys` in the repository root (the
 build copies it next to the executable automatically).  Then open `SelfModTamper.sln`, select
@@ -220,7 +220,8 @@ SelfModTamper/
 │   ├── SelfModTamper.cpp      # Main source: timer classes, C reference implementations,
 │   │                          #   dynamic SMC generator (AsmJit), benchmarking loop
 │   ├── TP.asm                 # Static hand-written MASM SMC checksum (TPComp, TPCompLoop)
-│   ├── PropertySheet.props    # MSBuild property sheet — reads ASMJIT_DIR env var
+│   ├── Directory.Build.props  # MSBuild early hook — sets VcpkgManifestRoot before vcpkg.props runs
+│   ├── PropertySheet.props    # MSBuild property sheet — bridges VCPKG_ROOT; Option C ASMJIT_DIR
 │   └── SelfModTamper.vcxproj  # Project file
 ├── .gitignore
 ├── .gitattributes
