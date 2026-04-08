@@ -164,10 +164,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Directory.Build.props" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <!-- vcpkg post-build step: copies asmjit.dll (and any other dynamic vcpkg deps) to $(OutDir). -->
-    <Import Project="$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.targets"
-            Condition="'$(VcpkgRoot)'!='' and Exists('$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.targets')" />
+    <Import Project="$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.targets" Condition="'$(VcpkgRoot)'!='' and Exists('$(VcpkgRoot)scripts\buildsystems\msbuild\vcpkg.targets')" />
   </ImportGroup>
 </Project>

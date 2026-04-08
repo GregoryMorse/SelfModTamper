@@ -24,4 +24,7 @@
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Directory.Build.props" />
+  </ItemGroup>
 </Project>
