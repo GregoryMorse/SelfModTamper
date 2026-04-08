@@ -44,12 +44,12 @@ preferred-citation:
       given-names: Gregory
       email: gregory.morse@live.com
       orcid: "https://orcid.org/0000-0002-0231-6557"
-      affiliation: "E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE), Budapest, Hungary"
+      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
     - family-names: Kozsik
-      given-names: Tam\u00e1s
+      given-names: Tamás
       email: kto@elte.hu
       orcid: "https://orcid.org/0000-0003-4484-9172"
-      affiliation: "E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE), Budapest, Hungary"
+      affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
   year: 2022
   month: 6
   conference:
@@ -61,5 +61,5 @@ preferred-citation:
     Presented at CECC 2022, Smolenice, Slovakia, 28 June 2022.
     Full manuscript unpublished and not yet available on arXiv;
     forms part of a doctoral dissertation under review at
-    E\u00f6tv\u00f6s Lor\u00e1nd University (ELTE).
+    Eötvös Loránd University (ELTE).
   url: "https://github.com/GregoryMorse/SelfModTamper"
