@@ -589,13 +589,12 @@ HANDLE enablePerfCounters(std::wstring id, std::wstring filename)
 	SC_HANDLE hManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if (hManager == NULL) return NULL;
 	WCHAR buf[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, buf);
+	GetModuleFileNameW(NULL, buf, MAX_PATH);
 	std::wstring path = buf;
-#ifdef _DEBUG
-	path += L"\\x64\\Debug\\" + filename;
-#else
-	path += L"\\x64\\Release\\" + filename;
-#endif
+	const size_t slashPos = path.rfind(L'\\');
+	if (slashPos != std::wstring::npos)
+		path.resize(slashPos);
+	path += L'\\' + filename;
 	SC_HANDLE hService = CreateService(hManager, id.c_str(), id.c_str(), SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
 		SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, path.c_str(), NULL, NULL, NULL, NULL, NULL);
 	if (hService == NULL && GetLastError() == ERROR_SERVICE_EXISTS) {

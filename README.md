@@ -33,7 +33,8 @@ The full manuscript is currently **unpublished** — it is not yet available on 
 | Compiler | Visual Studio 2019 or later (MSVC + MASM/ml64) |
 | Architecture | x86-64 only |
 | Privileges | **Administrator** required at runtime (kernel driver for MSR access) |
-| External library | [AsmJit](https://github.com/asmjit/asmjit) (JIT assembler, header + library) |
+| Build system | CMake ≥ 3.21 + [vcpkg](https://vcpkg.io/) (recommended) **or** `.vcxproj` directly |
+| External library | [AsmJit](https://github.com/asmjit/asmjit) — auto-resolved by vcpkg, or manual build |
 | Kernel driver | [WinRing0 v1.2](http://openlibsys.org/) — `WinRing0x64.sys` (digitally signed) |
 
 > **Note:** The performance-counter features (MSR read/write via `IOCTL_OLS_*`) are accessed through the WinRing0 kernel driver.  Without it the process skips counter setup gracefully but the `MACHINE_CLEARS.SMC` columns will show zero.
@@ -42,43 +43,142 @@ The full manuscript is currently **unpublished** — it is not yet available on 
 
 ### AsmJit
 
+**Recommended — vcpkg (automatic):** `vcpkg.json` already declares the `asmjit` dependency.
+When you configure with CMake (see [Building](#building)), vcpkg installs AsmJit into
+`vcpkg_installed/` automatically — no separate clone or build step is needed.
+
+**Alternative — manual build with `ASMJIT_DIR`:** If you prefer to build AsmJit yourself
+and use the `.vcxproj` directly without vcpkg, set the `ASMJIT_DIR` environment variable to
+the root of your AsmJit checkout (the directory containing the `src` subfolder), then build:
+
 ```bat
-REM Clone and build for x64 (adjust generator as needed)
-git clone https://github.com/asmjit/asmjit.git D:\libraries\asmjit-master
-cd D:\libraries\asmjit-master
+git clone https://github.com/asmjit/asmjit.git C:\path\to\asmjit
+cd C:\path\to\asmjit
 cmake -B build_vs2022_x64 -G "Visual Studio 17 2022" -A x64
 cmake --build build_vs2022_x64 --config Debug
 cmake --build build_vs2022_x64 --config Release
 ```
 
-By default `PropertySheet.props` expects AsmJit at `D:\libraries\asmjit-master\`.  Update the include and library paths in `SelfModTamper\PropertySheet.props` to match your local checkout, or set the paths via Visual Studio's project property pages.
+```powershell
+# Set ASMJIT_DIR permanently for your user account
+[System.Environment]::SetEnvironmentVariable("ASMJIT_DIR", "C:\path\to\asmjit", "User")
+```
+
+`SelfModTamper\PropertySheet.props` reads `$(ASMJIT_DIR)` automatically; no manual editing
+of the property sheet is required.
 
 ### WinRing0
 
-Download `WinRing0_1_2_0.zip` from the [WinRing0 release page](http://openlibsys.org/), extract `WinRing0x64.sys`, and place it in the same directory as the compiled executable:
+The digitally signed kernel driver `WinRing0x64.sys` is required to read hardware performance
+counters (`MACHINE_CLEARS.SMC`).  Without it the benchmark still runs but counter columns show zero.
 
-```
-x64\Debug\WinRing0x64.sys
-x64\Release\WinRing0x64.sys
+Run the provided download script **once** before your first build:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Get-WinRing0.ps1
 ```
 
-The executable will attempt to register and start the driver as a Windows service on first run and stop/delete it on exit.
+This downloads `WinRing0_1_2_0.zip` from [openlibsys.org](http://openlibsys.org/), extracts
+`WinRing0x64.sys` into the repository root, and CMake copies it next to the executable
+automatically.  The file is excluded from version control via `.gitignore`.
+
+> If the download fails, download `WinRing0_1_2_0.zip` manually from
+> [http://openlibsys.org/](http://openlibsys.org/), extract `WinRing0x64.sys`, and place it
+> in the repository root before running cmake.
+
+The executable registers and starts the driver as a Windows service on each run and
+stops/deletes it cleanly on exit.
 
 ## Building
 
-1. Open `SelfModTamper.sln` in Visual Studio.
-2. Edit `SelfModTamper\PropertySheet.props` so the AsmJit include and library paths point to your AsmJit build.
-3. Select **x64 | Debug** or **x64 | Release** and build.
+### Prerequisites
 
-> Only the **x64** platform is supported.  The static SMC in `TP.asm` uses 64-bit registers and RIP-relative addressing; the dynamic generator in `SelfModTamper.cpp` targets x86-64 exclusively.
+| Tool | How to get |
+|---|---|
+| Visual Studio 2019+ | [visualstudio.microsoft.com](https://visualstudio.microsoft.com/) — Desktop Development with C++ workload |
+| CMake ≥ 3.21 | Bundled with Visual Studio, or [cmake.org](https://cmake.org/download/) |
+| vcpkg | [github.com/microsoft/vcpkg](https://github.com/microsoft/vcpkg) — clone and set `VCPKG_ROOT` |
 
-> The `.text` section must be writable for the static SMC variants.  This is controlled via the linker flag `/SECTION:.text,RWE` already present in the project.
+Set `VCPKG_ROOT` permanently if you have not already:
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("VCPKG_ROOT", "C:\path\to\vcpkg", "User")
+```
+
+---
+
+### Option A — CMake + vcpkg (recommended)
+
+AsmJit is installed automatically from `vcpkg.json`.
+
+```bat
+REM 1. Download the WinRing0 driver (one-time setup)
+powershell -ExecutionPolicy Bypass -File scripts\Get-WinRing0.ps1
+
+REM 2. Configure (installs AsmJit via vcpkg, generates Visual Studio project files in build\)
+cmake --preset windows-x64
+
+REM 3. Build
+cmake --build --preset release
+REM  or for Debug:
+cmake --build --preset debug
+```
+
+Output: `build\Release\SelfModTamper.exe` / `build\Debug\SelfModTamper.exe`
+
+> The preset uses the **Visual Studio 17 2022** generator.  If you only have Visual Studio
+> 2026 build tools, edit the `"generator"` field in `CMakePresets.json` to
+> `"Visual Studio 18 2026"`.
+
+---
+
+### Option B — Visual Studio IDE (Open Folder)
+
+Visual Studio 2022 and later detect `CMakeLists.txt` and `CMakePresets.json` when you use
+**File → Open → Folder**.
+
+1. Run `scripts\Get-WinRing0.ps1` once (see above).
+2. **File → Open → Folder** — select the repository root.
+3. Visual Studio configures CMake and restores vcpkg packages automatically.
+4. Select the **x64-Release** or **x64-Debug** target and build.
+
+> Ensure `VCPKG_ROOT` is set in your user environment *before* opening Visual Studio.
+
+---
+
+### Option C — Visual Studio `.vcxproj` (legacy)
+
+The original `SelfModTamper.sln` / `.vcxproj` remain for users who prefer the MSBuild
+workflow.  AsmJit paths are resolved via `PropertySheet.props`.
+
+**Using vcpkg integration (easiest):**
+
+```bat
+vcpkg integrate install
+```
+
+Then open `SelfModTamper.sln`, select **x64 | Debug** or **x64 | Release**, and build.
+Copy `WinRing0x64.sys` next to the resulting executable manually.
+
+**Using a manual AsmJit build:**
+
+Set `ASMJIT_DIR` as described in [Dependencies → AsmJit](#asmjit) and restart Visual Studio.
+`PropertySheet.props` picks up the variable automatically.
+
+> Only the **x64** platform is supported.  The static SMC in `TP.asm` uses 64-bit registers
+> and RIP-relative addressing; the dynamic generator in `SelfModTamper.cpp` targets x86-64
+> exclusively.
+>
+> The `.text` section must be writable for the static SMC variants.  This is controlled via
+> the linker flag `/SECTION:.text,RWE` already present in the project.
 
 ## Running
 
 ```bat
 REM Must be run from an elevated (Administrator) command prompt
-x64\Release\SelfModTamper.exe
+REM CMake build output:    build\Release\SelfModTamper.exe
+REM .vcxproj build output: x64\Release\SelfModTamper.exe
+build\Release\SelfModTamper.exe
 ```
 
 The program:
@@ -104,12 +204,17 @@ Number of pages: 2  Unrolled loop size per page: 148  Intro bytes: 0x5F  Code si
 
 ```
 SelfModTamper/
-├── SelfModTamper.sln          # Visual Studio solution
+├── CMakeLists.txt             # Primary CMake build (recommended)
+├── CMakePresets.json          # Build presets — windows-x64 (Release/Debug)
+├── vcpkg.json                 # vcpkg manifest — declares AsmJit dependency
+├── scripts/
+│   └── Get-WinRing0.ps1       # Downloads WinRing0x64.sys to repository root
+├── SelfModTamper.sln          # Visual Studio solution (legacy .vcxproj build)
 ├── SelfModTamper/
 │   ├── SelfModTamper.cpp      # Main source: timer classes, C reference implementations,
 │   │                          #   dynamic SMC generator (AsmJit), benchmarking loop
 │   ├── TP.asm                 # Static hand-written MASM SMC checksum (TPComp, TPCompLoop)
-│   ├── PropertySheet.props    # Shared property sheet — update AsmJit paths here
+│   ├── PropertySheet.props    # MSBuild property sheet — reads ASMJIT_DIR env var
 │   └── SelfModTamper.vcxproj  # Project file
 ├── .gitignore
 ├── .gitattributes

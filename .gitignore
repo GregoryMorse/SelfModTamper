@@ -5,6 +5,17 @@
 SelfModTamper/func.asm
 SelfModTamper/out.txt
 
+# CMake build output and vcpkg installed packages
+build/
+build-*/
+vcpkg_installed/
+
+# User-local CMake overrides (machine-specific, must not be committed)
+CMakeUserPresets.json
+
+# WinRing0 kernel driver binary (downloaded by scripts/Get-WinRing0.ps1)
+WinRing0x64.sys
+
 # User-specific files
 *.suo
 *.user

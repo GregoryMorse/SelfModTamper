@@ -1,43 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  AsmJit dependency paths for the legacy .vcxproj build.
+
+  Option A (recommended): CMake + vcpkg
+    See README.md — no changes needed here.
+
+  Option B: vcpkg Visual Studio integration
+    Run once: vcpkg integrate install
+    AsmJit include and library paths are injected by vcpkg automatically.
+    No changes needed here.
+
+  Option C: Manual AsmJit build (set ASMJIT_DIR environment variable)
+    Set ASMJIT_DIR to the root of your AsmJit checkout (the directory
+    that contains the 'src' subfolder), e.g. in PowerShell:
+      [System.Environment]::SetEnvironmentVariable("ASMJIT_DIR", "C:\path\to\asmjit", "User")
+    The CMake build sub-directory is expected at $(AsmJitDir)\build_vs2022_x64\.
+    Override by setting AsmJitBuildSubDir before this sheet is imported.
+-->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <!-- Map the ASMJIT_DIR environment variable to an MSBuild property. -->
+    <AsmJitDir Condition="'$(AsmJitDir)'=='' and '$(ASMJIT_DIR)'!=''">$(ASMJIT_DIR)</AsmJitDir>
+    <AsmJitBuildSubDir Condition="'$(AsmJitBuildSubDir)'==''">build_vs2022_x64</AsmJitBuildSubDir>
+  </PropertyGroup>
   <PropertyGroup />
-  <ItemDefinitionGroup>
+  <!-- Include path — applied to all configurations when ASMJIT_DIR is set. -->
+  <ItemDefinitionGroup Condition="'$(AsmJitDir)'!=''">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\libraries\asmjit-master\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(AsmJitDir)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64' and '$(AsmJitDir)'!=''">
     <Link>
-      <AdditionalDependencies>D:\libraries\asmjit-master\build_vs2022_x86\Debug\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(AsmJitDir)\$(AsmJitBuildSubDir)\Debug\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy D:\libraries\asmjit-master\build_vs2022_x86\Debug\asmjit.dll $(OutDir)</Command>
+      <Command>copy "$(AsmJitDir)\$(AsmJitBuildSubDir)\Debug\asmjit.dll" "$(OutDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' and '$(AsmJitDir)'!=''">
     <Link>
-      <AdditionalDependencies>D:\libraries\asmjit-master\build_vs2022_x86\Release\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(AsmJitDir)\$(AsmJitBuildSubDir)\Release\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>copy D:\libraries\asmjit-master\build_vs2022_x86\Release\asmjit.dll $(OutDir)</Command>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Link>
-      <AdditionalDependencies>D:\libraries\asmjit-master\build_vs2022_x64\Debug\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>copy D:\libraries\asmjit-master\build_vs2022_x64\Debug\asmjit.dll $(OutDir)</Command>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>  
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Link>
-      <AdditionalDependencies>D:\libraries\asmjit-master\build_vs2022_x64\Release\asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>copy D:\libraries\asmjit-master\build_vs2022_x64\Release\asmjit.dll $(OutDir)</Command>
+      <Command>copy "$(AsmJitDir)\$(AsmJitBuildSubDir)\Release\asmjit.dll" "$(OutDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup />
