@@ -34,5 +34,9 @@
     <!-- Use the dynamic x64-windows triplet to match the CMake preset. -->
     <VcpkgTriplet Condition="'$(VcpkgTriplet)'==''">x64-windows</VcpkgTriplet>
     <VcpkgHostTriplet Condition="'$(VcpkgHostTriplet)'==''">x64-windows</VcpkgHostTriplet>
+    <!-- Use vcpkg's built-in applocal DLL copy (vcpkg.exe z-applocal) instead of
+         applocal.ps1, which requires pwsh.exe (PowerShell 7).  This avoids the
+         "'pwsh.exe' is not recognized" noise on machines that only have powershell.exe. -->
+    <VcpkgXUseBuiltInApplocalDeps Condition="'$(VcpkgXUseBuiltInApplocalDeps)'==''">true</VcpkgXUseBuiltInApplocalDeps>
   </PropertyGroup>
 </Project>
