@@ -1,0 +1,17 @@
+{
+ "round": "R0",
+ "date": "2026-10-15",
+ "executor": "Claude Sonnet 5.5",
+ "checks": {
+  "v1_hashes_tarball_tex_bib_eps_pdf": "pass (all five match plan section 0)",
+  "build_pdf_v1_and_v2_pre": "pass: python validation/build_tex.py; local 12 pages each (arXiv PDF has 11; MiKTeX class/engine difference), no undefined references",
+  "lake_stub_build": "pass: lake --file lakefile.proof.toml build under limited_run.py, peak commit 528 MB",
+  "build_modules_and_axiom_audit": "pass: AUDIT declarations=3 violations=0, peak commit 612 MB",
+  "tables_checker": "pass: python validation/check_tables.py",
+  "native_compile": "pass: Debug|x64 and Release|x64 build (compile-only; product not run, needs admin + WinRing0)"
+ },
+ "commands": ["python validation/limited_run.py --cwd lean -- lake --file lakefile.proof.toml build",
+  "python validation/build_modules.py --force SmcTamper", "python validation/axiom_audit.py",
+  "python validation/check_tables.py", "python validation/limited_run.py -- python validation/native.py"],
+ "peak_group_commit_bytes_max": 611930112
+}

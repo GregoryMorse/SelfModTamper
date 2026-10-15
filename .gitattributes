@@ -61,3 +61,8 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+# Pristine arXiv v1 bytes and reference text must never be line-ending converted (hashes are checked).
+paper/arxiv-v1/* -text
+validation/reference/* -text
+*.eps -text
+*.pdf binary

@@ -1,0 +1,9 @@
+name = "selfmodtamper"
+version = "0.1.0"
+defaultTargets = ["SmcTamper"]
+
+[leanOptions]
+autoImplicit = false
+
+[[lean_lib]]
+name = "SmcTamper"

@@ -1,0 +1,10 @@
+name = "selfmodtamper"
+version = "0.1.0"
+defaultTargets = ["SmcTamper"]
+buildDir = ".lake/proof-build"
+
+[leanOptions]
+autoImplicit = false
+
+[[lean_lib]]
+name = "SmcTamper"

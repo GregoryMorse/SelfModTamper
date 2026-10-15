@@ -5,7 +5,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 
 | Round | Deliverable | Priority | State |
 | --- | --- | --- | --- |
-| R0 | Bootstrap, references, baselines | must | TODO |
+| R0 | Bootstrap, references, baselines | must | DONE |
 | R1 | Claim inventory, errata verification, author questions | must | TODO |
 | R2 | Bits, parity, opcode family, masks | must | TODO |
 | R3 | x86-64 subset model (R3a encodings, R3b semantics) | must | TODO |
@@ -43,3 +43,17 @@ handoff: done / next / open obligations / hazards / evidence file).
   A planning brute force supports the forgery claim: 3 free qwords always restore the static kernel's state
   (0/12,000 failures); 2 sometimes do not (483 failures).
 - Next: R0 (no question needed this round).
+
+### R0 (Claude Sonnet 5.5, 2026-10-15)
+
+- Done: v1 e-print downloaded fresh, all five hashes match plan section 0; `paper/arxiv-v1/` (+ `SHA256SUMS`), `paper/` copy (future v2),
+  `validation/reference/2604.12407v1.{pdf,txt}`; Lake project (`selfmodtamper`, lib `SmcTamper`, stub `Spec/Bits.lean` with
+  `parityFlag`); infra vendored (`lean/VENDORED.md`); Lake build, `build_modules.py`, `axiom_audit.py` (3 declarations, 0 violations)
+  pass under the guard (peak commit 612 MB); `validation/data/paper_tables.json` + `check_tables.py` pass; both configs compile.
+- Next: R1 (claim inventory, errata verification, the one batched author question: P05, P07, L06, tag name).
+- Open obligations: none. Note for R15: Palomar policy assets (`validation/palomar/policy/`) are not copied yet; the Windows CI job
+  needs vcpkg/asmjit and has not run on GitHub.
+- Hazards: `latexmk` with an external `-outdir` breaks bibtex; use `validation/build_tex.py` (scratch copy). Local PDFs have 12 pages vs 11
+  on arXiv (class/engine difference; page numbers for errata must come from the arXiv PDF text, not local builds). `native.py` Debug/Release
+  finished in 4-6 s (likely up to date); the product is never run (admin + WinRing0).
+- Evidence: `validation/rounds/R0.json`.

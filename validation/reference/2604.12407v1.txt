@@ -1,0 +1,620 @@
+arXiv:2604.12407v1 [cs.CR] 14 Apr 2026                 Tamper-Prooﬁng with Self-Modifying Code
+
+                                                                                         Gregory Morse
+                                                                         morse@inf.elte.hu1 and Tamás Kozsik
+
+                                                                                          kto@elte.hu1
+
+                                                 1Eötvös Loránd Tudományegyetem / University (ELTE), Budapest, Hungary
+
+                                                                                                        Abstract
+
+                                                     Classical computability theory tells us that self-modifying code (SMC) on a deterministic uni-
+                                                versal Turing machine can be simulated by non-SMC code on the same model. That abstraction,
+                                                however, omits the external timing inputs, concurrency, and microarchitectural state that dom-
+                                                inate practical execution on modern processors. We argue that once timing, ordering, and self-
+                                                introspective eﬀects are treated as observables, a practically faithful non-SMC reproduction of
+                                                timed SMC becomes detectably expensive on commodity systems. We present a tamper-prooﬁng
+                                                model that combines introspective and polymorphic SMC, reliable clocks, and runtime timing
+                                                predicates to bind integrity checks to execution behavior. We distinguish static and dynamic
+                                                SMC generation, characterize the timing semantics needed to avoid catastrophic pipeline clears,
+                                                and give x86-64 design primitives for checksum-driven self-patching. We also report timer mea-
+                                                surements, performance comparisons, and performance-monitoring counter evidence showing
+                                                that careful engineering—especially loop unrolling and cross-page modiﬁcation—substantially
+                                                reduces the overhead of SMC while preserving its tamper-detection value. The paper concludes
+                                                with an eﬃciency analysis, a threat model, and deployment guidance for trusted code executing
+                                                in untrusted environments.
+
+                                        Keywords: x86, x86-64, assembly language, self-modifying code, software protection, tamper-
+                                        prooﬁng, integrity checking, runtime veriﬁcation
+
+                                        1 Introduction
+
+                                        It is classical in computability theory that self-modifying code (SMC) on a deterministic universal
+                                        Turing machine (UTM) can be simulated by non-SMC code on the same model; SMC does not
+                                        increase computational power beyond Turing completeness, but rather changes representation and
+                                        potentially eﬃciency [1, 2, 3]. That baseline, however, abstracts away external inputs. In prac-
+                                        tice, time sources such as Coordinated Universal Time (UTC) and processor time-stamp counters
+                                        (TSCs), together with concurrent scheduling, introduce nondeterminism: even if a TSC were made
+                                        deterministic, UTC would not be; in parallel settings, TSC readings are further complicated by
+                                        cache and memory synchronization.
+
+                                             Once such inputs are admitted as observables, the equivalence of SMC to non-SMC becomes
+                                        fragile in a tamper-prooﬁng context. Functional behavior can still be simulated in principle, but
+                                        preserving timing, ordering, and self-introspective eﬀects in the presence of an adversary generally
+                                        cannot be achieved without either reintroducing self-modiﬁcation or incurring detectable distor-
+                                        tions.
+External inputs: what helps, what does not. Many machine and system identiﬁers—CPU
+ID strings, NIC MAC addresses, disk/RAM conﬁgurations, or operating-system ﬁngerprints—are
+useful for binding a license to a host [4], but they solve ﬁngerprinting more directly than tamper-
+prooﬁng and are operationally brittle. System-activity signals such as mouse movement or event
+logs either feed entropy pools [5] or exhibit regularity that attackers can mimic. Cloud- or server-
+provided data can be incorporated as an external input, but replay and protocol attacks complicate
+correctness unless additional machinery is deployed; moreover, such channels do not protect code
+at the machine-architecture level against manual debugging, thread injection, or remote process-
+memory writes. A well-engineered network time source can, however, be a reliable UTC input.
+
+Practical stance. For integrity checks that bind behavior to time, there is eﬀectively no prac-
+tically faithful non-SMC equivalent that preserves both semantics and timing in the face of an
+adversary on contemporary systems. An attacker could attempt to simulate execution under a
+synthetic time source and adapt the predicate accordingly, but this requires a deterministic, fully
+characterizable timing model. Modern commodity processors do not satisfy this assumption. Exe-
+cution timing is inﬂuenced by partially undocumented microarchitectural state—branch predictors,
+caches, coherence protocols, speculative execution, microcode—together with concurrent activity
+and operating-system scheduling. Reproducing these eﬀects within tight timing tolerances would re-
+quire a faithful simulation of both the processor and the operating system, including their dynamic
+state, and doing so at practical speed is infeasible.
+
+Model. We propose a tamper-prooﬁng model in which SMC is (i) introspective, in that it check-
+sums its own code, and (ii) polymorphic, in that it rewrites itself while executing. The model uses
+constant-time algorithmic kernels to reduce unrelated timing leakage and may treat sensitive data
+as code (SMC-backed storage) to harden against data-only faults. A virtualized SMC wrapper can
+dynamically generate an inner SMC layer. Formally, we assume a timer T (t) chosen per query t for
+reliability and a checksum function C(c) over code or data c; the predicate P (T, C) returns true if
+and only if the protected code remains unmodiﬁed.
+
+Relation to prior work. Tamper-prooﬁng via watermarking is well studied [6]. Self-check-
+summing with SMC has also been explored [7], but typically with static checksum routines rather
+than checksum kernels that rewrite themselves while executing. Remote runtime-integrity schemes
+can rely on a veriﬁer in the cloud [8]; our goal is to avoid such infrastructure and keep the assurance
+mechanism local to the untrusted host. This inverts the conventional “trustworthy computing”
+perspective, which usually assumes a trusted host running untrusted software. Our setting instead
+asks how trusted software can retain integrity on an untrusted host, which is the operationally
+harder direction.
+
+Contributions. The paper makes four concrete contributions.
+
+   • It frames timed, introspective SMC as a practical tamper-prooﬁng primitive whose non-SMC
+       reproduction is detectably costly on modern systems.
+
+   • It develops a structured engineering model covering reliable clocks, timing semantics, static
+       versus dynamic generation, and concrete x86-64 design primitives.
+
+   • It reports empirical timing and performance-counter results that explain when SMC is im-
+       practical and when it becomes eﬃcient enough to deploy.
+... Checksum Unit 1 Checksum Unit 2       ¢ Checksum Veri er State 1
+                                          ¢ Checksum Veri er State 2
+Measure time         Measure time
+                                               ...
+Page 1               Page 1
+
+Modify Next Page Modify Next Page
+
+Compute              Compute
+
+Page 2               Page 2
+
+  Modify Prior Page    Modify Prior Page
+
+        Compute              Compute
+
+Measure time ¡       Measure time ¡
+
+                    Figure 1: Design overview of checksum units and state veriﬁcation.
+
+    • It states explicit eﬃciency and security assumptions so that the scope and limitations of the
+       approach are clear.
+
+     Figure 1 gives a high-level overview of the resulting design.
+     The remainder of the paper proceeds as follows. Section 2 evaluates practical time sources.
+Section 3 contrasts static and dynamic SMC generation. Section 4 formalizes the timing semantics
+relevant to detection. Sections 5 and 6 present static and dynamic design primitives. Section
+7 reports measured performance. Section 8 interprets the cost model. Section 9 shows how the
+primitives compose into a deployment scheme. Section 10 states the threat model and assumptions,
+and Section 11 concludes.
+
+2 Reliable clocks
+
+The read TSC instructions RDTSC and RDTSCP are not perfectly reliable in isolation because modern
+processors expose hyper-threading, out-of-order execution, speculative execution, and cache eﬀects
+that can perturb measurements [9]. Nevertheless, they can be made reliable enough statistically
+by repeated execution and by surrounding them with serialization instructions such as CPUID and
+RDTSCP. In many tamper-prooﬁng contexts, a high-probability integrity decision is suﬃcient to
+continue execution.
+
+     Most contemporary systems also expose several other clocks. High Precision Event Timer
+(HPET), real-time clock (RTC) facilities, and operating-system monotonic counters provide alter-
+native timing sources with diﬀerent resolution and noise proﬁles. The speciﬁc x86 instructions
+discussed here are not unique in spirit: AVR32, SPARC V9, PowerPC, ARMv7, and ARMv8
+all provide related counter-style instructions, underscoring the near universality of hardware time
+measurement.
+
+     For x86 time-stamp counters, the instructions RDTSC and RDTSCP have the corresponding intrin-
+sics __rdtsc and __rdtscp, which are readily usable from user mode. On many systems they oﬀer the
+most ﬁne-grained timing information available to ordinary software.
+
+     On Windows, several Application Programming Interface (API) calls expose timer state. UTC
+can be queried with GetSystemTimePreciseAsFileTime. The high-resolution performance counter is ob-
+tained with QueryPerformanceCounter and calibrated with QueryPerformanceFrequency. The interrupt timer
+is available through QueryInterruptTimePrecise. These three are practically in the same precision class.
+Coarser timers include the tick counter GetTickCount64() and multimedia timers via timeBeginPeriod(1),
+timeEndPeriod(1), and timeGetTime(), though they are not intended for precise microbenchmarking.
+
+     On Linux, clock_gettime provides access to several clocks. The system clock is obtained through
+CLOCK_REALTIME. A monotonic clock analogous to an interrupt timer is measured with CLOCK_MONOTONIC
+, and a boot-time clock including suspended time is available through CLOCK_BOOTTIME. UTC time
+can also be queried with gettimeofday, although clock_gettime is generally the cleaner interface in
+contemporary software. Standard C and C++ library abstractions wrap part of this functionality
+and may be easier to use when the implementation details do not matter.
+
+3 Static versus dynamic generation of SMC
+
+Static SMC is handwritten assembly code linked into the program at compile time. It is diﬃcult to
+write and maintain because assemblers and C/C++ toolchains do not directly accommodate code
+that rewrites its own instruction bytes. Compiler support is also inconsistent: Microsoft Visual C++
+supports inline assembly on x86 but not x86-64, whereas the GNU Compiler Collection allows inline
+assembly more broadly.
+
+     Dynamic SMC is generated at runtime, for example with an assembler library such as AsmJit
+[10]. Although such frameworks are typically used for just-in-time compilation, they also provide
+a convenient foundation for SMC that must be polymorphic or context sensitive. Features missing
+from conventional assemblers can be introduced programmatically, and the generated code can
+adapt to the operating-system version, processor family, address-space layout, or deployment policy
+at runtime.
+
+     Static code is normally loaded into read-execute (RX) pages. Since SMC needs write access, the
+binary or loader conﬁguration must be adjusted accordingly. Under MSVC, this can be expressed
+at link time with /SECTION:.text,RWE. With other toolchains, such as GCC on Portable Executable
+(PE) or Executable and Linkable Format (ELF) targets, the required section permissions may need
+manual editing in the binary format metadata.
+
+     For dynamically generated SMC, the memory allocator must request pages with the appropriate
+permissions. On Windows, this is achieved with VirtualAlloc(NULL, codeSize, MEM_RESERVE | MEM_COMMIT,
+PAGE_EXECUTE_READWRITE). On Linux, the corresponding mechanism is typically mmap. In both cases,
+deployment policies should be reviewed carefully if write-execute (WX/RWX) pages are restricted.
+
+     Dynamic SMC also makes address tracking more diﬃcult for emulation tools. Because the code
+layout is generated at runtime, the addresses that a semantics- faithful non-SMC emulator must
+monitor are themselves contextual. This is one of the reasons dynamic generation is especially
+attractive for tamper-prooﬁng.
+
+4 Timing semantics of SMC
+
+Eﬃcient tamper-prooﬁng with SMC requires careful attention to modern microarchitectural be-
+havior, particularly instruction pipelines and memory hierarchies. Most processor optimizations of
+recent decades have focused on deep pipelines, speculative pre-processing, and aggressive caching.
+Na"ive SMC can invalidate that work and degrade execution to something resembling a much older
+processor running at a higher clock frequency. For a tamper-prooﬁng scheme, such a penalty is
+unacceptable.
+
+     A practical workaround is to structure the checksum routine so that it does not modify the
+currently executing instruction stream. Loop unrolling is one useful technique: it increases the
+number of instructions executed between modiﬁcation points and thus allows the pipeline to remain
+                 Item               Intel x86-64   AMD64
+ Perf. Counter Global Control            0x38F     0xC0000301
+                                         0x186     0xC0010000
+      Perf. Event Selector 0             0xC1      0xC0010004
+          Perf. Counter 0
+                               MACHINE_CLEARS.SMC  PIPELINE_RESTART_DUE_TO_
+SMC Event Name / Unit Mask                         SELF_MODIFYING_CODE
+                                     0xC3 / 0x4
+        SMC Event Value                            0x21 / 0x0
+
+Table 1: Intel x86-64 and AMD64 address and event reference values for representative supported
+microarchitectures.
+
+populated. When cache eﬀects matter, unrolling can also distribute self-modifying regions across
+distinct pages, reducing the chance that the executing page is also the one being written.
+
+     Although modern processors ultimately remain von Neumann machines, their deep pre-execution
+machinery makes SMC expensive when it touches instructions that are already in ﬂight. On x86,
+such cases can trigger a machine clear: the processor squashes in-ﬂight instructions and restarts
+fetch/decode for the logical processor. This is a major source of slowdown. Similar eﬀects can also
+appear in cross-modifying code (XMC) settings where one thread writes code later executed by
+another. Designs therefore have to account for these penalties and avoid them when possible.
+
+     The detection of SMC by the processor is itself approximate. It often uses the current page or
+a smaller region as the detection unit, which means false positives can occur when a modiﬁcation
+is near, but not identical to, the bytes currently in ﬂight. Consequently, both timing thresholds
+and code layout must be engineered with these approximations in mind.
+
+     Hardware performance counters help tune these designs. On x86, model-speciﬁc registers
+(MSRs) can conﬁgure event counters that are later read through RDPMC if control register 4 al-
+lows it. The conﬁguration interface is vendor speciﬁc in its addresses but conceptually similar
+across Intel and AMD processors [11, 12]. Table 1 summarizes the key register and event identiﬁers
+used in our measurements.
+
+     Between Windows and Linux, the main diﬀerence is access control. Performance counter conﬁg-
+uration is privileged. On Windows, practical experimentation may therefore require a signed kernel
+driver such as WinRing0 [13]. On Linux, perf_event_open can expose performance counters to user
+mode under policy, so a separate kernel module is not always necessary. Importantly, the counters
+were used only for measurement and tuning; deployment of the tamper-prooﬁng mechanism itself
+does not require direct PMC access.
+
+5 Static SMC tamper-prooﬁng design primitives
+
+To demonstrate the core idea, we begin with a simple static design. Eﬃcient SMC depends heavily
+on the details of the instruction set architecture (ISA). Many ISAs contain opcode families whose
+encodings diﬀer only in a few bits. On x86-64, this makes it possible to exchange arithmetic oper-
+ations by toggling a small number of bits in place. In particular, several long-standing arithmetic
+instructions share a common format for a 64-bit register destination and a 64-bit register-or-memory
+source. Table 2 shows the useful subset.
+
+    By exploiting this encoding pattern and combining it with loop unrolling, we develop a checksum
+scheme. Here, a checksum scheme is a self-veriﬁcation mechanism in which a program computes a
+lightweight integrity value over a region of its own code or data and uses that value at runtime to
+detect tampering or to select the next execution state. The checksum is not intended to be collision
+resistant in the cryptographic sense; the protection comes from coupling it to dynamic state and
+Instruction  Opcode  Opcode[3:5]    LAT         RCP
+     ADC       0x13          2         1           1
+     ADD       0x03          0         1
+     AND       0x23          4         1         0.25
+    CMP        0x3B          7                   0.25
+      OR       0x0B          1    0.2 / 0.25  0.2 / 0.25
+     SBB       0x1B          3         1         0.25
+     SUB       0x2B          5         1
+     XOR       0x33          6         1           1
+                                       1         0.25
+                                                 0.25
+
+Table 2: x86 arithmetic instruction pattern used by the checksum kernel. Latency and reciprocal
+throughput are in cycles; ranges reﬂect microarchitectural variation [14].
+
+ADC                             Add with carry
+ SBB                        Subtract with borrow
+XOR
+ SHL                             Exclusive OR
+ LEA                         Shift left (unsigned)
+SETcc                       Load eﬀective address
+CMP                         Set byte on condition
+  Jcc                         Compare operands
+cc=S
+cc=G                           Conditional jump
+cc=P                      Sign / negative (SF = 1)
+             Greater than (signed, ZF = 0 and SF = OF)
+
+                                Parity (PF = 1)
+
+Table 3: Reference for instructions used by the example checksum kernel. The parity ﬂag uses the
+legacy low-8-bit parity computation.
+
+timing.
+    With multiple checksum functions, the program can maintain validation data for a set of reach-
+
+able states deﬁned by each checksum kernel’s last modiﬁcation. Reset points before or after initial-
+ization keep the state space manageable. Figure 2 shows a minimal SMC checksum kernel, while
+Figure 3 shows a C++ implementation that emulates the same behavior as faithfully as possible
+without using SMC.
+
+    One x86-64 feature is especially helpful here: instruction-pointer-relative addressing. Because
+RIP-relative addressing allows nearby code bytes to be reached without ﬁrst materializing an ab-
+solute address in a register, the SMC kernel can patch itself with comparatively little scaﬀolding.
+Earlier 16-bit and 32-bit x86 variants do not provide this mechanism in the same form; there, the
+programmer typically needs an auxiliary register and a CALL/POP style idiom to recover the current
+address, which perturbs the stack and makes the checksum kernel less elegant.
+
+    The next static variant loop-unrolls the checksum body and modiﬁes an opcode at some ﬁxed
+oﬀset from each unrolled position. Unrolling has two advantages. First, it improves timing behavior:
+with a suitable oﬀset and suﬃcient depth, pipeline clears can be reduced dramatically and may
+disappear altogether. Second, it makes faithful non-SMC emulation harder because the emulator
+must track more potential modiﬁcation sites as the unroll depth grows.
+
+6 Dynamic SMC tamper-prooﬁng design primitives
+
+Dynamic generation generalizes the same ideas while removing many of the practical limits of
+handwritten assembly. Figure 4 shows a representative AsmJit fragment. Important features
+checksum:
+ADC RBX, QWORD PTR [RSI] ; 48 13 1E
+SETS DL ; 0F 98 C2
+SETP AL ; 0F 9A C0
+SHL AL, 2 ; C0 E0 02
+OR DL, AL ; 0A D0
+SHL DL, 3 ; C0 E2 03
+XOR BYTE PTR [$-2-3-3-3-2-3], DL
+LEA RSI, [RSI+8]
+CMP RDI, RSI
+JG checksum
+
+                                Figure 2: A simple static SMC checksum variant.
+
+const size_t offsetInFunc = 0xF;
+// manually found based on MOV, LEA, XOR, CLC, ADC prefix
+const PULONG64 pModOffset = (PULONG64)((ULONG64)((PBYTE)pTPCompOffset + offsetInFunc) & ~0x7ULL);
+const unsigned char pModByteOffset = ((ULONG64)((PBYTE)pTPCompOffset + offsetInFunc) & 7) * 8 + 3;
+// convert to bits, add 3 bits for the ADC/SBB/XOR/CMP offset
+const unsigned __int64 preserve = ~(5ULL << pModByteOffset);
+for (LPBYTE pEnd = (LPBYTE)pData + ulSize; (LPBYTE)pData < pEnd; pData++) {
+
+      unsigned __int64 res;
+      unsigned __int64 pDataVal = pData == pModOffset ?
+
+             (*pData & preserve) |
+             ((unsigned __int64)op << pModByteOffset) : *pData;
+      switch (op) {
+      case 0: res = sum += pDataVal; break;
+      case 1: res = sum -= pDataVal; break;
+      case 4: res = sum ^= pDataVal; break;
+      case 5: res = sum - pDataVal; break;
+      default: res = 0;
+      }
+      op ^= (!paritybyte((unsigned char)res) << 2) |
+             ((res & 0x8000000000000000ULL) != 0);
+}
+
+Figure 3: Minimal C++ code to emulate the SMC checksum computation precisely. The three
+arguments are the start address pData, the protected length ulSize, and the function start address
+pTPCompOffset; sum stores the checksum result.
+
+include the ability to bind labels at arbitrary oﬀsets, compute code sizes for fragments before ﬁnal
+emission, and emit RIP-relative x86-64 addressing directly. These features are especially valuable
+because x86-64 relative encodings can change size depending on the ﬁnal distance to a label, making
+precise layout diﬃcult to calculate by hand.
+
+    Our implementation used three code blocks: a prologue, the checksum body, and an epilogue.
+The prologue and checksum body were ﬁrst emitted with placeholder addresses to determine exact
+code size. Then the prologue and the required number of checksum copies were arranged to ﬁll two
+pages of memory, after which the epilogue was appended and the whole region emitted into RWX
+pages. The prologue and epilogue preserve registers and satisfy calling conventions.
+
+    In practice, a dual-page layout with each unrolled checksum unit writing to the corresponding
+oﬀset in the alternate page proved suﬃcient and close to ideal. We also used SMC to implement
+branch-free termination so that each unrolled iteration avoids conditional control ﬂow. The ﬁnal
+termination patch can still induce an occasional pipeline clear, but this is infrequent enough to
+resemble a branch misprediction rather than a persistent cost.
+
+    When executing the design, we logged processor and layout details to make the experimental
+conﬁguration explicit. Figure 5 shows a typical output block. Most of these values are discovered
+through CPUID, page size queries, or the layout computations already described.
+if (lbl) cb.bind(*lbl);
+cb.adc(x86::rbx, x86::ptr(x86::rcx));
+cb.sets(x86::dl);
+cb.setp(x86::al);
+cb.shl(x86::al, 2);
+cb.or_(x86::dl, x86::al);
+cb.shl(x86::dl, 3);
+cb.xor_(destlbl ? x86::byte_ptr(*destlbl, 1) :
+
+      x86::byte_ptr(x86::rip, PAGE_SIZE), x86::dl);
+// add 1 to skip the prefix byte
+cb.lea(x86::rcx, x86::ptr(x86::rcx, 8));
+
+Figure 4: Example snippet of dynamic SMC generated via AsmJit.
+
+Manufacturer: GenuineIntel
+DisplayModel: 0x9E DisplayFamily: 0x6
+Architecture Performance Monitoring Version: 4 Number of Performance Counters per Logical Processor: 4 PMC bit
+
+         width: 48
+The page size for this system is 4096 bytes.
+Code segment base: 0x7FF7B4521000 size: 0x8200 End address: 0x7FF7B4529200
+Number of pages: 2 Unrolled loop size per page: 148 Intro bytes: 0x5F Code size: 0x1B
+
+Figure 5: Representative processor, operating-system, and dynamic-layout details used during
+experimentation.
+
+7 Performance results
+
+For the basic static SMC model, the measured execution time is on average approximately 7.9×
+slower than the non-SMC variant shown in Figure 3; the measurements are given in Table 4. Among
+the clocks tested, RDTSCP is the most informative and the most stable for ﬁne-grained timing. The
+minimum, average, and maximum values reveal heavy-tailed noise caused by infrequent context
+switches, but the central mass of the samples remains tight enough to support practical thresholding.
+
+    This distinction matters when interpreting the tables. The maximum values should not be read
+as the “typical” execution time of the checksum; they are dominated by rare scheduler interference
+and other system-level disturbances. The minima, by contrast, are much more stable and better
+represent the uncontended baseline. For deployment, this suggests calibrating thresholds from
+empirical quantiles or repeated-sample windows rather than from raw maxima alone.
+
+    The dynamically generated SMC variant is substantially more competitive. As shown in Table 5,
+it is approximately 90.5× faster than the semantics-faithful, timing-constrained non-SMC variant
+and about 2.5× faster than the static SMC implementation. This version used two pages and
+wrote to the corresponding oﬀset in the opposite page; using three or four pages did not materially
+improve results.
+
+    The spread in the dynamic measurements also gives a rough sense of how often the operating
+system perturbs the benchmark. Using the RDTSCP ﬁgures as a back-of-the-envelope estimate, the
+SMC variant yields
+
+10,000  ·  (467,286 −  414,188)                      ≈  246,   246    ≈  2.5%,
+            2,158,056                                         10,000
+
+which suggests that only a small fraction of runs suﬀer a substantial task-switch style disturbance.
+Performing the same estimate for the semantics-faithful non-SMC variant gives roughly 3.6%. The
+exact percentages should not be over-interpreted, but they reinforce the practical point: the domi-
+nant source of variance is scheduler noise, not instability in the SMC design itself.
+     Timer                 SMC                       Non-SMC
+                           Min.
+    RDTSC         Avg.   7466370    Max.    Avg.     Min.      Max.
+   RDTSCP       8305286  7466412  17053914
+Interrupt Time  8305389   28806   17054428  1052981 959776 11039730
+Perf. Counter    32044    28807
+ Precise UTC     32045    28806     65800   1053077 959834 11040460
+  Tick Count     32045              65802
+  Multimedia                 0      65803   4064 3704 42610
+                    3        1
+                    3                 16    4064 3703 42617
+                                       7
+                                            4065 3704 42622
+
+                                            0        0         16
+
+                                            0        0         4
+
+Table 4: 10,000 runs on a hexa-core Intel Core i7-9750H with 16 GB RAM under Windows 10; the
+checksum covered the entire 220 KB code segment.
+
+     Timer       Avg.     SMC      Max.       Avg.   Non-SMC     Max.
+                467241    Min.    2157922  42300670     Min.   74294904
+    RDTSC       467286   414132   2158056  42300840            74295022
+   RDTSCP        1803    414188             163202   39599882   286641
+Interrupt Time   1803     1598      8328    163204   39600010   286644
+Perf. Counter    1803     1599      8327    163206              286647
+ Precise UTC              1598      8328               152779
+  Tick Count       0                 16        16      152779      32
+  Multimedia       0        0                  16      152779      29
+                            0         2
+                                                          0
+                                                          15
+
+Table 5: Dynamic SMC measurements under the same environment and conditions as Table 4.
+
+    We can also inspect SMC-induced pipeline clears directly. Table 6 reports the aggregate counts
+across 10,000 runs. The C variants are aﬀected by context switching and unrelated system activity,
+which can include just-in-time execution from other processes. The naive SMC variant, unsurpris-
+ingly, triggers a large number of clears because the checksum enters its own introspective region
+and continues modifying code there. The unrolled static and dynamic loop variants remain the
+most instructive result: they still incur some clears at the start of each unrolled iteration, showing
+that the current termination logic leaves room for improvement, but the reduction relative to the
+naive SMC case is dramatic.
+
+8 Eﬃciency analysis
+
+Any non-SMC reproduction of the mechanism must generally spend more space-time resource than
+its SMC counterpart. Even when both are asymptotically linear, the relevant practical quantity is
+the constant factor: the goal is to engineer a large enough constant c such that cnon-SMC O(n) ≫
+cSMC O(n). A stronger checksum family might even force super-linear behavior in a faithful non-
+SMC emulation, though we do not rely on that here.
+
+    Precisely proving optimality is diﬃcult because the cost is dominated by microarchitectural
+details. Searching for an optimal non-SMC emulation strategy is, in general, combinatorial. At the
+same time, handwritten assembly is not automatically optimal: compilers can sometimes discover
+improvements that are hard to ﬁnd manually. This makes high-level prototyping for code generation
+a valid engineering strategy.
+
+    Several architectural lessons are important. First, modifying instructions that are eﬀectively
+in ﬂight can reduce performance to something reminiscent of a late-1990s Pentium III-class core,
+because pipeline-clearing behavior destroys the beneﬁts of deep speculation and out-of-order ex-
+    Variant   Event count
+         C          4514
+
+       SMC       83198361
+     C Loop        20986
+   SMC Loop      4597855
+Dyn SMC Loop     4492871
+
+Table 6: SMC pipeline-clear occurrences over 10,000 runs.
+
+ecution. Second, branching is expensive even with a branch predictor, so non-SMC emulations
+that require many conditionals are intrinsically disadvantaged. Third, an ISA-independent design
+rule is that SMC should conservatively avoid modifying the currently executing page. Finally,
+timing scores are stable enough in practice for detection, with the largest perturbations caused
+by operating-system task switches; those can be mitigated, though not eliminated, by adjusting
+process or thread priority.
+
+9 Using primitives as part of a tamper-prooﬁng scheme
+
+The model requires a timer T (t) tailored for reliability at the tth query and a checksum function
+C(c) over code or data c. The tamper-prooﬁng predicate P (T, C) returns true if and only if the
+protected code has not been modiﬁed. In practice, security comes from deploying many checksum
+units so they cannot all be removed or overridden easily. A state machine with precomputed
+validation states can implement P (T, C) for a controlled subset of states, while a reset function
+restores the SMC to a canonical state and bounds the state-space growth.
+
+    The timer-validity thresholds can be estimated empirically on representative hardware or upper-
+bounded conservatively. The most useful policy parameters are the allowed CPU-usage range in
+the operating-system environment, the length of the protected computation, and the number of
+consecutive failed timing scores that trigger fatal termination or recovery. In a practical deployment,
+these thresholds are tuned together with code layout rather than in isolation.
+
+10 Security assumptions and threat model
+
+The scope of the model is deﬁned by four main assumptions.
+
+   1. A von Neumann architecture is available; pure Harvard architectures fall outside the intended
+       deployment model.
+
+   2. An attacker cannot discover and neutralize all embedded checksum functions.
+
+   3. There does not exist a semantics-faithful non-SMC implementation that is as fast as, or faster
+       than, the SMC version under the same timing constraints.
+
+   4. Specialized hardware with direct memory access, such as certain FPGA-based platforms,
+       would require a correspondingly larger-area defense strategy.
+
+    These assumptions intentionally separate what is being claimed from what is not. For example,
+self-reconﬁgurable hardware eﬀectively realizes SMC in another substrate and is therefore compat-
+ible with the model rather than excluded by it. Similarly, the mechanism is not claimed to be
+equivalent to cryptographic attestation; it is a local runtime-integrity technique intended to raise
+attacker cost substantially on commodity systems.
+11 Summary and outlook
+
+We have developed a tamper-prooﬁng toolkit that binds code integrity to timing and runtime-
+generated SMC. The central idea is to make faithful reproduction of both semantics and execution
+timing costly for an adversary, even when the host environment is untrusted.
+
+    The main engineering lesson is that naive SMC is too slow, but carefully designed SMC is not.
+Reliable clocks such as RDTSCP provide stable enough timing signals for practical thresholding, while
+loop unrolling and cross-page self-modiﬁcation largely eliminate the worst pipeline stalls. Dynamic
+SMC then turns these gains into a ﬂexible deployment strategy that is materially faster than a
+semantics-faithful non-SMC emulation.
+
+    The approach is still bounded by platform-speciﬁc threshold tuning, operating- system schedul-
+ing noise, and the practical diﬃculty of measuring some hardware events without privileged support.
+Promising directions for future work include cross-modifying code in multithreaded settings, check-
+sum kernels whose best non-SMC emulation incurs super-linear overhead, automated blueprint
+generation for dynamic SMC, and validation on additional ISAs.
+
+    Overall, polymorphic SMC paired with carefully engineered timing semantics oﬀers a practical
+path to runtime integrity for trusted code executing in untrusted environments.
+
+References
+
+ [1] Marvin L. Minsky. Computation: Finite and Inﬁnite Machines. Prentice-Hall, Englewood
+      Cliﬀs, NJ, 1967.
+
+ [2] John E. Hopcroft and Jeﬀrey D. Ullman. Introduction to Automata Theory, Languages, and
+      Computation. Addison-Wesley, Reading, MA, 1979.
+
+ [3] Sanjeev Arora and Boaz Barak. Computational Complexity: A Modern Approach. Cambridge
+      University Press, Cambridge, 2009.
+
+ [4] Hua Shan Tan and Yang Yang. A software protection method based on computer ﬁngerprint
+      and asymmetric encryption. In Information Technology Applications in Industry, Computer
+      Engineering and Materials Science, volume 756 of Advanced Materials Research, pages 1215–
+      1219. Trans Tech Publications Ltd, 10 2013.
+
+ [5] Yue Hu, Xiaofeng Liao, Kwok wo Wong, and Qing Zhou. A true random number generator
+      based on mouse movement and chaotic cryptography. Chaos, Solitons & Fractals, 40(5):2286–
+      2293, 2009.
+
+ [6] C.S. Collberg and C. Thomborson. Watermarking, tamper-prooﬁng, and obfuscation - tools
+      for software protection. IEEE Transactions on Software Engineering, 28(8):735–746, 2002.
+
+ [7] J.T. Giﬃn, M. Christodorescu, and L. Kruger. Strengthening software self-checksumming via
+      self-modifying code. In 21st Annual Computer Security Applications Conference (ACSAC’05),
+      pages 10 pp.–32, 2005.
+
+ [8] Mathias Morbitzer. Scanclave: Verifying application runtime integrity in untrusted environ-
+      ments. In 2019 IEEE 28th International Conference on Enabling Technologies: Infrastructure
+      for Collaborative Enterprises (WETICE), pages 198–203, 2019.
+[9] Vincent M. Weaver, Dan Terpstra, and Shirley Moore. Non-determinism and overcount on
+    modern hardware performance counter implementations. In 2013 IEEE International Sympo-
+    sium on Performance Analysis of Systems and Software (ISPASS), pages 215–224, 2013.
+
+[10] AsmJit Project. AsmJit project: Low-latency machine code generation — asmjit.com.
+      https://asmjit.com/, 2023. [Accessed 19-Jun-2023].
+
+[11] Intel Corporation. Intel 64 and IA-32 Architectures Software Developer’s Manual - Volume
+     3B. Intel Corporation, September 2016.
+
+[12] Inc. Advanced Micro Devices. AMD64 Architecture Programmer’s Manual Volume 2: System
+      Programming. Advanced Micro Devices, Inc., January 2023.
+
+[13] OpenLibSys.org.  What’s  WinRing0  —  openlibsys.org.
+
+https://openlibsys.org/manual/WhatIsWinRing0.html, 2023. [Accessed 20-Jun-2023].
+
+[14] AsmJit Project. AsmGrid — asmjit.com. https://asmjit.com/asmgrid/, 2023. [Accessed
+      19-Jun-2023].
+

@@ -1,0 +1,281 @@
+{
+ "source": "arXiv:2604.12407v1 TeX SelfModifyingCodeTamperProofingManuscriptUpdated.tex (sha256 79d72610...)",
+ "note": "Table 6 labels 'SMC Loop' and 'Dyn SMC Loop' are transcribed as printed (see plan L01: the code labels are swapped).",
+ "table4_static": {
+  "caption_line": 531,
+  "units": "timer ticks as printed; RDTSC/RDTSCP in TSC cycles, Interrupt Time/Perf. Counter/Precise UTC in 100 ns, Tick Count/Multimedia in ms",
+  "rows": [
+   {
+    "timer": "RDTSC",
+    "tex_line": 523,
+    "smc": {
+     "avg": 8305286,
+     "min": 7466370,
+     "max": 17053914
+    },
+    "non_smc": {
+     "avg": 1052981,
+     "min": 959776,
+     "max": 11039730
+    }
+   },
+   {
+    "timer": "RDTSCP",
+    "tex_line": 524,
+    "smc": {
+     "avg": 8305389,
+     "min": 7466412,
+     "max": 17054428
+    },
+    "non_smc": {
+     "avg": 1053077,
+     "min": 959834,
+     "max": 11040460
+    }
+   },
+   {
+    "timer": "Interrupt Time",
+    "tex_line": 525,
+    "smc": {
+     "avg": 32044,
+     "min": 28806,
+     "max": 65800
+    },
+    "non_smc": {
+     "avg": 4064,
+     "min": 3704,
+     "max": 42610
+    }
+   },
+   {
+    "timer": "Perf. Counter",
+    "tex_line": 526,
+    "smc": {
+     "avg": 32045,
+     "min": 28807,
+     "max": 65802
+    },
+    "non_smc": {
+     "avg": 4064,
+     "min": 3703,
+     "max": 42617
+    }
+   },
+   {
+    "timer": "Precise UTC",
+    "tex_line": 527,
+    "smc": {
+     "avg": 32045,
+     "min": 28806,
+     "max": 65803
+    },
+    "non_smc": {
+     "avg": 4065,
+     "min": 3704,
+     "max": 42622
+    }
+   },
+   {
+    "timer": "Tick Count",
+    "tex_line": 528,
+    "smc": {
+     "avg": 3,
+     "min": 0,
+     "max": 16
+    },
+    "non_smc": {
+     "avg": 0,
+     "min": 0,
+     "max": 16
+    }
+   },
+   {
+    "timer": "Multimedia",
+    "tex_line": 529,
+    "smc": {
+     "avg": 3,
+     "min": 1,
+     "max": 7
+    },
+    "non_smc": {
+     "avg": 0,
+     "min": 0,
+     "max": 4
+    }
+   }
+  ]
+ },
+ "table5_dynamic": {
+  "caption_line": 571,
+  "rows": [
+   {
+    "timer": "RDTSC",
+    "tex_line": 563,
+    "smc": {
+     "avg": 467241,
+     "min": 414132,
+     "max": 2157922
+    },
+    "non_smc": {
+     "avg": 42300670,
+     "min": 39599882,
+     "max": 74294904
+    }
+   },
+   {
+    "timer": "RDTSCP",
+    "tex_line": 564,
+    "smc": {
+     "avg": 467286,
+     "min": 414188,
+     "max": 2158056
+    },
+    "non_smc": {
+     "avg": 42300840,
+     "min": 39600010,
+     "max": 74295022
+    }
+   },
+   {
+    "timer": "Interrupt Time",
+    "tex_line": 565,
+    "smc": {
+     "avg": 1803,
+     "min": 1598,
+     "max": 8328
+    },
+    "non_smc": {
+     "avg": 163202,
+     "min": 152779,
+     "max": 286641
+    }
+   },
+   {
+    "timer": "Perf. Counter",
+    "tex_line": 566,
+    "smc": {
+     "avg": 1803,
+     "min": 1599,
+     "max": 8327
+    },
+    "non_smc": {
+     "avg": 163204,
+     "min": 152779,
+     "max": 286644
+    }
+   },
+   {
+    "timer": "Precise UTC",
+    "tex_line": 567,
+    "smc": {
+     "avg": 1803,
+     "min": 1598,
+     "max": 8328
+    },
+    "non_smc": {
+     "avg": 163206,
+     "min": 152779,
+     "max": 286647
+    }
+   },
+   {
+    "timer": "Tick Count",
+    "tex_line": 568,
+    "smc": {
+     "avg": 0,
+     "min": 0,
+     "max": 16
+    },
+    "non_smc": {
+     "avg": 16,
+     "min": 0,
+     "max": 32
+    }
+   },
+   {
+    "timer": "Multimedia",
+    "tex_line": 569,
+    "smc": {
+     "avg": 0,
+     "min": 0,
+     "max": 2
+    },
+    "non_smc": {
+     "avg": 16,
+     "min": 15,
+     "max": 29
+    }
+   }
+  ]
+ },
+ "table6_clears": {
+  "caption_line": 598,
+  "rows": [
+   {
+    "variant": "C",
+    "tex_line": 592,
+    "count": 4514
+   },
+   {
+    "variant": "SMC",
+    "tex_line": 593,
+    "count": 83198361
+   },
+   {
+    "variant": "C Loop",
+    "tex_line": 594,
+    "count": 20986
+   },
+   {
+    "variant": "SMC Loop",
+    "tex_line": 595,
+    "count": 4597855
+   },
+   {
+    "variant": "Dyn SMC Loop",
+    "tex_line": 596,
+    "count": 4492871
+   }
+  ]
+ },
+ "fig5": {
+  "tex_lines": [
+   488,
+   493
+  ],
+  "code_segment_base": "0x7FF7B4521000",
+  "size": "0x8200",
+  "end": "0x7FF7B4529200",
+  "pages": 2,
+  "unrolled_loop_size_per_page": 148,
+  "intro_bytes": "0x5F",
+  "code_size": "0x1B",
+  "page_size": 4096
+ },
+ "text_claims": {
+  "static_vs_basic_c": {
+   "tex_line": 502,
+   "printed": "7.9"
+  },
+  "dynamic_vs_nonsmc": {
+   "tex_line": 536,
+   "printed": "90.5"
+  },
+  "dynamic_vs_static": {
+   "tex_line": 537,
+   "printed": "2.5"
+  },
+  "estimator": {
+   "tex_line": 546,
+   "numerator": [
+    467286,
+    414188
+   ],
+   "max": 2158056,
+   "runs": 10000,
+   "printed_runs": 246,
+   "printed_pct": "2.5",
+   "nonsmc_printed_pct": "3.6"
+  }
+ }
+}
