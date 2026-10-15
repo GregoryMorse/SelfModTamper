@@ -78,4 +78,13 @@ theorem rd64_wr8_aligned (m : Mem) (a : Nat) (b : BitVec 8) :
 theorem wr8_same (m : Mem) (a : Nat) (b : BitVec 8) : wr8 m a b a = b := by simp [wr8]
 theorem wr8_other (m : Mem) (a x : Nat) (b : BitVec 8) (h : x ≠ a) : wr8 m a b x = m x := by simp [wr8, h]
 
+theorem wr8_wr8_same (m : Mem) (a : Nat) (b b' : BitVec 8) : wr8 (wr8 m a b) a b' = wr8 m a b' := by
+  funext x; by_cases h : x = a <;> simp [wr8, h]
+
+/-- Byte `j < 8` of a 64-bit read is the memory byte at `base + j`. -/
+theorem byteAt_rd64 (m : Mem) (base j : Nat) (hj : j < 8) : byteAt (rd64 m base) j = m (base + j) := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro k hk
+  rw [getLsbD_byteAt _ _ _ hk, getLsbD_rd64 _ _ _ _ hj hk]
+
 end SmcTamper
