@@ -23,13 +23,13 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C16 | §4 ¶6 | PMCs only for measurement, not needed by the mechanism | M | R5 | todo |  |
 | C17 | Table 2 | opcode pattern, bits 3–5, 2-bit toggle closure | F | R2 | todo |  |
 | C18 | Table 2 | LAT/RCP values | R (P07) | R1 | partial | see R-class table below |
-| C19 | Table 3 | instruction and condition-code semantics (S, G, P) | F + R | R3 | todo |  |
-| C20 | Fig. 2 | encodings in comments, `$-2-3-3-3-2-3` targets the ADC opcode | F + M | R3, R5 | todo |  |
+| C19 | Table 3 | instruction and condition-code semantics (S, G, P) | F + R | R3 | done | Spec/Step.lean (`aluW`, `cond`); X64/Step.lean: `cond_S`, `cond_P`, `cond_G`, `cond_L`, `aluW_adc_clear`, `aluW_sbb_clear`, `jg_after_cmp`; parity: Bits/Parity.lean |
+| C20 | Fig. 2 | encodings in comments, `$-2-3-3-3-2-3` targets the ADC opcode | F + M | R3, R5 | done | X64/Facts.lean: `tpCompBytes_listing` (M: ml64 listing), `fig2_xor_targets_adc_opcode` |
 | C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | todo |  |
-| C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | todo |  |
+| C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
 | C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | todo |  |
 | C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | todo |  |
-| C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | todo |  |
+| C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | partial | X64/Facts.lean: `unit_size_27`, `unit_adc_opcode_at_one` (the `+1` skips the REX byte); AsmJit dump bytes in R5 |
 | C26 | §6 ¶2 | sizes measured with placeholders equal the emitted sizes | F + M | R5 | todo |  |
 | C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | todo |  |
 | C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 | todo |  |

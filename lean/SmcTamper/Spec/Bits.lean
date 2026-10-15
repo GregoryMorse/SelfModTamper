@@ -22,11 +22,11 @@ abbrev Mem := Nat → BitVec 8
   !(b.getLsbD 0 ^^ b.getLsbD 1 ^^ b.getLsbD 2 ^^ b.getLsbD 3 ^^ b.getLsbD 4 ^^ b.getLsbD 5 ^^ b.getLsbD 6 ^^
     b.getLsbD 7)
 
-/-- Parity flag of a 64-bit result: even parity of its low byte. -/
-@[expose] def pf (x : BitVec 64) : Bool := evenParity8 (x.setWidth 8)
+/-- Parity flag of a result: even parity of its low byte. -/
+@[expose] def pf {w : Nat} (x : BitVec w) : Bool := evenParity8 (x.setWidth 8)
 
-/-- Sign flag of a 64-bit result: its most significant bit. -/
-@[expose] def sf (x : BitVec 64) : Bool := x.msb
+/-- Sign flag of a result: its most significant bit. -/
+@[expose] def sf {w : Nat} (x : BitVec w) : Bool := x.msb
 
 /-- The two-bit operation number held in bits 3 (weight 1) and 5 (weight 4) of an ALU opcode byte. -/
 @[expose] def opOf (b : BitVec 8) : Nat :=

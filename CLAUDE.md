@@ -9,7 +9,7 @@ commit and produce an arXiv v2 manuscript that states its Lean verification, Pal
 (state and handoff notes: `lean/ROUNDS.md`). Decisions in plan §2 are settled; ask the user before
 deviating. Do not browse `../selfspectre` or `../smcTuring` beyond the paths the plan names.
 
-**Current round: R3** (R0-R2 done; R3a then R3b). Update this line at each round close.
+**Current round: R4** (R0-R3 done). Local full builds: `python validation/build_modules.py SmcTamper` (plain `lake build` exceeds the cap; CI does it). Update this line at each round close.
 
 ## Hard rules
 
