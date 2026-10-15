@@ -65,4 +65,6 @@
 paper/arxiv-v1/* -text
 validation/reference/* -text
 *.eps -text
+paper/*.tex -text
+paper/*.bib -text
 *.pdf binary

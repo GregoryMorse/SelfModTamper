@@ -282,3 +282,4 @@ __pycache__/
 output/pdf/*.aux
 output/pdf/*.log
 /.private/
+*-eps-converted-to.pdf
