@@ -84,3 +84,5 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 ## Open obligations
 
 * C15 AMD column (P14): primary source for MSR C000_0301 and PMCx021 not yet found.
+
+R2 also proved (support for C21, R4): SmcTamper.cSubst_eq_setByte (the Fig. 3 `preserve`/shift substitution replaces exactly byte j by `opcodeOf op`), rd64_wr8_outside / rd64_wr8_inside / rd64_wr8_aligned (Bits/Bytes.lean).

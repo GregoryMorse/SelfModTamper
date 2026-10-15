@@ -9,7 +9,7 @@ commit and produce an arXiv v2 manuscript that states its Lean verification, Pal
 (state and handoff notes: `lean/ROUNDS.md`). Decisions in plan §2 are settled; ask the user before
 deviating. Do not browse `../selfspectre` or `../smcTuring` beyond the paths the plan names.
 
-**Current round: R2** (R0, R1 done). Update this line at each round close.
+**Current round: R3** (R0-R2 done; R3a then R3b). Update this line at each round close.
 
 ## Hard rules
 
