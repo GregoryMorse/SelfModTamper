@@ -22,6 +22,9 @@ deviating. Do not browse `../selfspectre` or `../smcTuring` beyond the paths the
   `Lean.ofReduceBool`, `unsafe`. Only `propext`, `Quot.sound`, `Classical.choice` may appear.
 - Windows and the CPU are black boxes: platform behaviour enters only as fields of the contract
   structures (plan D2), never as axioms or as claims about real hardware.
+- The threat model (§10, plan D11, rounds R11b–R11c) is the crux of the paper. Assumptions must be
+  structural, never "the attacker is detected" (`validation/threat_audit.py`). Each one needs a
+  necessity witness. Never cut these rounds for budget.
 - Statement-level definitions live in `lean/SmcTamper/Spec/` (core imports only, `@[expose]`);
   `Challenge.lean` is generated from them.
 - Errata: paper text, tables, figures and captions only, quoted exactly from arXiv v1

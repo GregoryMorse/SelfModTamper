@@ -16,7 +16,9 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R8 | Von Neumann vs Harvard, split memory | must | TODO |
 | R9 | Clear contract | must | TODO |
 | R10 | Timers, noise, estimator, data checks | must | TODO |
-| R11 | Detection predicate, policy, assumptions | must | TODO |
+| R11a | Detection predicate, policy, reset | must | TODO |
+| R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | TODO |
+| R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | TODO |
 | R12 | Code fixes (not errata) and native acceptance | must | TODO |
 | R13 | Errata list (paper only) | must | TODO |
 | R14 | Coverage and fidelity audit | must | TODO |
@@ -35,4 +37,9 @@ handoff: done / next / open obligations / hazards / evidence file).
   and the tag; apply the errata that are certain.
 - Errata seeds: P01, P02, P04, P06, P08, P09 confirmed; P03 inferred (evidence in plan §5); P05 and P07
   open (R1 checks P07's source; P05 is the R1 question); P10 optional.
+- User (2026-10-15): §10 "Security assumptions and threat model" is the crux for journal acceptance. Plan
+  D11 adds a full formal threat model (levels L0–L4, assumptions A1–A8, theorems T1–T4) in R11b–R11c, and
+  errata P11 (replace §10), P12 (§1 protection claims), P13 (§1 synthetic-time argument; replay suffices).
+  A planning brute force supports the forgery claim: 3 free qwords always restore the static kernel's state
+  (0/12,000 failures); 2 sometimes do not (483 failures).
 - Next: R0 (no question needed this round).

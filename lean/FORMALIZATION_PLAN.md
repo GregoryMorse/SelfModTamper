@@ -58,6 +58,10 @@ class (D1) and is discharged in Lean, unconditionally or relative to the explici
 primary sources; pure observation/opinion is listed as such. Nothing about Windows or the CPU is treated as a
 white box (D2).
 
+**§10 (security assumptions and threat model) is the crux (user, 2026-10-15).** Journal acceptance depends
+on it. It gets a complete formal threat model (D11, rounds R11b–R11c), and the inadequacies of the
+published section are errata (P11–P13), whose replacement text states exactly what Lean proves.
+
 **Final deliverables (definition of done).**
 1. `lean/` Lake project: zero `sorry` outside `Challenge.lean`; only `propext`, `Quot.sound`,
    `Classical.choice`; cold CI build + axiom audit green on GitHub.
@@ -188,9 +192,7 @@ paper's data are *consistent* with some parameter values (FD). Components:
    adversarially placed number `p` of preemptions of cost ≤ `D`; "disturbed" = noise above `ν`. A window
    of `k` consecutive runs contains at most `r < k` disturbed runs (deterministic form); i.i.d. Bernoulli
    form is a *could* item.
-5. **Adversary/assumption contract**: the paper's A1–A4 (§10) as a `structure Assumptions`, plus the
-   attacker classes "code patcher", "split memory" (instruction fetch from a pristine copy, as in the
-   Wurster–van Oorschot–Somayaji attack on self-checksumming), "faithful emulator", "external writer".
+5. **Threat model** (adversary levels, assumptions A1–A8, mediation and debug-trap costs): see D11.
 `lean/PLATFORM_CONTRACT.md` (written in R9, final in R14) lists every field: meaning, why plausible,
 primary source, evidence, and what is *not* claimed.
 
@@ -254,12 +256,86 @@ Cold full builds and the Palomar preflight run on GitHub Actions. Python: `PYTHO
   registered statement. The v2 commit comes after the tag; the tag stays on the registered commit.
 
 **D10 — Palomar selection and fidelity.** Select only result families of research interest:
-`EmulationExact`, `SplitMemoryDetection`, `HarvardSeparation`, `ClearAvoidance`, `TamperEvidence`
-(+ `EmulationStateBound` if proved). Elementary arithmetic (ratios, layout numbers, table checks) stays
+`SecurityTheorem` and `AssumptionsNecessary` (the headline, D11), `EmulationExact`, `HarvardSeparation`,
+`ClearAvoidance` (+ `EmulationStateBound` if proved). Elementary arithmetic (ratios, layout numbers, table checks) stays
 supporting material (selfspectre review 1 rejected a separately selected index-arithmetic result). Every
 sentence of `formalization.yaml`, `PALOMAR_SEMANTICS.md` and Spec docstrings must claim no more than the
 Lean hypotheses give: observable claims need their freshness/initial-state hypotheses stated; contract
 results must say "under the contract" (selfspectre lost three review rounds to this).
+
+**D11 — The threat model is the crux.** v1 §10 lists four informal assumptions without an adversary model,
+a goal, or a security statement. Several are not checkable as phrased (A3 is a universal negative, and A4 is a
+remark rather than an assumption), and assumptions the scheme needs are missing (time integrity,
+persistence, non-compensation). The formalization makes the threat model complete and non-tautological,
+and P11 replaces §10 with a section that states exactly what is proved. `Spec/Threat.lean` holds the definitions; proofs are in `Threat/*.lean`;
+`lean/THREAT_MODEL.md` gives the informal account (source for the v2 §10 text).
+
+* **System.** Protected image `I₀ : Mem`, protected addresses `Prot`; units `u` with region, own code
+  addresses (including SMC opcode bytes), kernel (the Level-1 semantics of R4/R6, evaluated on a *fetch view*
+  and a *data view*), canonical state, expected value computed from `I₀`, threshold `τ_u`, timer source; a check
+  schedule; response code addresses.
+* **Executions.** A timeline of events: `exec a` (protected byte fetched for execution), `check u reading`,
+  `write a b level` (adversary write), `splitWrite` (fetch view only), `mediate` (adversary copies a data-view
+  write into the fetch view), `emulate u reading`, `regWrite` (debugger changes registers), `debugTrap`. World
+  state: fetch view, data view, elapsed time per the cost contract (D2).
+* **Adversary levels (cumulative):** L0 static patcher; L1 user mode (debug APIs, `WriteProcessMemory`,
+  thread injection, hooks in unprotected modules such as the OS timer APIs, hardware breakpoints); L2 kernel
+  (CR4.TSD makes RDTSC trappable; thread suspension; page tables); L3 hypervisor/emulator (EPT split views,
+  RDTSC exiting / TSC offsetting, virtual time); L4 physical (DMA, FPGA). Each level is a predicate on the events
+  it may emit. The mapping level → capability is R-class (cite the Intel SDM sections), never proved.
+* **Goal.** The adversary wins if (a) some `exec a` fetches a byte `≠ I₀ a`, or (b) a unit is emulated, or
+  (c) registers are tampered inside a timed interval — and no alarm is raised (alarm = value mismatch, or
+  reading > τ, under the k-consecutive policy of R11a). Register tampering *outside* timed intervals is out of
+  scope; say so, and prove it is undetected (scope witness).
+* **Assumptions** — each a structural property of the design or of the adversary's level. **No assumption may
+  mention `alarm` or `wins`** (`validation/threat_audit.py` checks the `Assumptions` fields). The v1
+  assumption each one replaces is given in brackets.
+  - A1 coherence: the fetch view equals the data view [v1 A1].
+  - A2 coverage: every protected byte, every unit's own code and the response code lie in some unit's region;
+    the "covers" graph is strongly connected; at least one unit stays unmodified [v1 A2].
+  - A3 timing gap: a calibration condition, native upper bound ≤ `τ_u` < the emulation/mediation lower bound
+    of the cost contract (R8 separation) [replaces v1 A3's "there does not exist…"].
+  - A4: no writer outside the protected thread acts between a check and the use of the checked bytes [v1 A4].
+  - A5 time integrity *(missing in v1)*: readings come from a timer instruction inside protected code that the
+    adversary's level cannot trap or offset.
+  - A6 persistence *(missing)*: a modification persists until the next scheduled check of a covering unit, or
+    is made inside a timed interval.
+  - A7 response coverage *(missing)*: the response code is in `Prot`; it may be merged into A2.
+  - A8 non-compensation *(missing; v1 only says the checksum "is not intended to be collision resistant")*:
+    on the modified data view, every covering unit's kernel result and state differ from the original.
+* **Theorems (targets).**
+  - **T1 Security:** for adversaries of level ≤ L1, under the platform contract and A1–A8, the adversary never
+    wins. Static patches are caught by value; emulation by time; in-interval debugging by the debug-trap cost.
+  - **T2 SMC strengthening:** A1 can be dropped for SMC units. A split-view adversary either produces a wrong
+    value (R8) or must `mediate` every opcode-byte write that is fetched later (sensitivity argument). Each
+    mediation costs ≥ κ_m under the contract, so A3/A5 give timing detection. This states precisely why SMC
+    beats the Wurster et al. split-memory attack.
+  - **T3 Necessity (minimality):** for each A_i, an adversary that satisfies all the other assumptions wins:
+    - A2: neutralise all units.
+    - A3: emulation under τ.
+    - A4: DMA write–use race. For **every** schedule with a gap between check and use, so a "larger-area
+      defense" narrows the window but never closes it.
+    - A5: replay of readings recorded from native runs. No timing model is needed (P13).
+    - A6: transient write–execute–restore between checks.
+    - A8: compensation forgery. For the single-site kernel, **3 adversary-controlled consecutive qwords after
+      the last modification restore (sum, opcode state) for every target reachable from the canonical start,
+      and 2 do not suffice for some targets**. Construction: pick results with prescribed toggles 0/1/4/5 via
+      r = 1, 2^63 + 1, 0, 2^63, and invert ADD/SUB/XOR/CMP for d. Lemma: (S, CMP) with t(S) = 0 is its own
+      only predecessor, hence unreachable. A planning brute force found 0 failures in 12,000 random cases with
+      3 qwords, and 483 with 2.
+    - A1 with plain (non-SMC) checksums: the split-view attack.
+  - **T4 Level matrix:** L2+ adversaries violate A5 or A1 through the cited capabilities. So the local scheme's
+    guarantees are for L0/L1, and for L2+ only with a time source outside the adversary's control (the network
+    UTC input of §1). With such a source, slowdowns larger than its resolution plus jitter are detected.
+    Corollary for §2: OS timer APIs can be hooked at L1, so only RDTSC/RDTSCP inside protected code satisfy A5
+    against L1.
+  - **Could:** unrolled forgery with one free pass + 3 qwords; the "covers" closure lemma for concrete layouts.
+* **Literature alignment** (R11b; cite only after verifying the DOI): Collberg–Thomborson 2002 and Giffin et
+  al. 2005 (both cited in v1), Chang–Atallah 2001 (guards), Horne et al. 2001 (testers),
+  Wurster–van Oorschot–Somayaji 2005 (split-memory attack), Seshadri et al. SWATT 2004 and Pioneer 2005
+  (timing-based attestation with a trusted verifier's clock, which this local scheme lacks), Castelluccia et al.
+  2009 (attacks on timing-based attestation), Kovah et al. 2012. Use them to name the adversary classes and to
+  show which assumptions are standard and which are new.
 
 ---
 
@@ -271,7 +347,7 @@ lean/
   FORMALIZATION_PLAN.md  ROUNDS.md     this plan; state machine + handoff notes
   lean-toolchain  lakefile.toml  lakefile.proof.toml (buildDir = ".lake/proof-build")
   SmcTamper.lean                       root import
-  SmcTamper/Spec/{Bits,Kernel,CModel,ISA,Images,Contract,Detection,Harvard,Paper}.lean   Challenge surface (D6)
+  SmcTamper/Spec/{Bits,Kernel,CModel,ISA,Images,Contract,Detection,Harvard,Threat,Paper}.lean   Challenge surface (D6)
   SmcTamper/Spec/Data.lean             transcribed Tables 4–6 and Fig. 5 values (FD, not selected)
   SmcTamper/Bits/{Parity,Bytes,Mask,Opcode}.lean
   SmcTamper/X64/{Encode,Decode,Step,Run,Facts}.lean
@@ -280,11 +356,12 @@ lean/
   SmcTamper/Layout/{Numbers,AsmJitSize,LayoutData}.lean
   SmcTamper/Harvard/{Machine,NonInterference,Interp,Separation,SplitMemory}.lean
   SmcTamper/Contract/{Clears,StaticClears,UnrolledClears,Timers,Noise,Estimator,Overhead}.lean
-  SmcTamper/Detection/{Predicate,Collision,Policy,Reset,Assumptions,Negative}.lean
+  SmcTamper/Detection/{Predicate,Collision,Policy,Reset}.lean
+  SmcTamper/Threat/{Timeline,Levels,Closure,Security,SplitMirror,Forgery,Replay,Transient,Necessity,Matrix}.lean
   SmcTamper/Data/{Ratios,Consistency}.lean
   SmcTamper/Paper.lean                 proofs of the Spec/Paper Props
   Challenge.lean Solution.lean comparator.json formalization.yaml           (R15)
-  PAPER_MAP.md VENDORED.md PLATFORM_CONTRACT.md PALOMAR_SEMANTICS.md PALOMAR_SUBMISSION.md
+  PAPER_MAP.md VENDORED.md PLATFORM_CONTRACT.md THREAT_MODEL.md PALOMAR_SEMANTICS.md PALOMAR_SUBMISSION.md
   LICENSE_AUDIT.md FINAL_ACCEPTANCE.json
   errata/{POLICY.md, edits.json, ERRATA.md, smctamper-2026-errata.tex, QUESTIONS.md}   paper only
   CODE_FIXES.md                        code/docs fixes with commit hashes (not errata)
@@ -294,7 +371,7 @@ paper/
   v1-v2.diff
 validation/
   limited_run.py memory_budget.py lean_build.py build_modules.py axiom_audit.{py,lean}
-  make_challenge.py audit_errata.py make_errata.py apply_edits.py coverage_audit.py
+  make_challenge.py audit_errata.py make_errata.py apply_edits.py coverage_audit.py threat_audit.py
   extract_layout.py run_listings.py native.py Vectors.lean
   native/{smc_harness.cpp, CMakeLists.txt}   evidence harness (includes the product source, D-R12)
   layout/{tp_x64.json, dyn_x64.json}  data/paper_tables.json  reference/  rounds/R*.json  palomar/…
@@ -349,9 +426,9 @@ called proof. Keep the errata PDF ≤ 3 pages (target 2).
 |---|---|---|---|---|
 | C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 |
 | C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 |
-| C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11 |
+| C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a |
 | C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 |
-| C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11 |
+| C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a |
 | C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 |
 | C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 |
 | C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 |
@@ -377,7 +454,7 @@ called proof. Keep the errata PDF ≤ 3 pages (target 2).
 | C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 |
 | C29 | Fig. 5 | 148 units/page, intro 0x5F, unit 0x1B, base + size = end | F + FD + M | R5 |
 | C30 | §7 ¶1 | static SMC ≈ 7.9× slower | FD | R10 |
-| C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11 |
+| C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11a |
 | C32 | §7 ¶3 | dynamic ≈ 90.5× faster than non-SMC | FD | R10 |
 | C33 | §7 ¶3 | ≈ 2.5× faster than static SMC (inconsistent, P02) | FD | R10 |
 | C34 | §7 ¶3 | 3–4 pages no material improvement | X (data not reported) | R1 |
@@ -390,11 +467,19 @@ called proof. Keep the errata PDF ≤ 3 pages (target 2).
 | C41 | §8 ¶3 | Pentium III remark; branching expensive | X | R1 |
 | C42 | §8 ¶3 | design rule: never modify the currently executing page | FC | R9 |
 | C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 |
-| C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11 |
-| C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11 |
-| C46 | §10 | A1–A4 scope the model; each is necessary (counterexamples) | F | R11 |
+| C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a |
+| C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a |
+| C46 | §10 | A1–A4 scope the model; corrected: the complete threat model A1–A8 with T1–T4 (D11, P11) | F + FC | R11b, R11c |
 | C47 | §10 ¶2 | reconfigurable hardware compatible; not attestation | X | R1 |
 | C48 | §11 | summary restates C12–C45 | (refs) | R14 |
+| C49 | §10 A1 | von Neumann needed; pure Harvard outside. Corrected: coherence; SMC detects split views or forces costly mediation (T2) | F + FC | R8, R11c |
+| C50 | §10 A2, §9 ¶1 | units cannot all be neutralised; many units. Corrected: structural coverage + one intact unit (T1); neutralise-all witness (T3) | F | R11b, R11c |
+| C51 | §10 A3 | no equally fast faithful non-SMC implementation. Corrected: calibration condition under the cost contract (T1); emulation-under-τ witness (T3) | FC | R11b, R11c |
+| C52 | §10 A4 | DMA/FPGA need a larger-area defense. Corrected: write–use race exists for every schedule with a gap (T3) | F | R11c |
+| C53 | §1 "Relation to prior work" | local assurance without a remote verifier. Consequence: time source on the untrusted host; guarantees for ≤ L1 (T4) | FC + R | R11c |
+| C54 | §1 "Practical stance" | a synthetic time source requires a full timing model (false: replay suffices, P13) | F | R11c |
+| C55 | §1 "External inputs" | the scheme protects against debugging, thread injection, remote writes (qualified, P12) | F | R11c |
+| C56 | §5 ¶2 | checksum not collision resistant; protection from dynamic state and timing (made precise by A8 and the forgery theorem) | F | R11c |
 
 ### Paper errata seeds (P)
 
@@ -415,6 +500,9 @@ before anything is written to `edits.json`.
 | P08 | §1 "Model" | "constant-time algorithmic kernels" → kernels whose control flow and instruction count do not depend on the data (per-operation costs still differ, Table 2) | formal | confirmed (clarification) |
 | P09 | §8 ¶1 | `c_nonSMC O(n) ≫ c_SMC O(n)` → `c_nonSMC·n ≫ c_SMC·n` (measured ≈ 10,168 vs 112 cycles per qword); "must generally spend more space-time resource" is Assumption 3, not a theorem | formal + editorial | confirmed (clarification) |
 | P10 | Table 3 | "SHL Shift left (unsigned)" → "logical shift left (same as SAL)" | editorial | optional; drop if the list gets long |
+| P11 | §10 whole section | Inadequate threat model: no adversary capabilities, goal or security statement; A3 is an uncheckable universal negative; A4 is a remark; time integrity, persistence, response coverage and non-compensation are missing. Replace §10 with the D11 threat model (levels L0–L4, A1–A8, T1–T4, with Lean names). The replacement text is written in R11c from `THREAT_MODEL.md` | formal | confirmed (text pending R11c; author reviews in R13) |
+| P12 | §1 "External inputs" | "…do not protect code at the machine-architecture level against manual debugging, thread injection, or remote process-memory writes" (implies the scheme does) → qualify: protects against persistent modification of covered bytes and against interference inside timed intervals; injected code that leaves covered bytes intact, register tampering outside timed intervals, and transient write–restore between checks are not detected (T3 witnesses) | formal | confirmed once the T3 witnesses are proved |
+| P13 | §1 "Practical stance" | "…simulate execution under a synthetic time source…, but this requires a deterministic, fully characterizable timing model" → an adversary controlling the time source only needs to replay readings recorded from native runs (Lean: replay theorem); timing detection therefore requires a time source outside the adversary's control (A5): RDTSC/RDTSCP inside protected code against L0/L1, or an external source against L2+ | formal | confirmed |
 
 ### Code (L) and docs (D) seeds — not errata (§0); tracked in `lean/CODE_FIXES.md`; all land before the Palomar commit
 
@@ -633,7 +721,7 @@ writes (generic over a decode function reading ≤ `L` bytes).
    the SMC writes go to the other copy) computes a different checksum from the vN run whenever some toggle in
    the run is non-zero (the opcode change takes effect only under vN); give an explicit small region where it
    differs (`decide`). Also: under split memory a *non*-SMC checksum is blind to code patches (the attack the
-   paper's A1 excludes).
+   paper's A1 excludes). The mediation variant (adversary mirrors SMC writes into the fetch view) is R11c (T2).
 
 **Gate:** C01, C02, C06 proved.
 
@@ -679,12 +767,11 @@ layout offsets (unrolled).
 
 **Gate:** all FD rows of `PAPER_MAP.md` checked; P01/P02/P03 numbers backed by declarations.
 
-### R11 — Detection predicate, policy, assumptions (must)
+### R11a — Detection predicate, policy, reset (must)
 
 `Spec/Detection.lean`: checksum units (region, kernel, canonical opcode state, expected value), the
-predicate `P` (value match ∧ time ≤ τ), reset to canonical, alarm after `k` consecutive failures,
-`Assumptions` (A1 von Neumann fetch, A2 some unneutralised unit covers each protected byte, A3 every faithful
-non-SMC implementation exceeds τ, A4 no external writer between check and use).
+predicate `P` (value match ∧ time ≤ τ), reset to canonical, alarm after `k` consecutive failures. The
+assumptions and the adversary are R11b (D11), not here.
 
 1. `Detection/Predicate` (C03 corrected): completeness (unmodified + contract noise bound ⇒ `P`);
    soundness for value-changing modifications; timing soundness for any attacker slower than τ.
@@ -695,12 +782,58 @@ non-SMC implementation exceeds τ, A4 no external writer between check and use).
    alarm. *(could)* i.i.d. Bernoulli form `P(k failures) = p^k` over finite weights.
 4. `Detection/Reset` (C44): with reset, the final opcode state is a function of the region contents, so one
    expected value per region suffices; without reset, the state after `j` calls depends on `j`.
-5. `Detection/Assumptions` + `Negative` (C46, C05): main `tamper_evident` theorem under A1–A4 + contract;
-   necessity witnesses: Harvard/split memory without SMC (R8) defeats A1-less schemes, all units neutralised ⇒
-   no detection (A2), a faithful emulator under τ breaks timing detection (A3 is needed), an external writer
-   can restore bytes before the check (A4). Data-as-code covered (C05).
+5. C05: data stored in covered bytes (SMC-backed storage) is checked like code.
 
-**Gate:** C03, C05, C44–C46 proved; P04 backed.
+**Gate:** C03, C05, C44, C45 proved; P04 backed.
+
+### R11b — Threat model I: definitions, level matrix, security theorem (must; the crux, up to two sessions)
+
+1. Literature pass (D11 list): fetch and verify each DOI; for each paper record in `THREAT_MODEL.md` its
+   adversary, its assumptions and how it maps to L0–L4 and A1–A8 (one short paragraph each). No unverified
+   citation is used anywhere.
+2. R-class facts for the level matrix: Intel SDM sections for CR4.TSD (RDTSC/RDTSCP privileged when set),
+   VMX RDTSC exiting and TSC offsetting/scaling, EPT execute-only pages, debug registers DR0–DR7 and #DB; Microsoft
+   Learn for `WriteProcessMemory`, `SetThreadContext`, `CreateRemoteThread`. Record in `PAPER_MAP.md`.
+3. `Spec/Threat.lean`: system, timeline events, world (fetch/data views, elapsed time from the cost contract),
+   levels as predicates on events, goal, alarm (from R11a), `structure Assumptions` (A1–A8 exactly as in D11).
+   `validation/threat_audit.py`: fails if any `Assumptions` field mentions `alarm`, `wins` or a detection
+   predicate.
+4. `Threat/Timeline` (step semantics of a timeline, view invariants), `Threat/Levels` (what each level can emit),
+   `Threat/Closure` (strongly connected coverage + one intact unit + persistence ⇒ every persistent modification
+   is read by some intact unit's check; induction along the covers graph).
+5. `Threat/Security` **T1**: for adversaries ≤ L1, under the contract and A1–A8, `¬ wins`. Prove it in three cases
+   (persistent modification → value mismatch by A8 at an intact unit's check; emulation → reading > τ by A3/A5 and
+   the R8 separation lemma; in-interval debug trap/register write → reading > τ by the debug-trap cost) and
+   compose them.
+6. Draft `THREAT_MODEL.md` §1–§3 (system, adversary levels with citations, assumptions with rationale).
+
+**Gate:** T1 proved; threat audit passes; every level capability has a primary source.
+
+### R11c — Threat model II: necessity, SMC strengthening, forgery, replay; §10 replacement text (must; up to two sessions)
+
+1. `Threat/SplitMirror` **T2**: an adversary with split views and no mediation produces a wrong value whenever
+   a toggle is non-zero (reuse R8); with mediation, every opcode-byte write that is fetched later needs one
+   `mediate` event (sensitivity argument, as in R8), so elapsed time ≥ native + (#such writes)·κ_m. Hence T1
+   holds without A1 for SMC units under A3/A5. Contrast: a plain checksum under split views is blind (R8).
+2. `Threat/Forgery` (A8 necessity): the 3-qword construction and the 2-qword impossibility case of D11 for the
+   single-site kernel; the lemma that `(S, CMP)` with `t(S) = 0` is unreachable from the canonical start.
+   *(could)* the unrolled kernel with one free pass + 3.
+3. `Threat/Replay` (A5 necessity, P13): with adversary-chosen readings, replaying any accepted native
+   reading passes every check while emulating. `Threat/Transient` (A6 necessity): write–exec–restore inside a
+   check gap. Also the A4 witness for every schedule with a check–use gap ("larger-area defense narrows,
+   never closes").
+4. `Threat/Necessity` **T3**: for each A_i a timeline that satisfies the other assumptions and wins (A2
+   neutralise-all, A3 emulation under τ, A1 with plain checksums); P12 scope witnesses (injected code leaving
+   covered bytes intact; register tampering outside timed intervals). `Threat/Matrix` **T4**: L2+ capabilities
+   (contract fields citing the SDM) violate A5 or A1; with an external time source of resolution `r` and jitter `j`,
+   slowdowns > `r + j` are detected (reuse R10 timer lemmas).
+5. Finish `THREAT_MODEL.md`. Write the P11 replacement for §10, about one page: adversary levels table, A1–A8 in
+   one sentence each (v1 numbering kept for A1–A4), T1–T4 informally with Lean names, and a scope paragraph
+   (what is not claimed, including L2+ without an external clock). Also write the P12 and P13 `after` texts.
+   Fidelity check (D10) of every sentence against the Lean statements.
+
+**Gate:** T2, T3 (a witness for every assumption; A7 may share A2's), T4 proved; P11–P13 texts in
+`edits.json` with `lean_refs`; threat audit passes.
 
 ### R12 — Code corrections and native acceptance (must)
 
@@ -724,7 +857,8 @@ non-SMC implementation exceeds τ, A4 no external writer between check and use).
    (selfspectre template; title "Errata and model clarifications — Tamper-Proofing with Self-Modifying
    Code"; cites arXiv:2604.12407v1; per item: ID, location, exact before/after, one-sentence reason,
    confidence/evidence, Lean reference or source). No code section (code fixes are not errata). PDF in
-   `output/pdf/`, ≤ 3 pages. Each item must be understandable without this repo (§0).
+   `output/pdf/`, ≤ 3 pages plus one appendix page holding the P11 replacement §10. Each item must be
+   understandable without this repo (§0).
 3. `audit_errata.py`: inventory, every `lean_refs` name exists (generated `#check` file
    `lean/ErrataRefs.lean` builds), PDF page count, no `confirmed` item without a Lean ref, number check or
    source.
@@ -744,9 +878,11 @@ non-SMC implementation exceeds τ, A4 no external writer between check and use).
 
 ### R15 — Palomar package, CI, handoff (must)
 
-1. `Spec/Paper.lean`: Props `EmulationExact` (static Level 2 + unrolled Level 1, Level 2 if R7 done),
-   `SplitMemoryDetection`, `HarvardSeparation`, `ClearAvoidance`, `TamperEvidence`, `EmulationStateBound`
-   (if proved); `Paper.lean` proves each.
+1. `Spec/Paper.lean`: Props `SecurityTheorem` (T1 + T2 + T4), `AssumptionsNecessary` (T3, including
+   forgery, replay, transient and write–use witnesses), `EmulationExact` (static Level 2 + unrolled Level 1,
+   Level 2 if R7 done), `HarvardSeparation` (incl. R8 split memory), `ClearAvoidance`, `EmulationStateBound`
+   (if proved); `Paper.lean` proves each. The informal account of the first two must match `THREAT_MODEL.md`
+   word for word in scope (levels ≤ L1, contract, A1–A8).
 2. `make_challenge.py` → `Challenge.lean` (`PalomarSMT.mathematical_result : … ∧ …` with `sorry`);
    `Solution.lean`; `comparator.json` (standard three axioms, `enable_nanoda: true`). Limits: hard 1,000 lines /
    100 KiB, preferred 300 / 32 KiB (disclose if over).
@@ -758,7 +894,8 @@ non-SMC implementation exceeds τ, A4 no external writer between check and use).
 4. `PALOMAR_SEMANTICS.md`, `LICENSE_AUDIT.md`, README "Lean formalization" section (D1 wording),
    `PALOMAR_SUBMISSION.md` (form values; `request_id: smctamper01`, `project_path: lean`).
 5. CI: `proof.yml` (Linux cold build, axiom audit, `make_challenge.py --check`, `audit_errata.py`,
-   `coverage_audit.py`; Windows job `native.py --all` with `--toolset v143`) and `palomar-full.yml`.
+   `coverage_audit.py`, `threat_audit.py`; Windows job `native.py --all` with `--toolset v143`) and
+   `palomar-full.yml`.
 6. Push (authorised) and get `proof.yml` green. Dispatching `palomar-full.yml` needs the user's go-ahead:
    make it this round's single question. Record run URLs in `FINAL_ACCEPTANCE.json`. Hand the exact commit
    and the preflight run ID to the user for submission. The `formalization.yaml` source note names the
@@ -773,7 +910,8 @@ commit handed over. Then wait for the user to report the registration (entry ID 
    (end of §1, or a short "Formal verification" subsection before §11).
 2. Create an annotated tag on the **registered** commit (message: Palomar entry ID/version, preflight run)
    and push it. Never move or delete it afterwards.
-3. `validation/apply_edits.py`: v1 TeX + `confirmed` items of `edits.json` → `paper/…Updated.tex`; add the
+3. `validation/apply_edits.py`: v1 TeX + `confirmed` items of `edits.json` → `paper/…Updated.tex` (P11
+   replaces §10 with the threat-model section; its new citations go to `biblio.bib`); add the
    verification statement (D1 wording; names the platform contract; Palomar entry, repository URL, tag,
    commit) and one `biblio.bib` entry for the formalization. Build the v2 PDF; write `paper/v1-v2.diff`;
    `latexdiff paper/arxiv-v1/… paper/…` → `output/pdf/smctamper-v1-v2-latexdiff.pdf`.
@@ -789,9 +927,9 @@ v2 PDF and latexdiff handed to the user.
 
 ## MVP path (if budget is tight)
 
-R0 → R1 → R2 → R3 → R4 → R5 → R6 (no StateBound) → R8 → R9 → R10 → R11 → R12 → R13 → R14 → R15 →
-(user registers) → R16, with `EmulationExact` (static L2 + unrolled L1), `SplitMemoryDetection`,
-`HarvardSeparation`, `ClearAvoidance`, `TamperEvidence`. R7 and the *should/could* items are later Palomar
+R0 → R1 → R2 → R3 → R4 → R5 → R6 (no StateBound) → R8 → R9 → R10 → R11a → R11b → R11c → R12 → R13 → R14
+→ R15 → (user registers) → R16, with `SecurityTheorem`, `AssumptionsNecessary`, `EmulationExact` (static L2 +
+unrolled L1), `HarvardSeparation`, `ClearAvoidance`. R11b/R11c are never cut: they are the paper's crux. R7 and the *should/could* items are later Palomar
 updates, not blockers (a later registry version does not move the R16 tag; it gets its own tag).
 
 ## Risks and fallbacks
@@ -809,6 +947,9 @@ updates, not blockers (a later registry version does not move the R16 tag; it ge
 | Palomar policy requires something new | `refresh_policy.py`; change only workflow/schema pins, never Lean pins without asking |
 | Author unavailable for `ask-author` items | record the item with both readings, choose the conservative wording, flag it in `ERRATA.md` |
 | Challenge too large (ISA + images) | move images to layout data referenced by a short definition; select fewer Props (ask user) |
+| Security theorem becomes tautological (an assumption restates "detected") | `threat_audit.py`; every assumption must have a T3 witness showing it is needed *and* must be a property of the design or the adversary's level; a reviewer reads `Assumptions` alone and must not see the conclusion in it |
+| Timeline model too general to prove T1 | restrict the event alphabet to what T1–T4 need; prove T1 per goal case (a)/(b)/(c), then compose |
+| Literature misattribution | cite only verified DOIs; quote each paper's assumption in `THREAT_MODEL.md` with page numbers |
 
 ## Round-close checklist (copy into each `ROUNDS.md` entry)
 
