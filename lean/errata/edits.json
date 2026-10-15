@@ -1,0 +1,359 @@
+{
+ "paper": "arXiv:2604.12407v1",
+ "tex_sha256": "79d7261088f2f783776f88c41a3b97b8ba926fad20b709400bcd6917b89c89b5",
+ "edits": [
+  {
+   "id": "P01",
+   "location": "Section 7, display after \"back-of-the-envelope estimate\"",
+   "kind": "replace",
+   "before": "\\frac{10{,}000 \\cdot (467{,}286 - 414{,}188)}{2{,}158{,}056} \\approx 246,\n\\qquad\n\\frac{246}{10{,}000} \\approx 2.5\\%,",
+   "before_pdf": [
+    "(467,286 − 414,188)",
+    "≈ 2.5%"
+   ],
+   "after": "\\frac{10{,}000 \\cdot (467{,}286 - 414{,}188)}{2{,}158{,}056 - 414{,}188} \\approx 304,\n\\qquad\n\\frac{304}{10{,}000} \\approx 3.0\\%,",
+   "reason": "The estimate must divide by max - min: if an undisturbed run takes the minimum and a disturbed one the maximum, the disturbed fraction is (avg - min)/(max - min), not (avg - min)/max.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Arithmetic on Table 5 (RDTSCP, SMC columns): 10000*(467286-414188)/(2158056-414188) = 304.48; the printed formula gives 246.05. Lean: Data.Estimator (R10).",
+   "source": "Table 5; Section 7",
+   "lean_refs": [],
+   "page": 8,
+   "class": "formal"
+  },
+  {
+   "id": "P01.2",
+   "location": "Section 7, sentence after the display",
+   "kind": "replace",
+   "before": "gives roughly $3.6\\%$.",
+   "before_pdf": [
+    "gives roughly 3.6%"
+   ],
+   "after": "gives roughly $7.8\\%$ (Table~\\ref{tbl:dynresult}, non-SMC columns, with the minimum subtracted in the same way).",
+   "reason": "Same correction as P01 for the non-SMC columns: (42,300,840 - 39,600,010)/(74,295,022 - 39,600,010) = 7.78%, whereas 3.6% divides by the maximum.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Arithmetic on Table 5 (RDTSCP, non-SMC columns). Lean: Data.Estimator (R10).",
+   "source": "Table 5; Section 7",
+   "lean_refs": [],
+   "page": 8,
+   "class": "formal"
+  },
+  {
+   "id": "P02",
+   "location": "Section 7, paragraph introducing Table 5",
+   "kind": "replace",
+   "before": "about $2.5\\times$\nfaster than the static SMC implementation",
+   "before_pdf": [
+    "about 2.5× faster than the static SMC implementation"
+   ],
+   "after": "about $17.8\\times$\nfaster than the basic static SMC implementation (Table~\\ref{tbl:staticresult})",
+   "reason": "Table 4 over Table 5 gives 8,305,389/467,286 = 17.8 (RDTSCP averages); no ratio of the tables' entries is 2.5.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Arithmetic on Tables 4 and 5 (RDTSCP, SMC columns): 17.77; minima 7,466,412/414,188 = 18.03; the only ratio near 2.5 is basic C over dynamic SMC, 1,053,077/467,286 = 2.25 (Table 4 non-SMC over Table 5 SMC), which the sentence does not describe. Lean: Data.Ratios (R10).",
+   "source": "Tables 4 and 5; Section 7",
+   "lean_refs": [],
+   "page": 8,
+   "class": "formal"
+  },
+  {
+   "id": "P03",
+   "location": "Caption of Table 4",
+   "kind": "replace",
+   "before": "the checksum covered the entire 220~KB code segment.",
+   "before_pdf": [
+    "checksum covered the entire 220 KB code segment"
+   ],
+   "after": "the checksum covered the entire 32.5~KiB (0x8200-byte) code segment.",
+   "reason": "Figure 5 prints a code-segment size of 0x8200 bytes, and the clear count in Table 6 equals two clears per 8-byte word of exactly that region.",
+   "status": "confirmed",
+   "confidence": "inferred",
+   "evidence": "Figure 5: \"size: 0x8200 End address: 0x7FF7B4529200\" with base 0x7FF7B4521000. Table 6: 83,198,361 clears / 10,000 runs = 8,319.84 per run = 1.99996 per 8-byte word of 0x8200 bytes (4,160 words); for 220 KB it would be 0.295 per word. Inferred because the author may have measured a different build than the one in Figure 5.",
+   "source": "Figure 5; Table 6",
+   "lean_refs": [],
+   "page": 9,
+   "class": "editorial"
+  },
+  {
+   "id": "P04",
+   "location": "Section 1, paragraph \"Model\"",
+   "kind": "replace",
+   "before": "returns true if and only if the\nprotected code remains unmodified.",
+   "before_pdf": [
+    "returns true if and only if the protected code remains unmodified"
+   ],
+   "after": "returns true for the unmodified protected code (when its timing lies within the calibrated bounds) and false for every modification that changes the checksum state or violates the time bound.",
+   "reason": "A checksum is not injective, so \"if and only if\" is false; the provable statement is completeness for the genuine code and detection of every modification that changes the checksum state or violates the time bound.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Lean: Detection.Collision (R11a) exhibits two different images with equal kernel output (collision witness); Detection.Predicate states completeness and conditional soundness.",
+   "source": "Sections 1 and 9",
+   "lean_refs": [],
+   "page": 2,
+   "class": "formal"
+  },
+  {
+   "id": "P04.2",
+   "location": "Section 9, first paragraph",
+   "kind": "replace",
+   "before": "returns true if and only if the protected code has not been modified.",
+   "before_pdf": [
+    "returns true if and only if the protected code has not been modified"
+   ],
+   "after": "returns true for the unmodified protected code (when its timing lies within the calibrated bounds) and false for every modification that changes the checksum state or violates the time bound.",
+   "reason": "Same as P04.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "As P04.",
+   "source": "Section 9",
+   "lean_refs": [],
+   "page": 10,
+   "class": "formal"
+  },
+  {
+   "id": "P05",
+   "location": "Table 6, row labels",
+   "kind": "replace",
+   "before": "SMC Loop & 4597855 \\\\ \\hline\nDyn SMC Loop & 4492871 \\\\ \\hline",
+   "before_pdf": [
+    "Dyn SMC Loop",
+    "4492871"
+   ],
+   "after": "SMC Loop & 4492871 \\\\ \\hline\nDyn SMC Loop & 4597855 \\\\ \\hline",
+   "reason": "In the measurement program the label \"SMC Loop\" was printed for the dynamically generated kernel and \"Dyn SMC Loop\" for the statically assembled one, so the counts under the two labels belong to the other variant.",
+   "status": "confirmed",
+   "confidence": "inferred",
+   "evidence": "SelfModTamper.cpp: testFuncs index 3 is TPCompF (dynamic) and index 4 is TPCompLoop (static), while strFuncNames[3] = \"SMC Loop\" and strFuncNames[4] = \"Dyn SMC Loop\". The author confirmed (2026-10-15) that the 2022 measurements were taken with this code, so the published row labels are swapped. Inferred only in that the table was transcribed from the program output with its labels.",
+   "source": "Table 6; SelfModTamper.cpp",
+   "lean_refs": [],
+   "page": 10,
+   "class": "mechanical"
+  },
+  {
+   "id": "P05.2",
+   "location": "Section 7, first paragraph",
+   "kind": "insert_after",
+   "before": "stable for fine-grained timing.",
+   "before_pdf": [
+    "stable for fine-grained timing"
+   ],
+   "after": "stable for fine-grained timing.  Each timed interval also contained one console write and one performance-counter driver call, which add the same kind of overhead to every variant.",
+   "reason": "The measured intervals were not limited to the kernel; the reader needs to know what else they contained.",
+   "status": "confirmed",
+   "confidence": "inferred",
+   "evidence": "SelfModTamper.cpp lines 697-703: std::cout and getSMCCount (IOCTL) run between the start and end of the timer. The author confirmed (2026-10-15) that the 2022 measurements used this code.",
+   "source": "Tables 4-6; SelfModTamper.cpp",
+   "lean_refs": [],
+   "page": 8,
+   "class": "mechanical"
+  },
+  {
+   "id": "P06",
+   "location": "Caption of Figure 3",
+   "kind": "replace",
+   "before": "The three arguments are the start address \\lstinline|pData|, the protected length \\lstinline|ulSize|, and the function start address \\lstinline|pTPCompOffset|; \\lstinline|sum| stores the checksum result.",
+   "before_pdf": [
+    "three arguments are the start address",
+    "pTPCompOffset"
+   ],
+   "after": "The function arguments are the start address \\lstinline|pData|, the protected length \\lstinline|ulSize| (a multiple of 8 bytes) and the result address \\lstinline|pResult|; \\lstinline|pTPCompOffset| is the address of the body of the kernel \\lstinline|TPComp| and is computed before the loop (not shown), \\lstinline|sum| is stored to \\lstinline|*pResult|, and \\lstinline|op| is the persistent opcode state. The emulation is exact for an 8-byte-aligned region when \\lstinline|op| equals the opcode state of the kernel at entry.",
+   "reason": "The caption lists pTPCompOffset as an argument and omits pResult; the figure also relies on an alignment/length precondition and on the opcode state persisting between calls.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "SelfModTamper.cpp TPCompC(PULONG64 pData, ULONG64 ulSize, PULONG64 pResult) computes pTPCompOffset before the loop and declares op as static; Lean: Static.Emulation (R4) states the precondition.",
+   "source": "Figure 3; SelfModTamper.cpp lines 417-439",
+   "lean_refs": [],
+   "page": 7,
+   "class": "formal"
+  },
+  {
+   "id": "P07",
+   "location": "Table 2, CMP row, LAT column",
+   "kind": "replace",
+   "before": "CMP & 0x3B & 7 & 0.2 / 0.25",
+   "before_pdf": [],
+   "after": "CMP & 0x3B & 7 & 1",
+   "reason": "A latency of 0.2-0.25 cycles is not a possible latency (the number is a reciprocal throughput); the measured register-to-flags latency of CMP is 1 cycle.",
+   "status": "confirmed",
+   "confidence": "inferred",
+   "evidence": "uops.info (measured) CMP (R64, M64): latency operand 1 -> flags = 1 on Skylake and Zen 3. The cited AsmGrid page is an interactive table that could not be read here, so the reciprocal-throughput cells are not changed. The author chose this correction (2026-10-15).",
+   "source": "Table 2; https://uops.info/html-lat/SKL/CMP_R64_M64-Measurements.html",
+   "lean_refs": [],
+   "page": 6,
+   "class": "editorial"
+  },
+  {
+   "id": "P08",
+   "location": "Section 1, paragraph \"Model\"",
+   "kind": "replace",
+   "before": "constant-time algorithmic kernels",
+   "before_pdf": [
+    "constant-time algorithmic kernels"
+   ],
+   "after": "algorithmic kernels whose control flow and instruction count are independent of the data",
+   "reason": "The kernels execute a data-independent instruction sequence, but individual instructions still differ in cost (Table 2), so \"constant-time\" overstates the property.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Lean: Static.ConstantFlow and Unrolled.Level1 (control flow and instruction count independent of the data, R4/R6).",
+   "source": "Section 1; Table 2",
+   "lean_refs": [],
+   "page": 2,
+   "class": "formal"
+  },
+  {
+   "id": "P09",
+   "location": "Section 8, first paragraph",
+   "kind": "replace",
+   "before": "$c_{\\text{non-SMC}}\\,\\mathcal{O}(n) \\gg c_{\\text{SMC}}\\,\\mathcal{O}(n)$",
+   "before_pdf": [
+    "≫"
+   ],
+   "after": "$c_{\\text{non-SMC}}\\,n \\gg c_{\\text{SMC}}\\,n$",
+   "reason": "An asymptotic class absorbs constants, so a comparison of the two constants cannot be written with O(n) on both sides.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Measured cycles per 8-byte word (Tables 4-6): about 10,168 (C Loop) versus 112 (dynamic SMC). Lean: Data.Ratios (R10).",
+   "source": "Section 8; Tables 4-5",
+   "lean_refs": [],
+   "page": 9,
+   "class": "formal"
+  },
+  {
+   "id": "P10",
+   "location": "Table 3",
+   "kind": "replace",
+   "before": "SHL & Shift left (unsigned)",
+   "before_pdf": [
+    "Shift left (unsigned)"
+   ],
+   "after": "SHL & Shift left (logical, same as SAL)",
+   "reason": "SHL is the logical shift; \"unsigned\" is not the architectural name.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Intel SDM Vol. 2B, SAL/SAR/SHL/SHR.",
+   "source": "Table 3",
+   "optional": true,
+   "lean_refs": [],
+   "page": 6,
+   "class": "editorial"
+  },
+  {
+   "id": "P11",
+   "location": "Section 10 (Security assumptions and threat model), whole section",
+   "kind": "replace_section",
+   "before": "\\section{Security assumptions and threat model}\\label{sec:assumptions}\n\nThe scope of the model is defined by four main assumptions.\n\\begin{enumerate}\n  \\item A von Neumann architecture is available; pure Harvard architectures fall\n  outside the intended deployment model.\n  \\item An attacker cannot discover and neutralize all embedded checksum\n  functions.\n  \\item There does not exist a semantics-faithful non-SMC implementation that is\n  as fast as, or faster than, the SMC version under the same timing constraints.\n  \\item Specialized hardware with direct memory access, such as certain FPGA-based\n  platforms, would require a correspondingly larger-area defense strategy.\n\\end{enumerate}\n\nThese assumptions intentionally separate what is being claimed from what is not.\nFor example, self-reconfigurable hardware effectively realizes SMC in another\nsubstrate and is therefore compatible with the model rather than excluded by it.\nSimilarly, the mechanism is not claimed to be equivalent to cryptographic\nattestation; it is a local runtime-integrity technique intended to raise attacker\ncost substantially on commodity systems.",
+   "before_pdf": [
+    "The scope of the model is defined by four main assumptions"
+   ],
+   "after": "(replacement text written in R11c from lean/THREAT_MODEL.md)",
+   "reason": "The section states no adversary capabilities, goal or security statement; assumption 3 is an uncheckable universal negative, assumption 4 a remark, and assumptions the scheme needs (time integrity, persistence, response coverage, non-compensation) are missing.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Lean: Threat.Security, Threat.Necessity, Threat.Matrix (R11b-R11c).",
+   "source": "Section 10; plan D11",
+   "pending": "R11c",
+   "lean_refs": [],
+   "page": 10,
+   "class": "formal"
+  },
+  {
+   "id": "P12",
+   "location": "Section 1, paragraph \"External inputs\"",
+   "kind": "replace",
+   "before": "moreover, such channels do not protect code at the machine-architecture level\nagainst manual debugging, thread injection, or remote process-memory writes.",
+   "before_pdf": [
+    "against manual debugging, thread injection, or remote process-memory writes"
+   ],
+   "after": "moreover, such channels do not protect code at the machine-architecture level\nagainst manual debugging, thread injection, or remote process-memory writes.  The mechanism proposed here does not prevent these either: it detects persistent modification of the checksummed bytes and interference inside timed intervals, but not injected code that leaves the checksummed bytes intact, register tampering outside timed intervals, or a modification that is undone before the next covering check (Section~\\ref{sec:assumptions}).",
+   "reason": "The sentence suggests that the proposed scheme protects against debugging, thread injection and remote memory writes; it does not.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Lean: Threat.Transient and Threat.Necessity (witness attacks against each omitted assumption, R11c).",
+   "source": "Section 1",
+   "pending": "R11c",
+   "lean_refs": [],
+   "page": 2,
+   "class": "formal"
+  },
+  {
+   "id": "P13",
+   "location": "Section 1, paragraph \"Practical stance\"",
+   "kind": "replace",
+   "before": "An attacker could\nattempt to simulate execution under a synthetic time source and adapt the\npredicate accordingly, but this requires a deterministic, fully characterizable\ntiming model.  Modern commodity processors do not satisfy this assumption.",
+   "before_pdf": [
+    "An attacker could attempt to simulate execution under a synthetic time source and adapt the predicate accordingly, but this requires a deterministic, fully characterizable timing model"
+   ],
+   "after": "An attacker who controls the time source need not model the processor at all: replaying readings recorded from native runs makes any threshold predicate on those readings pass.  Timing-based detection therefore requires a time source outside the adversary's control, for example \\texttt{RDTSC}/\\texttt{RDTSCP} read inside the protected code against a user-mode adversary, or an external source against a kernel-level adversary.  An adversary who must run the protected code under emulation with an honest clock needs a deterministic, fully characterizable timing model, and modern commodity processors do not admit one.",
+   "reason": "Replaying recorded timer readings defeats any timing predicate when the adversary controls the clock, so a synthetic time source needs no timing model.",
+   "status": "confirmed",
+   "confidence": "certain",
+   "evidence": "Lean: Threat.Replay (R11c).",
+   "source": "Section 1; plan D11",
+   "pending": "R11c",
+   "lean_refs": [],
+   "page": 2,
+   "class": "formal"
+  },
+  {
+   "id": "P14",
+   "location": "Table 1, AMD64 column (counter global control MSR and SMC event)",
+   "kind": "clarify",
+   "before": "Perf. Counter Global Control & 0x38F & 0xC0000301",
+   "before_pdf": [],
+   "after": "(pending research: cite the AMD document that defines MSR C000_0301 and PMCx021 for the microarchitectures covered, or correct the cells)",
+   "reason": "The AMD cells have no primary source in the paper's references that was found: the 2012 copy of the AMD64 APM Vol. 2 (rev 3.21) confirms MSRs C001_0000 (PerfEvtSel0) and C001_0004 (PerfCtr0) but contains neither C000_0301 nor event 0x21.",
+   "status": "ask-author",
+   "confidence": "inferred",
+   "evidence": "Searched: AMD64 APM Vol. 2 rev 3.21 (March 2012; the author's OneDrive copy; the paper cites the January 2023 revision, not available here); Linux perf JSON for amdzen1-5 (no self-modifying-code event); AMD BKDG/PPR downloads failed. Intel column verified (Linux perf skylake pipeline.json: C3H/04H MACHINE_CLEARS.SMC). To be settled by the author supplying the AMD revision or by research in a later session.",
+   "source": "Table 1; AMD APM Vol. 2",
+   "page": 5,
+   "lean_refs": [],
+   "class": "editorial"
+  }
+ ],
+ "code": [
+  {
+   "id": "L01",
+   "file": "SelfModTamper/SelfModTamper.cpp",
+   "fix": "swap the last two strFuncNames entries",
+   "test": "harness label check",
+   "status": "planned"
+  },
+  {
+   "id": "L02",
+   "file": "SelfModTamper/SelfModTamper.cpp",
+   "fix": "move the per-run console write and counter read after the end of the timed interval",
+   "test": "native run (timing only)",
+   "status": "planned"
+  },
+  {
+   "id": "L03",
+   "file": "SelfModTamper/SelfModTamper.cpp",
+   "fix": "follow the TPComp jump thunk only if the first byte is 0xE9",
+   "test": "Release differential vectors",
+   "status": "planned"
+  },
+  {
+   "id": "L04",
+   "file": "SelfModTamper/TP.asm, SelfModTamper.cpp",
+   "fix": "document and assert the loop precondition size >= 8 and 8 | size",
+   "test": "edge vectors",
+   "status": "planned"
+  },
+  {
+   "id": "L05",
+   "file": "SelfModTamper/SelfModTamper.cpp",
+   "fix": "assert that the emitted intro size equals the measured size (only if R5 confirms the placeholder cancellation)",
+   "test": "harness dump",
+   "status": "planned"
+  },
+  {
+   "id": "L06",
+   "file": "SelfModTamper/TP.asm",
+   "fix": "comment only: the commented-out _TEXT$SMC SEGMENT ALIGN(4096) / ENDS (lines 5, 50) wrap TPComp only; TPCompLoop is in ordinary .text and not page-aligned (no change to the binary)",
+   "test": "listing identical",
+   "status": "planned"
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+# Code and docs fixes (not errata)
+
+The repository has no tagged release, so these are not errata (decision of the author, 2026-10-15). They land
+before the Palomar commit (R12 unless noted) as minimal diffs; each gets its commit hash here when done.
+
+| ID | File | Defect (found by reading, R1 re-read) | Fix | Test | Status |
+|---|---|---|---|---|---|
+| L01 | SelfModTamper/SelfModTamper.cpp | `testFuncs` = {C, TPComp, C Loop, TPCompF (dynamic), TPCompLoop (static)} but `strFuncNames` ends {..., "SMC Loop", "Dyn SMC Loop"}: the last two labels are swapped | swap the two names | harness label check | planned |
+| L02 | SelfModTamper/SelfModTamper.cpp | the timed interval contains a console write and a driver IOCTL (`getSMCCount`) per run | move both after the end of the timed interval | native run (timing only) | planned |
+| L03 | SelfModTamper/SelfModTamper.cpp | `TPCompC` / `TPCompCLoop` dereference `TPComp+1` as an `E9 rel32` incremental-link thunk; with `LinkIncremental=false` (Release) the computed offset is garbage and the emulation silently stops substituting the opcode | follow the thunk only if the first byte is `0xE9` | Release differential vectors | planned |
+| L04 | TP.asm, SelfModTamper.cpp | `TPCompLoop` needs `size >= 8` and that 8 divides `size` (otherwise it computes index -1 and patches inside the intro, or reads fewer qwords than the C model) | document and assert the precondition | edge vectors | planned |
+| L05 | SelfModTamper.cpp (`gen_asm`) | the intro is measured with placeholder immediates whose sizes differ from the emitted ones; the 95-byte total holds only because the differences cancel (and only if `mov rax, imm` is emitted as 7 bytes) | assert emitted size equals measured size, only if R5 confirms the cancellation | harness dump | planned |
+| L06 | SelfModTamper/TP.asm lines 5 and 50 | `_TEXT$SMC SEGMENT ALIGN(4096)` and its `ENDS` are commented out and enclose `TPComp` only; `TPCompLoop` lies in ordinary `.text`, so the static loop is not page-aligned (the dynamic copy is, via `VirtualAlloc`) | comment only, no change to the assembled bytes (author, 2026-10-15: reconcile without changing behaviour) | listing identical before/after | planned |
+| D01 | README.md | "not yet available on arXiv" | cite arXiv:2604.12407; Lean section (R15); Palomar entry and tag added in R16 | - | planned |
+| D02 | CITATION.cff | preferred citation | arXiv preprint | optional `cffconvert` | planned |
+| D03 | README.md | variant table must agree with L01 | edit | - | planned |
+
+Native evidence runs the product only in the dedicated harness (`validation/native/smc_harness.cpp`, R12); the
+product itself needs administrator rights and the WinRing0 driver and is never run by the rounds.

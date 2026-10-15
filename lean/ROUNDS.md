@@ -6,7 +6,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 | Round | Deliverable | Priority | State |
 | --- | --- | --- | --- |
 | R0 | Bootstrap, references, baselines | must | DONE |
-| R1 | Claim inventory, errata verification, author questions | must | TODO |
+| R1 | Claim inventory, errata verification, author questions | must | DONE |
 | R2 | Bits, parity, opcode family, masks | must | TODO |
 | R3 | x86-64 subset model (R3a encodings, R3b semantics) | must | TODO |
 | R4 | Static kernel: Fig. 2 ≡ Fig. 3 | must | TODO |
@@ -57,3 +57,16 @@ handoff: done / next / open obligations / hazards / evidence file).
   on arXiv (class/engine difference; page numbers for errata must come from the arXiv PDF text, not local builds). `native.py` Debug/Release
   finished in 4-6 s (likely up to date); the product is never run (admin + WinRing0).
 - Evidence: `validation/rounds/R0.json`.
+
+### R1 (Claude Sonnet 5.5, 2026-10-15)
+
+- Done: `lean/errata/{POLICY.md,edits.json,QUESTIONS.md}` (17 items: P01-P13 incl. P01.2, P04.2, P05.2, plus P14 Table 1 AMD column), `lean/CODE_FIXES.md`
+  (L01-L06, D01-D03), `lean/PAPER_MAP.md` (C01-C56 classified, R-class table); `validation/audit_errata.py --inventory` passes (pages filled
+  from the v1 PDF text). Author answers (2026-10-15): P05 same code -> P05 (swap Table 6 labels) and P05.2 (timed-interval contents) confirmed;
+  P07 -> CMP LAT = 1 (RCP cells untouched); L06 -> comment only (the commented segment in TP.asm encloses TPComp only); AMD column -> research.
+- Next: R2 (bits, parity, opcode family, masks).
+- Open obligations: P14 (AMD MSR C000_0301 and PMCx021 have no found primary source: needs the January 2023 AMD64 APM Vol. 2 or a PPR/BKDG;
+  author's OneDrive copy is rev 3.21 of 2012 and confirms only C001_0000/C001_0004); P11-P13 `after` text pending R11c; tag name asked in R15/R16.
+- Hazards: pass/fail of `before` matching ignores hyphens/whitespace in the PDF text; Table 2 text is scrambled in pdftotext (P07 page set by hand).
+  P05 assumes Table 6 was transcribed with the program's labels. Shell-embedded Python mangles backslashes: write scripts with Write/Edit.
+- Evidence: `validation/rounds/R1.json`.

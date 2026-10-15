@@ -1,0 +1,11 @@
+{
+ "round": "R1",
+ "date": "2026-10-15",
+ "executor": "Claude Sonnet 5.5",
+ "checks": {
+  "inventory_audit": "pass: python validation/audit_errata.py --inventory (17 edits; each before occurs once in the v1 TeX and its fragments on a PDF page)",
+  "claims_classified": "pass: C01-C56 each with one class in lean/PAPER_MAP.md",
+  "r_class": "partial: Microsoft Learn/man pages resolve, Intel event values verified (Linux perf JSON), AMD column unverified (P14)"
+ },
+ "author_answers": {"P05": "same code: confirmed", "P07": "CMP LAT = 1", "L06": "comment only", "AMD": "research; erratum if unreferenced"}
+}
