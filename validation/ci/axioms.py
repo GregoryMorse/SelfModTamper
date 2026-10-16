@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = """import Lean.Util.CollectAxioms
 import Lean.CoreM
 import SmcTamper
+import Solution
 open Lean
 def okAx : List Name := [`propext, `Quot.sound, `Classical.choice]
 #eval show CoreM Unit from do

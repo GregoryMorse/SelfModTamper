@@ -1,9 +1,15 @@
 name = "selfmodtamper"
 version = "0.1.0"
-defaultTargets = ["SmcTamper"]
+defaultTargets = ["SmcTamper", "Challenge", "Solution"]
 
 [leanOptions]
 autoImplicit = false
 
 [[lean_lib]]
 name = "SmcTamper"
+
+[[lean_lib]]
+name = "Challenge"
+
+[[lean_lib]]
+name = "Solution"

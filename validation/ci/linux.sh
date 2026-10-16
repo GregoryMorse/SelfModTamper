@@ -8,7 +8,12 @@ cd "$(dirname "$0")/../.."
 ROOT="$PWD"
 cd lean
 lean --version
-lake build SmcTamper 2>&1 | tee "$ROOT/lake-build.log"
+lake build SmcTamper Challenge Solution 2>&1 | tee "$ROOT/lake-build.log"
 cd "$ROOT"
 python3 validation/ci/axioms.py
+python3 validation/make_challenge.py --check
+python3 validation/audit_errata.py
+python3 validation/coverage_audit.py
+python3 validation/threat_audit.py
+(cd lean && lake env lean CoverageRefs.lean && lake env lean ErrataRefs.lean)
 echo "linux-proof: OK"

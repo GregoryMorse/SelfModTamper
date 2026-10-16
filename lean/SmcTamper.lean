@@ -73,3 +73,5 @@ public import SmcTamper.Threat.Matrix
 public import SmcTamper.Threat.Scope
 public import SmcTamper.Threat.LevelMono
 public import SmcTamper.Unrolled.Sites
+public import SmcTamper.Spec.Paper
+public import SmcTamper.Paper
