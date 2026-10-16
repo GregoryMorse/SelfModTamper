@@ -2,7 +2,7 @@
 
 Windows and the CPU are black boxes. Every dependence on them is a field of a Lean structure or a hypothesis of a theorem
 (never an `axiom`). This file lists each field: meaning, why it is plausible, source, evidence, and what is **not** claimed.
-The threat-model items are added in R11b/R11c. Final in R14.
+Final (R14).
 
 ## 1. ISA model (a definition, not a hypothesis)
 
@@ -52,3 +52,29 @@ The threat-model items are added in R11b/R11c. Final in R14.
   statistics `avg = ⌊Σ/N⌋` (`Contract/Estimator.count_above_min_lower`), which replaces the printed estimate
   `N (avg − min)/max` (that is Markov's bound at `θ = max`, an empty set: `published_estimate_vacuous`).
 - **Not claimed:** an i.i.d. noise model; that the plan's priority mitigation (C43) works (class X, a remark).
+
+## 5. Threat-model contract (`Spec/Threat.lean`; `THREAT_MODEL.md` has the argument)
+
+- **Cost contract `Cost`** (`emulLB`, `kd`, `km`): lower bounds on the elapsed time of an emulated check, of a debug-trap-forged check,
+  and per mediated (split-view) iteration. `Cost.admits` makes them constraints on the adversary's timeline. *Plausible:* an emulation
+  has to read the bytes it emulates (C02, `harvard_reads_sensitive`) and a debug trap or a view switch costs cycles. *Instance:*
+  `Threat/EmulBound` derives `emulLB` from the Harvard bound given a per-read charge `ρ`; the charge and which bytes are sensitive are
+  hypotheses. *Not claimed:* any numeric value for any real CPU, hypervisor or Windows version.
+- **Level contract `Level.allows` and `WF`:** what an adversary at each of L0..L4 may emit (writes, split views, timer forgery, DMA) and
+  that honest/neutral/mediated check paths mean what their names say (`WF.honestCode`, `neutralMod`, `medSplit`). *Plausible:* the
+  level table of `THREAT_MODEL.md` section 4. *Not claimed:* that a real system's levels are separated this way (L3 adds nothing
+  beyond L2, `Threat/LevelMono`).
+- **Assumptions A1-A8** are structural conditions on the timeline and system (no split views, covering units, intact unit, timing gap,
+  no DMA, time integrity, persistence, response coverage, non-compensation), never "the attacker is detected" (`validation/threat_audit.py`).
+  Each is necessary: `T3_full` gives a winning adversary when exactly one is dropped. *Not claimed:* that a deployed system meets any of
+  them; A5 in particular fails with an OS timer API (T4) or at L2.
+- **Not modelled:** speculative execution, other logical processors, instruction-cache replay, hardware debug registers (named in
+  `THREAT_MODEL.md` but not read from the primary manuals, G21), reconfigurable hardware.
+
+## 6. Non-claims (gap register G01-G05)
+
+- The unrolled kernel is verified at Level 1 (an abstract machine whose opcode state lives in the memory the kernel reads), plus the byte
+  layout against the assembler output; instruction-level (Level 2) execution of the 296-unit kernel is not proved (G01, G03, G13).
+- Exact machine-clear counts are not proved (only the upper bounds and the consistency checks against Table 6, G04); no line-granule
+  (g = 64) figure is claimed (G05).
+- The kernels crash when the qword count is a multiple of 148 (defect L07); the product guards it (CODE_FIXES L07) and the native vectors avoid those sizes. No Lean theorem models the crash.

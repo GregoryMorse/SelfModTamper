@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+    <title>Submit a result — Palomar</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <a class="wordmark" href="https://palomar-registry.org" aria-label="Palomar home">Palomar</a>
+      <nav aria-label="Main navigation">
+        <a href="https://palomar-registry.org">Registry</a>
+        <a href="https://palomar-registry.org/about.html">About</a>
+        <a class="active" aria-current="page" href="/">Submit</a>
+      </nav>
+    </header>
+    <main id="content" class="page-main">
+    <h1>Submit a Lean-verified result</h1>
+    
+    <!-- Automated agents: read /llms.txt before submitting. -->
+    <p class="lede"><strong>Before submitting, check that:</strong></p>
+    <ul>
+      <li>The result has credible research interest and a clear informal explanation.</li>
+      <li>A public, pinned commit contains an auditable <code>Challenge.lean</code>,
+          matching <code>Solution.lean</code>,
+          <a href="https://github.com/leanprover/comparator">Comparator configuration</a>,
+          <a href="https://github.com/mathlib-initiative/formalization.yaml"><code>formalization.yaml</code></a>,
+          and a licence.</li>
+      <li>You are a responsible author or maintainer, or have their approval.</li>
+    </ul>
+    <p>See the
+      <a href="https://github.com/PalomarRegistry/PalomarPolicy/blob/main/CONTRIBUTING.md">full submission requirements</a>.
+    </p>
+
+    <section class="disclosure recovery-prompt" id="recovery-prompt"
+             data-automatic="false" aria-labelledby="recovery-heading">
+      <h2 id="recovery-heading">Already have a submission in progress?</h2>
+      <div id="recovery-content"><form method="get" action="/submissions">
+        <button type="submit" class="secondary" id="find-submissions">Authenticate and find my submissions</button>
+      </form></div>
+    </section>
+
+    <section class="disclosure">
+      <h2>What becomes public</h2>
+      <p>
+        The submitted repository, commit, and Comparator configuration path are
+        permanently recorded in public, as is any approval evidence you write.
+        The automated review and its findings become
+        public only after you have seen them, and decided to complete the registration.
+        The <a href="https://palomar-registry.org/privacy.html">privacy policy</a>
+        says what else is kept, for how long, and how to ask about it.
+      </p>
+    </section>
+
+    <form method="post" action="/submit">
+      <label for="repository">Repository</label>
+      <input id="repository" name="repository" required autocomplete="off"
+             list="repository-suggestions"
+             aria-describedby="repository-hint"
+             placeholder="owner/formalization" value="">
+      <datalist id="repository-suggestions"></datalist>
+      <p class="hint" id="repository-hint">
+        <span class="field-status" id="repository-status" aria-hidden="true"></span>
+        <span id="repository-message">A public GitHub repository. Type <code>owner/</code> to choose from its repositories, or paste a URL.</span>
+      </p>
+
+      <label for="commit">Commit</label>
+      <input id="commit" name="commit" required pattern="\s*[0-9a-fA-F]{40}\s*" autocomplete="off"
+             aria-describedby="commit-hint"
+             placeholder="0000000000000000000000000000000000000000" value="">
+      <p class="hint" id="commit-hint">
+        <span class="field-status" id="commit-status" aria-hidden="true"></span>
+        <span id="commit-message">A full 40-character SHA. Branches and tags move; a record must not.</span>
+      </p>
+
+      <p class="hint">Every submitted Lean source file must use <code>module</code> and contain at most
+        10,000 lines. This includes contained projects. <code>lakefile.lean</code> is exempt only from the module header; files under
+        <code>.lake</code> are excluded and <code>.lean</code> symlinks are refused. The Challenge has the stricter 1,000-line and 100 KiB limits.
+        Preliminary source scans are bounded; full verification checks every file before building.</p>
+
+      <label for="comparator_config_path">Comparator configuration</label>
+      <input id="comparator_config_path" name="comparator_config_path" required
+             autocomplete="off" list="comparator-config-suggestions"
+             aria-describedby="comparator_config_path-hint comparator-config-multiple"
+             placeholder="comparator.json" value="">
+      <datalist id="comparator-config-suggestions"></datalist>
+      <p class="hint" id="comparator_config_path-hint">
+        <span class="field-status" id="comparator_config_path-status" aria-hidden="true"></span>
+        <span id="comparator_config_path-message">Choose a detected Comparator configuration or enter its repository-relative path. Palomar checks the selected file at this commit.</span>
+      </p>
+      <p class="hint warning" id="comparator-config-multiple" hidden>This repository contains multiple Comparator configurations. Palomar normally expects one per repository. Choose which configuration this entry should verify; <code>project.description</code> describes the repository’s formalization as a whole.</p>
+
+      <details id="layout" class="disclosure"
+               data-layout="unchecked">
+        <summary id="layout-summary">File layout</summary>
+        <p class="hint" id="layout-message">
+          Palomar looks for the project at the repository root. If it is
+          somewhere else, these are filled in for you once the commit is
+          checked.
+        </p>
+
+        <label for="project_path">Project directory</label>
+        <input id="project_path" name="project_path" autocomplete="off"
+               placeholder="left blank for the repository root"
+               value="">
+        <p class="hint">The directory holding the Lakefile and selected Comparator configuration.</p>
+
+        <label for="formalization_metadata_path">Formalization metadata</label>
+        <input id="formalization_metadata_path" name="formalization_metadata_path"
+               autocomplete="off"
+               placeholder="left blank for formalization.yaml in the project"
+               value="">
+      </details>
+
+      <section class="disclosure registration-target" id="registration-target"
+               data-state="unchecked" aria-labelledby="registration-target-heading">
+        <h2 id="registration-target-heading">Registration target</h2>
+        <p id="registration-target-message"></p>
+
+        <details id="registration-target-manual">
+          <summary>Enter an existing Palomar ID manually</summary>
+          <label for="existing_id">Existing Palomar ID <span class="optional">optional</span></label>
+          <input id="existing_id" name="existing_id" autocomplete="off"
+                 pattern="\s*[Pp][Aa][Ll][Oo][Mm][Aa][Rr]-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}\s*"
+                 aria-describedby="existing_id-hint"
+                 placeholder="PALOMAR-2026-07-29-000123"
+                 value="">
+          <p class="hint" id="existing_id-hint">
+            <span class="field-status" id="existing_id-status" aria-hidden="true"></span>
+            <span id="existing_id-message">Leave this blank when retrying an unsuccessful submission. Enter an ID only to register a new version of a result already in the Palomar Registry.</span>
+          </p>
+        </details>
+      </section>
+
+      <fieldset class="submission-details" id="submission-details"
+                aria-describedby="registration-target-message">
+      <fieldset>
+        <legend>Your relationship to this formalization</legend>
+        <label class="choice">
+          <input type="radio" name="authorization_relationship" value="maintainer" required
+                 >
+          I am a responsible author or maintainer of it
+        </label>
+        <label class="choice">
+          <input type="radio" name="authorization_relationship" value="approved"
+                 >
+          I have approval from a responsible author or maintainer
+        </label>
+        <p class="hint">
+          If this repository is only a thin wrapper around another formalization,
+          answer about that underlying repository, not the wrapper.
+        </p>
+      </fieldset>
+
+      <div class="dependent" id="approval-evidence" hidden>
+        <label for="authorization_evidence">
+          How that approval was given <span class="optional">optional</span>
+        </label>
+        <textarea id="authorization_evidence" name="authorization_evidence" rows="3"
+                  maxlength="4000"
+                  disabled 
+                  aria-describedby="authorization_evidence-hint"></textarea>
+        <p class="hint warning" id="authorization_evidence-hint">
+          Public as soon as verification starts, whether or not you register: it
+          travels in the inputs of a workflow run on a public repository, and it
+          appears in the public mechanical report. Registering keeps it in the
+          registry record permanently. Do not name anyone who has not agreed to
+          be named.
+        </p>
+      </div>
+
+      <label for="context">Notes <span class="optional">optional</span></label>
+      <textarea id="context" name="context" rows="4" aria-describedby="context-hint"></textarea>
+      <p class="hint" id="context-hint">
+        Stored in the private submission record and given to the AI checks that
+        validate <code>formalization.yaml</code> and the correspondence between
+        the informal and formal statements. Never sent to the public
+        verification workflow, but Palomar operators, GitHub, and the model
+        provider read it, and the review it informs becomes public if you
+        register. Do not include anything sensitive.
+      </p>
+
+      <section class="disclosure browser-preflight" id="browser-preflight"
+               data-state="checking" aria-labelledby="browser-preflight-heading" hidden>
+        <h2 id="browser-preflight-heading">Preliminary checks</h2>
+        <p id="browser-preflight-summary" tabindex="-1"></p>
+        <ul id="browser-preflight-diagnostics" class="problems"></ul>
+        <section id="preflight-description" class="registry-description-preview" hidden>
+          <h3>Registry preview</h3>
+          <p class="hint">Readers will see this project-wide description beneath the entry title.</p>
+          <blockquote id="preflight-description-text"></blockquote>
+          <p class="hint" id="preflight-description-source"></p>
+          <details id="preflight-description-declarations" hidden>
+            <summary id="preflight-description-declaration-summary"></summary>
+            <ul id="preflight-description-declaration-list"></ul>
+          </details>
+          <button type="button" class="secondary compact" id="preflight-description-edit">
+            Edit description
+          </button>
+        </section>
+        <p id="browser-preflight-deferred" class="hint"></p>
+        <section id="preflight-repair" hidden>
+          <h3 id="preflight-repair-heading">Fix <code>formalization.yaml</code> before submitting</h3>
+          <p id="preflight-repair-copy">
+            Palomar will validate these values after GitHub authentication and
+            prepare a pull request from its repair account. It will never push
+            directly to your repository.
+          </p>
+          <div id="preflight-repair-fields"></div>
+          <p class="hint" id="preflight-repair-status" role="status"></p>
+        </section>
+        <label class="choice" id="browser-preflight-confirmation" hidden>
+          <input type="checkbox" id="browser-preflight-anyway">
+          I want to submit anyway, despite these preliminary checks.
+        </label>
+      </section>
+
+      <input type="hidden" id="preflight-repair-request" name="preflight_repair"
+             value="">
+
+      <button type="submit" id="submission-submit">Authenticate via GitHub and submit</button>
+      <p class="hint">
+        You may be asked to sign in, so Palomar can confirm you have write
+        access to the repository you are submitting. Even if you are already signed
+        in, GitHub may ask you to authorize Palomar on your first submission.
+        The GitHub access token is used once and not stored. Palomar remembers
+        the verified account in this browser for twelve hours so it can find
+        submissions in progress automatically.
+      </p>
+      <p class="hint">
+        Finish the sign-in within fifteen minutes. After that Palomar discards
+        what you typed here and the submission has to be started again.
+      </p>
+      </fieldset>
+      <p class="visually-hidden" role="status" id="live-status"></p>
+    </form>
+    <script type="module" src="/intake.js"></script>
+  </main>
+    <footer class="site-footer">
+      <div><span class="footer-brand">Palomar</span><span> — a registry of Lean-verified results</span></div>
+      <div class="footer-links">
+        <a href="https://palomar-registry.org">Registry</a>
+        <a href="https://palomar-registry.org/about.html">About</a>
+        <a href="https://github.com/PalomarRegistry/PalomarPolicy/blob/main/CONTRIBUTING.md">Policy</a>
+        <a href="https://palomar-registry.org/privacy.html">Privacy</a>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "PalomarSMT.mathematical_result"
+  ],
+  "definition_names": [
+    "SmcTamper.Paper.SecurityTheorem",
+    "SmcTamper.Paper.AssumptionsNecessary",
+    "SmcTamper.Paper.MediationTheorem",
+    "SmcTamper.Paper.LevelMatrix",
+    "SmcTamper.Paper.HarvardSeparation"
+  ],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

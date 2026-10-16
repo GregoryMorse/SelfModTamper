@@ -251,3 +251,12 @@ handoff: done / next / open obligations / hazards / evidence file).
   marked open in the list. No code section (code fixes are in `CODE_FIXES.md`).
 - Note: `build_modules.py` and `axiom_audit.py` call the memory guard themselves; run them directly, not under `limited_run.py` (nesting aborts with "Another verification command is active").
 - Open: author review of the errata PDF (the one question of this round).
+
+### Gap closure and R14 (Claude Sonnet 5.5, 2026-10-16)
+
+- Closed: G02 (`Unrolled/Reset`), G06/G07 (`Unrolled/Sites`), G09 (`Threat/EmulBound`), G15 (`Threat/LevelMono`), G08/G44 (PAPER_MAP rows refreshed, no `todo`), G11/G12.
+  G04/G05 not pursued (non-claims). G20-G23: partial or softened, see GAPS. Still open: G01/G03/G13 (Level-2 refinement of the unrolled kernel), G24 (author), G14 (could).
+- R14: `validation/coverage_audit.py` (56 claim rows, 118 named declarations, all resolve); `Spec/Paper.lean` (five Props), `Paper.lean` (proofs), generated `Challenge.lean`
+  (about 800 lines, 38 KB, sorry only in the theorem), `Solution.lean`, `comparator.json`, `formalization.yaml` (validates against the pinned v0.4 schema), `PALOMAR_SEMANTICS.md`,
+  `LICENSE_AUDIT.md`, `PALOMAR_SUBMISSION.md`, `PLATFORM_CONTRACT.md` final, README Lean section, CI runs the generated-file and audit checks.
+- Next: R15 (push, `proof.yml` green, ask the author before dispatching `palomar-full.yml`; the author submits and registers).

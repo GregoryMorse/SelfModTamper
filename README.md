@@ -295,6 +295,24 @@ The scheme exploits the fact that several classic x86 arithmetic opcodes share a
 
 The SMC checksum cycles between `ADC`, `SBB`, `XOR`, and `CMP` (values 2, 3, 6, 7) by XOR-ing a single byte in the executing instruction stream.
 
+## Lean formalization
+
+The mathematical, algorithmic and quantitative statements of arXiv:2604.12407v1 are formalized in Lean 4 (`lean/`, pinned
+`leanprover/lean4:v4.35.0-rc3`, no Mathlib), unconditionally or relative to an explicitly stated platform contract, with corrections
+listed in the errata; platform facts are cited and empirical observations are listed as such. This is not a proof of the paper as a
+whole: `lean/PAPER_MAP.md` gives every claim, its class and its status, `lean/PLATFORM_CONTRACT.md` lists every hypothesis about the
+platform, and `lean/GAPS.md` records what is not proved (notably the instruction-level execution of the unrolled kernel).
+
+* Selected statement (`lean/SmcTamper/Spec/Paper.lean`): security under the structural assumptions A1-A8 (T1), the mediation cost of
+  split views (T2), the necessity of each assumption (T3), the level matrix (T4) and the Harvard separation (C01, C02).
+  `lean/Challenge.lean` is generated from the Spec modules; `lean/Solution.lean` proves it. Axioms: `propext`, `Quot.sound`,
+  `Classical.choice` only.
+* Errata (paper text only) are in `lean/errata/ERRATA.md` and `output/pdf/smctamper-2026-errata.pdf`; fixes to the code, README and
+  citation file are in `lean/CODE_FIXES.md`.
+* Native tests, assembler listings and timing runs under `validation/native/` are evidence, never proof.
+* Build: `python validation/build_modules.py SmcTamper` (memory-capped); CI does the cold build.
+* Palomar registration: not yet registered (see `lean/PALOMAR_SUBMISSION.md`).
+
 ## Citation
 
 If you use this code or reference the work, please cite the conference presentation:

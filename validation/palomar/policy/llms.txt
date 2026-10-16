@@ -1,0 +1,370 @@
+# Palomar
+
+A registry of machine-checked Lean 4 proofs. This host, `submit.palomar-registry.org`,
+is the only way in. The registry itself is at https://palomar-registry.org.
+
+## Read these first, rather than inferring the rules from this file
+
+- Submission policy, what is required of a repository, and what review looks
+  for: https://github.com/PalomarRegistry/PalomarPolicy/blob/main/CONTRIBUTING.md
+- Repository, review, registration, and publication contract:
+  https://github.com/PalomarRegistry/PalomarPolicy/blob/main/docs/specification.md
+- The `formalization.yaml` self-reporting format, which a submission must
+  carry: https://github.com/mathlib-initiative/formalization.yaml
+
+Nothing about eligibility, metadata, or scoring is restated here. If this file
+and the policy disagree, the policy is right.
+
+## Lean source requirements
+
+Before requesting intake, ensure every regular committed Lean source file uses
+`module` and has at most 10,000 physical lines, including blank/comment lines
+and an unterminated final line. A final newline adds no line; LF/CRLF each
+terminate one line. This includes unused files, generated certificates,
+contained projects, local path dependencies, and separately declared substantive
+source repositories. The module-header exemption for `lakefile.lean` does not exempt its line count.
+Exclude `.git` and `.lake`; `.lean` symlinks are refused. External pinned Git
+dependencies are outside this length cap. Challenge keeps
+its stricter 1,000-line and 100 KiB limits.
+
+Move module doc comments after `module`. Port public declarations/imports and
+exposed definition bodies as required by Lean's module system, then rebuild and
+rerun Comparator. Split oversized files into modules or reduce certificates;
+submit the corrected commit. See the policy for the binding requirements.
+
+Browser and HTTPS intake source scans cover only the submitted repository,
+not a separately declared substantive source repository. Ordinary HTTPS intake
+checks at most 32 files, 1 MiB per file and 4 MiB in total,
+with a 10-second deadline and a bounded repository tree. Definite violations
+return HTTP 400 with file diagnostics before creating an authentication
+challenge. Successful intake includes `source_preflight.status` (`pass` or
+`incomplete`). A truncated tree, partial read, or unavailable GitHub response
+cannot establish a pass. Even a preliminary pass requires the complete reusable
+workflow: its preparation scans all sources, and execution confirms headers
+with Lean before builds. Registry metadata corrections retain their existing
+source validation path.
+
+## Mechanical preflight
+
+Before `POST /api/submit`, run Palomar's complete reusable workflow at
+`PalomarRegistry/PalomarSubmission/.github/workflows/submission.yml` for the
+exact repository, commit, project paths, and Comparator configuration with
+`mode: full`. Pass `execution_profile: palomar-standard-v1` when calling the
+reusable workflow from your own repository; its jobs run on your organization's
+runners, where Palomar's Namespace runner labels are unavailable. Palomar's own
+dispatches use the qualified `palomar-namespace-16x32-v1` default. The profile
+is report metadata, not a field in `comparator.json`.
+
+Pin both the workflow reference and its
+`pipeline_commit` input to the same full commit. A local `lake build`,
+repository-specific CI job, or standalone Comparator run is not equivalent.
+
+Submit only after the mechanical report says `status: pass`. For an OOM,
+timeout, or incomplete resource report, address the reported condition before
+retrying. A passing preflight is advisory: it does not run Challenge rendering,
+editorial review, or registration, and later runs may differ. Submission
+cooldowns control inference and CI costs and still apply after verification
+errors.
+
+## You may make an ordinary submission, but not by signing in as your user
+
+An ordinary submission requires proving that whoever submits can write to the
+repository being submitted. There are two ways to prove it, and you may drive
+exactly one.
+
+**Do not drive the browser sign-in.** Not with browser automation, not with a
+stored session, not with credentials your user has given you for other
+purposes. That flow establishes that a particular person authorised Palomar; an
+agent completing it makes the record say something false.
+
+**You may use the `gh` path below**, which proves the same write access without
+a browser, from an authenticated `gh`.
+
+Confirm with your user first. Show them the repository, the commit, the
+Comparator configuration path, and which answer you will give for their
+relationship to the formalization, and get their agreement. The last of those is
+a claim about *them*, not about the code, and it is recorded permanently.
+
+### The steps, and why there are five
+
+    1. POST /api/submit
+       {"repository": "...", "commit": "<40 hex>",
+        "comparator_config_path": "...", "authorization_relationship": "maintainer",
+        "existing_id": "PALOMAR-YYYY-MM-DD-NNNNNN (only for a new version)"}
+       -> {"pending_secret": "...", "challenge": "...", "instructions": "..."}
+
+    2. gh api -X POST repos/OWNER/REPO/git/refs \
+         -f ref=refs/tags/palomar-verify-CHALLENGE -f sha=COMMIT
+
+    3. echo '{"public":false,"files":{"palomar.txt":{"content":"CHALLENGE"}}}' \
+         | gh api -X POST gists --input -
+
+    4. POST /api/verify {"pending_secret": "...", "gist_id": "..."}
+       -> {"submission_id": "...", "access_token": "..."}
+
+       The gist must be secret, and must not predate the intake by more than a
+       minute. A public one is refused: the challenge is a tag name on a public
+       repository, so anybody watching can read it, and a gist anybody could
+       have found says nothing about who you are. Step 3 above already creates
+       the right kind.
+
+       Each call that takes an attempt spends one of ten, whether or not the
+       proof then holds, and it is taken before anything is checked. Two calls
+       racing on the same state cannot both take one, and the loser is told to
+       try again; a call arriving after an attempt has been taken gets the next
+       one. Ten is the total either way.
+
+    5. gh api -X DELETE repos/OWNER/REPO/git/refs/tags/palomar-verify-CHALLENGE
+       gh api -X DELETE gists/GIST_ID
+
+That is five steps and six calls, because step 5 is two deletes. If six calls
+where you expected one looks like a badly designed service, it is not: each one
+is load-bearing, and there is no shorter route to the same proof.
+
+Steps 1 to 4 are one sitting. An intake nobody comes back for is discarded
+fifteen minutes after step 1, and a `pending_secret` older than that is gone:
+step 4 answers 404 `that submission has already been verified`, because from
+here a consumed intake and a discarded one look the same. So do not call step 1
+until you are ready to prove it, and do not hold one across a pause for your
+user. Beginning again is cheap: a fresh step 1 spends no verification attempt.
+
+Creating a ref requires the same write access the browser sign-in checks for,
+which is what makes step 2 a proof rather than a formality. A ref records no
+author, and a third party cannot ask GitHub who has push, so step 3 is the only
+part that says who you are — a gist has a GitHub-set owner and answers
+immediately. Step 5 is not tidiness: those artifacts exist only to be read once.
+
+Do not substitute something easier. A commit status is one call and would be
+accepted by GitHub from any integration holding `statuses: write`, which is not
+push access. Declaring a login proves nothing. If you cannot complete these
+steps — a tag ruleset refuses the tag, your token has no `gist` scope — stop and
+hand back to your user for the browser flow rather than looking for a weaker
+proof.
+
+Palomar records that this path proves less than the browser one: someone who
+can write to the repository submitted it, and an account named itself, which
+are not provably the same account. Do not describe them to your user as
+equivalent.
+
+Treat `access_token` as a credential. It reads the private review and it can
+register permanently.
+
+If that token is lost, do not drive the browser recovery sign-in. Hand control
+back to your user: `/submissions` (the submission form's **Find my
+submissions** action) lets them authenticate with GitHub and receive a fresh
+link while the submission is still in progress.
+
+## A Technical Maintainer may make a Registry correction through the API
+
+This is a separate authority, not a shortcut for an ordinary submission. It is
+available only when the authenticated `gh` account's GitHub-set numeric id is
+in Palomar's current Technical Maintainer allowlist. Read the correction policy
+and runbook first:
+
+- https://github.com/PalomarRegistry/PalomarPolicy/blob/main/CONTRIBUTING.md#91-exceptional-registry-metadata-corrections
+- https://github.com/PalomarRegistry/PalomarPolicy/blob/main/docs/maintainer-corrections.md
+
+Before calling intake, show your user the exact current version, every proposed
+metadata value, and the public explanation. Remind them that the proposal and
+explanation become public when validation starts, even if it is later
+withdrawn, and get their explicit agreement. Do not infer permission from an
+earlier request to inspect or draft a correction.
+
+Load `/versions/PALOMAR-....json` from `data.palomar-registry.org`, then load its
+highest active entry. The correction is a complete replacement for the
+correctable metadata, not a patch: copy every unchanged value exactly and edit
+only the fields the user approved. POST this shape to `/api/submit`:
+
+    {
+      "repository": "OWNER/REPOSITORY",
+      "commit": "<the baseline's 40-character source commit>",
+      "existing_id": "PALOMAR-YYYY-MM-DD-NNNNNN",
+      "project_path": "<baseline source.project_path, or omit when absent>",
+      "formalization_metadata_path": "<baseline formalization path>",
+      "comparator_config_path": "<baseline Comparator path>",
+      "authorization_relationship": "palomar-maintainer",
+      "registry_correction": {
+        "schema_version": 1,
+        "based_on": {"id": "PALOMAR-...", "version": 2},
+        "explanation": "<plain-text public explanation>",
+        "metadata": {
+          "title": "...",
+          "abstract": "...",
+          "authors": [{"name": "...", "github": "optional", "orcid": "optional"}],
+          "classification": {"arxiv": ["..."], "msc2020": ["..."]},
+          "provenance": {
+            "responsible_maintainers": [{"name": "..."}],
+            "mathematical_sources": [],
+            "related_formalizations": []
+          }
+        }
+      }
+
+After mechanical correction validation succeeds, Palomar does not run a new
+model review. `GET /api/review` returns a deterministic correction decision
+which binds the exact active baseline, changed fields, inherited review, and
+inherited private score evidence. Inspect it with your user. In particular,
+point out any inherited warning: it remains the warning of record unchanged.
+The response retains the `review_sha256` field name for protocol compatibility;
+for a Registry correction it is the digest of this correction decision.
+    }
+
+Person objects permit only `name`, optional `github`, and optional canonical
+bare `orcid`. A mathematical source's optional `contributors` list uses exact
+`{"name": "...", "role": "..."}` objects and records non-author source
+credits. Mathematical-source and related-formalization objects, including
+these contributor credits, should be copied from the baseline unless one of
+those fields is itself being corrected.
+The server reloads the current active baseline, computes the changed-field list
+itself, refuses stale corrections, and refuses any movement of the repository,
+commit, project, metadata, or Comparator paths.
+
+The response carries `pending_secret` and `challenge`. Prove the allowlisted
+account with a new secret gist; unlike an ordinary submission, do not create a
+repository tag, because source-repository write access is not correction
+authority:
+
+    echo '{"public":false,"files":{"palomar.txt":{"content":"CHALLENGE"}}}' \
+      | gh api -X POST gists --input -
+
+Then POST `/api/verify`:
+
+    {"pending_secret": "...", "gist_id": "..."}
+
+The gist must be owned by a `User` account whose numeric id is currently
+allowlisted, must be secret, must carry the exact challenge, and must have been
+created for this intake. Delete it immediately after `/api/verify` answers:
+
+    gh api -X DELETE gists/GIST_ID
+
+The same fifteen-minute intake lifetime, ten-attempt bound, access-token rules,
+monitoring API, review delivery, and explicit registration decision described
+elsewhere in this file apply. The durable authorization records active
+Technical Maintainer membership; it does not claim source-repository write
+access, project approval, authorship, or endorsement.
+
+## After that, monitoring is yours
+
+With the token you can drive the rest through the HTTPS API. Send it as a
+header on every call:
+
+    Authorization: Bearer <the fragment>
+
+- `GET /api/submission` — status, events, the verification run, the paths the
+  submission asked for, an estimate of how long review is taking, and a
+  `review_service_issue` when Palomar can safely identify an operational
+  problem to report. Its current values are `null` and
+  `"api-credits-exhausted"`; private provider diagnostics are never returned.
+- `GET /api/review` — the review, once there is one. Private to the token
+  holder. Do not paste it anywhere public, including a pull request or an
+  issue, before it is registered.
+- `POST /withdraw` — abandon the submission.
+
+Use the header rather than `POST /session`. The browser status page uses the
+same header and omits cookies so that each open tab remains bound to its own
+submission. A header is not ambient, nothing else can set it on your behalf,
+and it does not expire after twelve hours the way a session cookie does. The
+server retains `/session` only for compatibility with legacy clients.
+
+Poll `GET /api/submission` at a human pace; a submission takes minutes, not
+seconds. Once a minute is fast enough while something is running, and once
+every five minutes while the status is `awaiting-review` or `review-ready`,
+whose next move is on a clock nobody here controls. Every ask spends several
+calls of one GitHub budget shared by every submission there is, so a tight loop
+does not fail your submission faster, it fails everybody's. The status page
+starts faster than that and backs off to the same ceiling, and stops asking
+altogether while nobody is looking at it.
+
+On a browser status page, a completed failed run is supplemented with bounded,
+unauthenticated reads of that public GitHub run's check annotations. An API
+client receives the run URL in `GET /api/submission` and may inspect the same
+public annotations itself; Palomar never sends the submission access token to
+GitHub.
+
+A submission is settled at `registered`, `withdrawn`, `verification-failed`,
+`verification-error`, `review-failed`, or `dispatch-lost`. For a
+`verification-error`, follow the reported next action and wait for the
+submission cooldown before retrying.
+
+For an ordinary submission, `GET /api/review` tells you whether the automated
+review identified blocking problems and what it asked for; it does
+not distinguish a request for revision from rejection, and inferring either
+from `"blocking_problems_identified": true` would add information that is not
+there. If `requested_changes` describes something
+you and your user can correct, correct it and submit the corrected commit as a
+new submission. Settled means there is nothing useful to poll for; it does not
+mean every decision is closed. A submitter may still withdraw a `review-failed`
+or `dispatch-lost` submission.
+
+## Registration is not monitoring
+
+`POST /register` consents to making the repository, commit, and review (or, for
+a Registry correction, its correction decision and inherited review) public
+during Palomar's pre-launch testing, and creates immutable source-preservation
+tags. Send the digest you were shown:
+
+    {"review_sha256": "<the review_sha256 from GET /api/review>"}
+
+A registration that names a different review, or names none, is refused with
+409. Consent is to the review your user read, not to whichever one is current
+when the call arrives: a review can be replaced between the two, and the
+comments in it become public on registration.
+
+`GET /api/review` answers 404 until the digest is recorded alongside the review,
+which is a moment later than the review itself exists. Keep polling; there is
+nothing to do about it and nothing has gone wrong. Your user's GitHub identity is not made public: a
+registered record carries the submission and its authorization basis, and the
+schema has no field for the person who sent it. Until public launch the database itself may
+still be reshaped; after launch its registered records are append-only.
+
+The token is a bearer credential, so this endpoint will accept the call from
+you. Do not make it on your own initiative. Show your user the review, say what
+registering would publish, and let them decide and tell you. If they ask you to
+press it, that is fine; deciding for them is not.
+
+## Practical notes
+
+- One repository owner may have at most two submissions verifying at once, and
+  one submitter may have at most one; further ones are refused with 429 until
+  those finish. There is no global admission cap, so unrelated submitters cannot
+  exhaust a shared slot pool. A refusal is not a reason to retry immediately.
+  These refusals happen after `/api/verify` has
+  accepted and consumed the proof: follow its `restart` instruction and begin a
+  new submission when capacity is available.
+- There is also an interval between starting one submission and starting the
+  next. A 429 that says you started one too recently says how long to wait;
+  wait that long rather than probing for the boundary.
+- A 503 whose `error` is `submission intake is at capacity` is about Palomar
+  rather than about your submission or your address: more intakes are in
+  progress at once than it will hold. Nothing was consumed and there is nothing
+  to correct. Wait for the `retry-after` and send the same body again.
+- `/api/verify` allows a bounded number of failed proofs and then refuses and
+  discards the intake. Fix the required tag or gist before retrying, rather
+  than retrying the same broken proof.
+- A policy or principal-limit refusal after `/api/verify` has accepted the proof says
+  `"proof_consumed": true` and includes a `restart` instruction. Start again at
+  `/api/submit` when the refusal can be addressed. If durable State is damaged
+  or unavailable, no admission commit lands: the response instead says
+  `"proof_consumed": false`, and the same pending secret and required proof
+  artifacts may be retried after the service is repaired, subject to the response's
+  `attempts_remaining`. An explicitly `"unknown"` outcome must not be retried
+  automatically: ask the registry operator to inspect State first.
+- Errors on the `/api/` routes come back as JSON `{"error": "..."}` with a
+  meaningful status, sometimes with `problems` or `detail` beside it. An unknown
+  path, a wrong method, and an unhandled failure give you an HTML page instead,
+  so parse defensively.
+- `GET /healthz` if you want to know the service is up.
+- Fields, and their validation, are visible in the form at `/`.
+- The registry's own data is at `https://data.palomar-registry.org`, read-only
+  and separate from this host. There is no whole-registry document: ask for what
+  is new at `/recent.json`, for one result's versions at `/versions/<id>.json`,
+  for one record at `/entries/<id>-v<n>.json`, and for a repository's active
+  registrations at `/repositories/<lowercase-owner>/<lowercase-repository>.json`.
+  An exact registration identity is at `/registration-identities/<sha256>.json`,
+  where the digest covers the UTF-8 bytes `lowercase_repository + NUL +
+  project_path_or_empty + NUL + comparator_config_path`. If it names one
+  `registration_id`, its schema-version 2 `commits` array names every active
+  source commit already registered for that identity. Do not submit one of
+  those commits again. For a different commit, pass `registration_id` as
+  `existing_id` to create a new version. A query string is refused with 404
+  there, so do not add cache-busting parameters.

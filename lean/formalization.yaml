@@ -1,0 +1,105 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/v0.4.schema.json
+version: "v0.4"
+project:
+  name: "Tamper-proofing with self-modifying code: a Lean formalization of the threat model, with errata"
+  description: >-
+    Formalizes Gregory Morse and Tamas Kozsik's paper "Tamper-Proofing with Self-Modifying Code" (arXiv:2604.12407v1).
+    The selected statement is an abstract threat model for checksum units whose opcode state lives in the memory
+    they checksum: a system of units with regions and code, a timeline of write, execute, check, split-view and DMA
+    events, adversary levels L0-L4, a cost contract with lower bounds on emulation, forgery and mediation, and eight
+    structural assumptions A1-A8 (none of the form "the attacker is detected"). The development proves that under
+    A1-A8 an adversary never executes a modified protected byte without an effective alarm (T1), that a faithful
+    split-view run must mediate every iteration with a non-zero toggle and that this is a timing failure under the
+    timing gap (T2), that each of the eleven assumptions is necessary by an explicit winning adversary (T3, including a
+    three-quadword forgery of the checksum and the proof that two quadwords do not suffice), what each adversary level
+    gives and loses (T4), and that a Harvard machine reproducing a von Neumann machine must read every sensitive byte
+    (C01, C02). Supporting material, not part of the selected statement, covers the x86-64 model of the kernels, the
+    static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level, the byte layout against
+    assembler output, a clear-count contract checked against the paper's tables, timers, the noise estimator, the
+    detection predicate and the data ratios, together with native test vectors for the corrected sources.
+  authors: ["Gregory Morse"]
+  responsible_maintainers: ["Gregory Morse"]
+  license: "MIT"
+classification:
+  arxiv: ["cs.CR", "cs.LO"]
+  msc2020: ["68M07", "94A60", "68Q60"]
+sources:
+  - title: "Tamper-Proofing with Self-Modifying Code"
+    authors: ["Gregory Morse", "Tamas Kozsik"]
+    type: "paper"
+    id: "arxiv:2604.12407"
+    location: "https://arxiv.org/abs/2604.12407"
+    relationship: "adapts"
+    author_endorsement: "participated"
+    note: >-
+      arXiv:2604.12407v1. The selected results replace the informal Section 10 and the statements about memory splitting, with
+      exact minimal corrections P01-P13 (P14, the AMD event cells of Table 1, is open and ask-author), quoted from the arXiv
+      v1 text in errata/ERRATA.md and errata/edits.json, and legacy source fixes L01-L07 and D01-D03 (CODE_FIXES.md). The
+      threat model is formalized as an abstract model: the cost contract, the level capabilities and the eight assumptions
+      are hypotheses, and no theorem says that a given processor, hypervisor or operating system satisfies them. Not
+      modeled and not claimed: any processor's pipeline, caches, machine-clear behavior, timers or handling of
+      self-modifying code, and the measured tables (consistency checks only). Instruction-level execution of the unrolled
+      kernel is not proved; the unrolled kernel is verified at an abstract level plus a byte comparison with the assembler
+      output. The original paper remains a separately cited source.
+  - title: "Intel 64 and IA-32 Architectures Software Developer's Manual"
+    authors: ["Intel Corporation"]
+    type: "other"
+    id: "https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html"
+    location: "https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html"
+    relationship: "background"
+    note: >-
+      Background for the instruction encodings and the handling of self-modifying code in the supporting x86-64 model, a small
+      subset written for this development, not a verified processor. Platform facts about timestamp access, virtualization
+      and debug registers are not used in the selected statement.
+related_formalizations: []
+status:
+  scope: >-
+    The selected Palomar record is PalomarSMT.mathematical_result: security under the structural assumptions A1-A8 (T1),
+    the mediation cost of split views (T2), the necessity of each assumption (T3), the level matrix (T4) and the
+    Harvard separation (C01, C02). The model is abstract: every dependence on a processor, hypervisor or operating system
+    is a field of the cost contract, the level capabilities or the well-formedness structure, and no theorem says that any
+    real system satisfies it. The x86-64 model, the static and unrolled kernel theorems, the layout against assembler
+    bytes, the clear contract checked against Table 6, the timer and noise contract and the detection predicate are
+    supporting material, not selected registered claims; PAPER_MAP.md lists every claim with its status and
+    PLATFORM_CONTRACT.md every contract field. Instruction-level execution of the 296-unit kernel is an open obligation (G01).
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+automation:
+  methods:
+    - method: "agent"
+      models: ["Claude Opus 5.5", "Claude Sonnet 5.5"]
+      framework: "Claude Code"
+      tool_setup: >-
+        Agent-written Lean proofs, generated tables and checks, a generated Challenge, an errata generator and audit, native
+        MSVC/MASM test harnesses with Lean-generated vectors, memory-capped local builds, and GitHub Actions CI. Lean
+        4.35.0-rc3 without Mathlib; direct lean.exe runs under a 1.5 GB cap, cold builds on CI.
+      prompting_notes: >-
+        Human-directed formalization of the author's own paper, with a written plan, numbered rounds, a gap register,
+        exact minimal corrections quoted from the arXiv text, no sorry or custom axiom outside the Challenge theorem hole,
+        and standard axioms only.
+  spend_usd: "subscription-based; exact cost not tracked"
+  notes: >-
+    Gregory Morse supplied the paper, the original sources, the intended claims and the project direction. Claude produced the
+    formalization, validation code and documents. Lean kernel and axiom audits and native tests are mechanical evidence, not
+    independent human peer review.
+fidelity:
+  divergences: >-
+    Corrections to the paper text are P01-P13 (see errata/ERRATA.md): the estimate of runs affected by noise (P01),
+    the 2.5x ratio (P02), the table caption size (P03), the checksum-as-predicate overclaim and the collision example (P04),
+    interval contents and labels (P05), preconditions of the C++ emulation (P06), latency cells (P07), "constant-time"
+    (P08), notation (P09, P10), and the replacement of Section 10 by the threat model with its scope statements (P11-P13);
+    P14 (AMD cells of Table 1) is open. Corrections to the code are L01-L07 and D01-D03 (CODE_FIXES.md), including the
+    crash when the qword count is a multiple of 148 (L07). The threat model is relative to its cost contract and
+    assumptions; T2 does not claim that all split-view attacks are detected. The unrolled kernel is verified at an abstract
+    level, not at the instruction level. No further mismatch is claimed absent after an unspecified universal review.
+review:
+  status: "agent-reviewed"
+  reviewers: ["Claude Code (automated source and proof audit)"]
+  notes: >-
+    The agent checked source alignment of the selected definitions, the errata against the arXiv text, and standard-axiom
+    closure of every SmcTamper declaration. This is not independent human mathematical review. The author review of the
+    errata PDF is requested separately. The Comparator, NanoDa and the Palomar full preflight are gates whose run records
+    are attached to FINAL_ACCEPTANCE.json when they exist.
+acknowledgements: >-
+  The Lean contributors for the proof assistant, and the author's earlier developments for the build and audit infrastructure.

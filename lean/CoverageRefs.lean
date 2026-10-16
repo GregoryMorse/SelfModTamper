@@ -74,6 +74,10 @@ import SmcTamper.Threat.Matrix
 import SmcTamper.Threat.Scope
 import SmcTamper.Threat.LevelMono
 import SmcTamper.Unrolled.Sites
+import SmcTamper.Threat.EmulBound
+import SmcTamper.Unrolled.Reset
+import SmcTamper.Spec.Paper
+import SmcTamper.Paper
 
 #check @SmcTamper.interp_step
 #check @SmcTamper.interp_simulates
@@ -166,6 +170,8 @@ import SmcTamper.Unrolled.Sites
 #check @SmcTamper.reset_restores
 #check @SmcTamper.reset_value_stable
 #check @SmcTamper.no_reset_value_depends_on_calls
+#check @SmcTamper.reset_restores_unrolled
+#check @SmcTamper.reset_value_stable_unrolled
 #check @SmcTamper.no_false_alarm
 #check @SmcTamper.alarm_of_persistent
 #check @SmcTamper.calibration_no_alarm

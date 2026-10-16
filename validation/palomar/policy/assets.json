@@ -1,0 +1,42 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/formalization.schema.json",
+    "path": "formalization.yaml\\schema\\formalization.schema.json",
+    "sha256": "22bd0b61631535fc68efbdf01e3013362437673ac836d721dfbdf80773244ec3"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/v0.3.schema.json",
+    "path": "formalization.yaml\\schema\\v0.3.schema.json",
+    "sha256": "93247a8093ea0bb622650e8f387bcc95c4e4c7941408974d6779341844262b27"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/v0.4.schema.json",
+    "path": "formalization.yaml\\schema\\v0.4.schema.json",
+    "sha256": "25ff6b25ca4511635aff4443cf20480c15e59dddf19591c730950b442ea54fce"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarSubmission/d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44/taxonomies/arxiv-categories.json",
+    "path": "PalomarSubmission\\taxonomies\\arxiv-categories.json",
+    "sha256": "3b339cf140a914c50bab39b1c44df2437ce3984bd09bb2150fcb0edd60eda776"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarSubmission/d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44/taxonomies/msc2020-codes.json",
+    "path": "PalomarSubmission\\taxonomies\\msc2020-codes.json",
+    "sha256": "b4de69f1f562da01e0f4580cecc0ab36098f5297bb7cdd669c8ec3b0d3606060"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarPolicy/96b034cc31a72a63d4f4041911dce337a85c9a04/prompts/00-classification.md",
+    "path": "PalomarPolicy\\prompts\\00-classification.md",
+    "sha256": "dc6e7d0d63ed6dd03ec7a3d60b886b7125a9fffd06a76dd7ce4421934d6e4986"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarPolicy/96b034cc31a72a63d4f4041911dce337a85c9a04/rubric.json",
+    "path": "PalomarPolicy\\rubric.json",
+    "sha256": "fb8b5eb01bc41dc2c0a5a138b78b82004708681c97b311c225bdf6217f5f7d7d"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarPolicy/96b034cc31a72a63d4f4041911dce337a85c9a04/taxonomies/classification-guide.md",
+    "path": "PalomarPolicy\\taxonomies\\classification-guide.md",
+    "sha256": "0e8b1c11f02ddf785bab2d4c13b9c229b4a6f75b31b6da8e0df88b054082ecee"
+  }
+]

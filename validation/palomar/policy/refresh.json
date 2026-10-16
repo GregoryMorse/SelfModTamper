@@ -1,0 +1,137 @@
+{
+  "refreshed_at": "2026-10-16T17:48:27.634783+00:00",
+  "pins": {
+    "PalomarRegistry/PalomarPolicy": "96b034cc31a72a63d4f4041911dce337a85c9a04",
+    "PalomarRegistry/PalomarSubmission": "d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44",
+    "PalomarRegistry/PalomarTemplate": "2891de4c48955af824969a263d31b25e7a9a1406",
+    "mathlib-initiative/formalization.yaml": "99c678e569c7c4c0772db297c5ddd5e4c9b6322e"
+  },
+  "sources": [
+    {
+      "url": "https://api.github.com/repos/PalomarRegistry/PalomarPolicy/commits/main",
+      "file": "PalomarRegistry-PalomarPolicy-commit.json",
+      "sha256": "fe72121792029a4188b21b1074df78aa563681ce16d105072ce1223c7cd8ee46",
+      "bytes": 9498,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarPolicy/96b034cc31a72a63d4f4041911dce337a85c9a04/CONTRIBUTING.md",
+      "file": "PalomarPolicy/CONTRIBUTING.md",
+      "sha256": "32cfaa48ef8d51a6959df46f73ccff1482d8bbf89b4bb3f878498b518b11edcd",
+      "bytes": 58797,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarPolicy/96b034cc31a72a63d4f4041911dce337a85c9a04/docs/specification.md",
+      "file": "PalomarPolicy/docs/specification.md",
+      "sha256": "ec8ac89a6b4eea0e44c94a381af7b11ff540299ffd00cf2826603be2783b4376",
+      "bytes": 25337,
+      "passed": true
+    },
+    {
+      "url": "https://api.github.com/repos/PalomarRegistry/PalomarSubmission/commits/main",
+      "file": "PalomarRegistry-PalomarSubmission-commit.json",
+      "sha256": "398387454aa64fa553058b26fc3a75dca2922e82598e9316705dab7f072cb4b3",
+      "bytes": 19263,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarSubmission/d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44/toolchains.json",
+      "file": "PalomarSubmission/toolchains.json",
+      "sha256": "fd40347e4b586e7c42233b35f11efb006d25033b9a7ded9565719edf7aa98354",
+      "bytes": 54,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarSubmission/d4e41c1d5b0d114c4859e6e5831dc6d3ad1d0d44/.github/workflows/submission.yml",
+      "file": "PalomarSubmission/.github/workflows/submission.yml",
+      "sha256": "a116f9a84bf5287e8ed9cda55b98d3023c3c4215fe084b61ce7988e9bc9dc2f0",
+      "bytes": 12402,
+      "passed": true
+    },
+    {
+      "url": "https://api.github.com/repos/PalomarRegistry/PalomarTemplate/commits/main",
+      "file": "PalomarRegistry-PalomarTemplate-commit.json",
+      "sha256": "bec07e0456571f18d2a63546106a88f1753eacd34801b455b87da88fa271861f",
+      "bytes": 21233,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarTemplate/2891de4c48955af824969a263d31b25e7a9a1406/formalization.yaml",
+      "file": "PalomarTemplate/formalization.yaml",
+      "sha256": "04f3c577a1315833b7cf04ac8d7c8762689067a527a9cc3ec7f64f2ffbf12e24",
+      "bytes": 6419,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarTemplate/2891de4c48955af824969a263d31b25e7a9a1406/comparator.json",
+      "file": "PalomarTemplate/comparator.json",
+      "sha256": "ecb5fdece4f95702adc4dc86988c9315717e77ebfbda6d6d420571ddbe42e9fc",
+      "bytes": 243,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarTemplate/2891de4c48955af824969a263d31b25e7a9a1406/Challenge.lean",
+      "file": "PalomarTemplate/Challenge.lean",
+      "sha256": "ddc5114fd33fe72697a7fe2f8025d9e12d419b97747b81211584a5e87f3d132f",
+      "bytes": 496,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarTemplate/2891de4c48955af824969a263d31b25e7a9a1406/Solution.lean",
+      "file": "PalomarTemplate/Solution.lean",
+      "sha256": "b295f4873bd2cb9c63960eb73329ba4eb011de8fca9b2007dad60c41e99abb7f",
+      "bytes": 383,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/PalomarRegistry/PalomarTemplate/2891de4c48955af824969a263d31b25e7a9a1406/lakefile.toml",
+      "file": "PalomarTemplate/lakefile.toml",
+      "sha256": "a83f55ed63076ba7bb97046c7254e40754fc80d32c485c77b81a7dfd90e10d61",
+      "bytes": 364,
+      "passed": true
+    },
+    {
+      "url": "https://api.github.com/repos/mathlib-initiative/formalization.yaml/commits/main",
+      "file": "mathlib-initiative-formalization.yaml-commit.json",
+      "sha256": "95c36108f017aacd03256f0f66f4eb6e05c35ec55a2d2fdb4d31e7af7b0eccd4",
+      "bytes": 7835,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/README.md",
+      "file": "formalization.yaml/README.md",
+      "sha256": "68f8f77eced3b729638b9ee45c16c19d30d88b947520eb0c193fd17352146bee",
+      "bytes": 4555,
+      "passed": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/v0.4.schema.json",
+      "file": "formalization.yaml/schema/v0.4.schema.json",
+      "sha256": "25ff6b25ca4511635aff4443cf20480c15e59dddf19591c730950b442ea54fce",
+      "bytes": 12694,
+      "passed": true
+    },
+    {
+      "url": "https://submit.palomar-registry.org/llms.txt",
+      "file": "llms.txt",
+      "sha256": "a81dfa19c4ea36a0671d227d2129ade7dcd1d3ca47a0cc7842aac7c24305b2a0",
+      "bytes": 20374,
+      "passed": true
+    },
+    {
+      "url": "https://submit.palomar-registry.org/",
+      "file": "form.html",
+      "sha256": "58c7e2ce00316e33cc846da1d6116500d68465454f6bcbb13176a53074f37f8b",
+      "bytes": 13731,
+      "passed": true
+    },
+    {
+      "url": "https://palomar-registry.org/how-to-submit",
+      "file": "how-to-submit.html",
+      "sha256": "acd0589633359fac6a7e1063b9ae2c26894b9e91bc5e80657f1db4f71e749999",
+      "bytes": 25478,
+      "passed": true
+    }
+  ]
+}
