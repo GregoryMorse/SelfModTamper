@@ -75,5 +75,7 @@ public import SmcTamper.Threat.LevelMono
 public import SmcTamper.Unrolled.Sites
 public import SmcTamper.Threat.EmulBound
 public import SmcTamper.Unrolled.Reset
+public import SmcTamper.Unrolled.L2Decode
+public import SmcTamper.Unrolled.L2Unit
 public import SmcTamper.Spec.Paper
 public import SmcTamper.Paper
