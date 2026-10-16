@@ -11,9 +11,9 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 (L2 `unrolled_refines` open, R7 skipped) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation` |
 | C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | todo |  |
 | C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | done (witness) | Harvard/SplitMemory.lean `split_differs_from_vn`, `smc_detects_fetch_patch`; mediation variant in R11c |
-| C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | todo |  |
-| C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | todo |  |
-| C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | todo |  |
+| C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | done (FC) | Contract/Noise.lean `undisturbed_exists` (repetition lemma), `sampleMin_le` |
+| C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | done (FC) | Contract/Timers.lean `reading_bounds`, `reading_indistinguishable`, `multimedia_min_inconsistent` (O1) |
+| C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | done (FD) | Data/Ratios.lean `c09_clocks_agree` (within 6 units) |
 | C10 | §2, §3 | API/toolchain facts (Windows/Linux clocks, MSVC inline asm, `/SECTION`, `VirtualAlloc`, `mmap`) | R | R1 | done | R-class verified in R1 (table below) |
 | C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | partial | Spec/Layout.lean `opOff` (= base + const); no finite-set lemma yet |
 | C12 | §4 ¶1, ¶3 | modifying in-flight code triggers machine clears; naive SMC is slow | FC | R9 | done (FC) | Contract/StaticClears.lean `static_clears_ge`, `static_time_ge` |
@@ -34,20 +34,20 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | done | Layout/Numbers.lean `opcode_qwords_distinct`, `opOff_sep`; Layout/Targets.lean `unit_xor_target`, `unit_xor_other_page` |
 | C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 | done at Level 1 | Unrolled/Main.lean `unrolled_emulation` (patch applied, then restored); Unrolled/Facts.lean `next_byte_*` |
 | C29 | Fig. 5 | 148 units/page, intro 0x5F, unit 0x1B, base + size = end | F + FD + M | R5 | done (M) | Layout/Numbers.lean (`perPage_148`, `page1_fill`, `patch_target`, `bench_size_facts`, `fig5_sum`, `patch_xor`); Layout/Compare.lean (AsmJit and MASM bytes = Lean images); Layout/AsmJitSize.lean (intro 0x5F, cancellation) |
-| C30 | §7 ¶1 | static SMC ≈ 7.9× slower | FD | R10 | todo |  |
-| C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11a | todo |  |
-| C32 | §7 ¶3 | dynamic ≈ 90.5× faster than non-SMC | FD | R10 | todo |  |
-| C33 | §7 ¶3 | ≈ 2.5× faster than static SMC (inconsistent, P02) | FD | R10 | todo |  |
+| C30 | §7 ¶1 | static SMC ≈ 7.9× slower | FD | R10 | done (FD) | Data/Ratios.lean `c30_static_ratio` |
+| C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11a | partial (FD done; quantile calibration R11a) | Data/Ratios.lean `c31_heavy_tail`; Contract/Noise.lean `sampleMin_le` |
+| C32 | §7 ¶3 | dynamic ≈ 90.5× faster than non-SMC | FD | R10 | done (FD) | Data/Ratios.lean `c32_dynamic_ratio` |
+| C33 | §7 ¶3 | ≈ 2.5× faster than static SMC (inconsistent, P02) | FD | R10 | done (FD) | Data/Ratios.lean `p02_no_ratio_2_5`, `p02_17_8` (P02 confirmed: no ratio is 2.5; 17.8) |
 | C34 | §7 ¶3 | 3–4 pages no material improvement | X (data not reported) | R1 | done | listed as X (observation/opinion; nothing claimed) |
-| C35 | §7 ¶4 | 246 runs / 2.5% / 3.6% estimate (P01) | FD + FC | R10 | todo |  |
+| C35 | §7 ¶4 | 246 runs / 2.5% / 3.6% estimate (P01) | FD + FC | R10 | done (FD + FC) | Contract/Estimator.lean `published_values`, `p01_smc`, `p01_nonsmc`, `p01_two_point_values`, `published_estimate_vacuous`, `markov_count`, `two_point` (P01 confirmed) |
 | C36 | §7 ¶5, Table 6 | naive SMC clears ≫; unrolled reduced; clears at the start of unrolled iterations | FD + FC | R9 | done (FD + FC) | Contract/Table6.lean `table6_naive`, `table6_loop_page`, `table6_loop_byte_inconsistent`; Contract/Facts.lean `intro_stores`, `tail_stores` |
-| C37 | Tables 4–5 | cross-timer consistency (TSC ≈ 2.59 GHz) | FD | R10 | todo |  |
+| C37 | Tables 4–5 | cross-timer consistency (TSC ≈ 2.59 GHz) | FD | R10 | done (FD) | Data/Ratios.lean `c37_tsc_over_clock` (259.0-259.3 cycles per 100 ns) |
 | C38 | Tables 4–5 | measured interval contents (P05) | M | R12 | todo |  |
-| C39 | §8 ¶1 | `c_nonSMC O(n) ≫ c_SMC O(n)` (notation, P09) | FD + X | R10 | todo |  |
+| C39 | §8 ¶1 | `c_nonSMC O(n) ≫ c_SMC O(n)` (notation, P09) | FD + X | R10 | done (FD) | Data/Ratios.lean `c39_cycles_per_qword` (10168 vs 112); notation fix P09 |
 | C40 | §8 ¶2 | optimality hard, combinatorial; compilers can beat hand asm | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C41 | §8 ¶3 | Pentium III remark; branching expensive | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C42 | §8 ¶3 | design rule: never modify the currently executing page | FC | R9 | done (FC) | Contract/Facts.lean `no_clear_of_disjoint` |
-| C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 | todo |  |
+| C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 | done (FC; priority remark X) | Contract/Noise.lean `maxInterrupts_mono`, `undisturbed_exists` |
 | C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a | todo |  |
 | C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a | todo |  |
 | C46 | §10 | A1–A4 scope the model; corrected: the complete threat model A1–A8 with T1–T4 (D11, P11) | F + FC | R11b, R11c | todo |  |

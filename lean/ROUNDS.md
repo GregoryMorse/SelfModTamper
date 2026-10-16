@@ -15,7 +15,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R7 | Unrolled kernel, Level 2 | should | SKIPPED (MVP path; open obligation) |
 | R8 | Von Neumann vs Harvard, split memory | must | DONE |
 | R9 | Clear contract | must | DONE |
-| R10 | Timers, noise, estimator, data checks | must | TODO |
+| R10 | Timers, noise, estimator, data checks | must | DONE |
 | R11a | Detection predicate, policy, reset | must | TODO |
 | R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | TODO |
 | R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | TODO |
@@ -182,3 +182,16 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Open: exact page-granule counts (the proof gives upper bounds only); `Data/Consistency` for the g = 64 line granule not done; the
   intro's executed length `I` is not derived (needs Level 2 unrolled, R7 skipped).
 - Next: R10 (timers, noise, estimator, data checks).
+
+### R10 (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `Contract/Timers` (C08: `reading_bounds`, `reading_indistinguishable`, O1 `multimedia_min_inconsistent`), `Contract/Noise` (C07/C43:
+  `maxInterrupts_mono`, `sampleMin_le`, `undisturbed_exists`), `Contract/Estimator` (C35/P01), `Contract/Overhead` (P05 `overhead_conservative`),
+  `Data/Tables` (Tables 4-5 transcribed), `Data/Ratios` (C09, C30, C31, C32, C33/P02, C37, C39/P09, P03); `PLATFORM_CONTRACT.md` items 3-4.
+- Findings (all confirm the plan's seeds): P01 the printed estimate is Markov's bound at theta = max and bounds an empty set; the rigorous statement is
+  at least 305 (SMC) / 779 (non-SMC) runs above the minimum out of 10000 (two-point estimates 304 / 778), not 246 / 363; P02 no ratio of the four RDTSCP
+  averages is 2.5, dynamic SMC is 17.8x faster than static SMC; P03 a 220 KB region would need at least 28159 clears per run (naive kernel) but 8319.84 are
+  reported, 0x8200 bytes (4160 qwords) is consistent; O1 the Multimedia minimum of 1 ms contradicts runs of at least 2.8806 ms under the timer contract
+  (recorded as observation).
+- Not claimed / open: i.i.d. noise (could); quantile calibration (R11a); P05 provenance of the SMC Loop / Dyn SMC Loop labels stays ask-author (R12/R13).
+- Next: R11a (detection predicate, policy, reset).

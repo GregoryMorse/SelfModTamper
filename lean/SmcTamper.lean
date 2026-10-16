@@ -41,3 +41,9 @@ public import SmcTamper.Contract.UnrolledStream
 public import SmcTamper.Contract.UnrolledClears
 public import SmcTamper.Contract.Facts
 public import SmcTamper.Contract.Table6
+public import SmcTamper.Contract.Timers
+public import SmcTamper.Contract.Noise
+public import SmcTamper.Contract.Estimator
+public import SmcTamper.Contract.Overhead
+public import SmcTamper.Data.Tables
+public import SmcTamper.Data.Ratios

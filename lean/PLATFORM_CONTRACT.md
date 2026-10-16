@@ -2,7 +2,7 @@
 
 Windows and the CPU are black boxes. Every dependence on them is a field of a Lean structure or a hypothesis of a theorem
 (never an `axiom`). This file lists each field: meaning, why it is plausible, source, evidence, and what is **not** claimed.
-Items 3 and 4 (timers, scheduler/noise) are added in R10; the threat-model items in R11b/R11c. Final in R14.
+The threat-model items are added in R11b/R11c. Final in R14.
 
 ## 1. ISA model (a definition, not a hypothesis)
 
@@ -30,3 +30,25 @@ Items 3 and 4 (timers, scheduler/noise) are added in R10; the threat-model items
 - **Not claimed:** that real processors follow this rule; an exact `W`; behaviour for self-modification of code on a different
   logical processor; that the intro's abstract instructions (`Contract/UnrolledStream`) have the real executed count `I`
   (`pass_clears_byte` needs `I ≥ 4`; `pass_clears_page` holds for every `I`).
+
+## 3. Timer contract (`Contract/Timers.lean`)
+
+- **What:** a timer is a counter of resolution `r > 0` and unknown phase `φ`; the reading of `[s, e)` is
+  `⌊(e+φ)/r⌋ − ⌊(s+φ)/r⌋` (`reading`).
+- **Proved from it:** a reading of length `d` is `⌊d/r⌋` or `⌊d/r⌋ + 1` (`reading_bounds`); intervals differing by less than `r`
+  can read alike (`reading_indistinguishable`).
+- **Evidence (FD):** Tables 4–5 are consistent with `Interrupt Time`, `Perf. Counter`, `Precise UTC` having the same resolution
+  class (`Data/Ratios.c09_clocks_agree`) and with the TSC at about `2.59 GHz` against them (`c37_tsc_over_clock`); the printed
+  `Multimedia` minimum (1 ms) cannot come from runs of at least 2.8806 ms under this contract (`multimedia_min_inconsistent`,
+  observation O1, not an erratum).
+- **Not claimed:** how any Windows or CPU timer is implemented; that readings come from the same runs.
+
+## 4. Scheduler and noise contract (`Contract/Noise.lean`)
+
+- **What:** per run of length `L` at most `⌊L/q⌋ + 1` clock interrupts (`maxInterrupts`); a run is *disturbed* when its noise
+  exceeds a threshold; deterministic repetition assumption: of any `k` consecutive runs at most `r < k` are disturbed.
+- **Proved from it:** some run in every window of `k` is undisturbed (`undisturbed_exists`); the minimum of a sample is at most
+  every sample (`sampleMin_le`); the number of runs above the minimum is at least `N (avg − min)/(max − min)` for integer
+  statistics `avg = ⌊Σ/N⌋` (`Contract/Estimator.count_above_min_lower`), which replaces the printed estimate
+  `N (avg − min)/max` (that is Markov's bound at `θ = max`, an empty set: `published_estimate_vacuous`).
+- **Not claimed:** an i.i.d. noise model; that the plan's priority mitigation (C43) works (class X, a remark).
