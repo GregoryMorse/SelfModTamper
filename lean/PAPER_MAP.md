@@ -7,9 +7,9 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 |---|---|---|---|---|---|---|
 | C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | done | Harvard/Interp.lean `interp_step`, `interp_simulates` |
 | C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | done | Harvard/Separation.lean `harvard_reads_sensitive`, `harvard_time_bound` (cost contract as hypothesis) |
-| C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | todo |  |
+| C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | done (FC) | Detection/Predicate.lean `P_complete`, `P_sound_value`, `P_sound_time`, `P_not_iff` (collision witness; P04 confirmed) |
 | C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 (L2 `unrolled_refines` open, R7 skipped) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation` |
-| C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | todo |  |
+| C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | done (F) | Detection/Reset.lean `value_frame` (value determined by the covered bytes), `storage_tamper_detected` |
 | C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | done (witness) | Harvard/SplitMemory.lean `split_differs_from_vn`, `smc_detects_fetch_patch`; mediation variant in R11c |
 | C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | done (FC) | Contract/Noise.lean `undisturbed_exists` (repetition lemma), `sampleMin_le` |
 | C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | done (FC) | Contract/Timers.lean `reading_bounds`, `reading_indistinguishable`, `multimedia_min_inconsistent` (O1) |
@@ -48,8 +48,8 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C41 | §8 ¶3 | Pentium III remark; branching expensive | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C42 | §8 ¶3 | design rule: never modify the currently executing page | FC | R9 | done (FC) | Contract/Facts.lean `no_clear_of_disjoint` |
 | C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 | done (FC; priority remark X) | Contract/Noise.lean `maxInterrupts_mono`, `undisturbed_exists` |
-| C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a | todo |  |
-| C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a | todo |  |
+| C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a | done (F) | Detection/Reset.lean `reset_restores`, `reset_value_stable`, `no_reset_value_depends_on_calls` (the unrolled kernel is argued at the static-kernel level; see ROUNDS R11a) |
+| C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a | done (FC) | Detection/Policy.lean `no_false_alarm`, `alarm_of_persistent`, `calibration_no_alarm` |
 | C46 | §10 | A1–A4 scope the model; corrected: the complete threat model A1–A8 with T1–T4 (D11, P11) | F + FC | R11b, R11c | todo |  |
 | C47 | §10 ¶2 | reconfigurable hardware compatible; not attestation | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C48 | §11 | summary restates C12–C45 | X (summary; discharged through its referents C12-C45) | R14 | todo | refs only |

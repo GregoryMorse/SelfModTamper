@@ -16,7 +16,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R8 | Von Neumann vs Harvard, split memory | must | DONE |
 | R9 | Clear contract | must | DONE |
 | R10 | Timers, noise, estimator, data checks | must | DONE |
-| R11a | Detection predicate, policy, reset | must | TODO |
+| R11a | Detection predicate, policy, reset | must | DONE |
 | R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | TODO |
 | R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | TODO |
 | R12 | Code fixes (not errata) and native acceptance | must | TODO |
@@ -195,3 +195,16 @@ handoff: done / next / open obligations / hazards / evidence file).
   (recorded as observation).
 - Not claimed / open: i.i.d. noise (could); quantile calibration (R11a); P05 provenance of the SMC Loop / Dyn SMC Loop labels stays ask-author (R12/R13).
 - Next: R11a (detection predicate, policy, reset).
+
+### R11a (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `Spec/Detection` (`CheckUnit`, `run`, `value` = final sum and final opcode byte, `reset`, `P`, `alarm`); `Detection/Predicate` (C03: completeness,
+  value soundness, timing soundness; P04: two images that differ yet have equal value, `P_not_iff`); `Detection/Policy` (C45: no false alarm under the
+  deterministic noise contract, persistent slowdown alarms within `k` runs, calibration); `Detection/Reset` (C44: reset restores the canonical state,
+  value is a function of the other bytes, without reset the second call differs; C05: `value_frame`, `storage_tamper_detected`).
+- Scope: the detection units use the static Level 1 kernel; the unrolled kernel has 296 opcode states, restored by the intro/tail patch logic (`unrolled_emulation`),
+  and its reset claim is argued, not separately proved (it would be a copy of `reset_restores` for `fullPasses`). Time is an abstract number `t` compared with `tau`;
+  how a real run's time relates to the platform contract enters in R11b/R11c as a hypothesis.
+- Collision witness: first qword `0x8000000000000000` turns `ADC` into `CMP` (even parity, negative), so the second qword is not added; second qword `0` and
+  `0x8000000000000001` give the same toggle, hence equal sum and equal final opcode byte.
+- Next: R11b (threat model I: definitions, level matrix, security theorem), the crux.

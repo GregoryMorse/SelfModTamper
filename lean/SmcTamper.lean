@@ -47,3 +47,7 @@ public import SmcTamper.Contract.Estimator
 public import SmcTamper.Contract.Overhead
 public import SmcTamper.Data.Tables
 public import SmcTamper.Data.Ratios
+public import SmcTamper.Spec.Detection
+public import SmcTamper.Detection.Predicate
+public import SmcTamper.Detection.Policy
+public import SmcTamper.Detection.Reset
