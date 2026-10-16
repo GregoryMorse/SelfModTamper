@@ -1,0 +1,66 @@
+{
+ "debug": {
+  "build_ok": true,
+  "vectors": {
+   "exit": 0,
+   "output": "Number of pages: 2 Unrolled loop size per page: 148 Intro bytes: 0x5F Code size: 0x1B\nvector 0 R 1 8: TPComp (asm, single site)\nvector 0 R 1 8: TPCompC (C emulation)\nvector 0 R 1 8: TPCompLoop (asm, static unrolled)\nvector 0 R 1 8: TPCompCLoop (C emulation)\nvector 0 R 1 8: gen_asm (AsmJit dynamic unrolled)\nvector 1 R 2 16: TPComp (asm, single site)\nvector 1 R 2 16: TPCompC (C emulation)\nvector 1 R 2 16: TPCompLoop (asm, static unrolled)\nvector 1 R 2 16: TPCompCLoop (C emulation)\nvector 1 R 2 16: gen_asm (AsmJit dynamic unrolled)\nvector 2 R 3 24: TPComp (asm, single site)\nvector 2 R 3 24: TPCompC (C emulation)\nvector 2 R 3 24: TPCompLoop (asm, static unrolled)\nvector 2 R 3 24: TPCompCLoop (C emulation)\nvector 2 R 3 24: gen_asm (AsmJit dynamic unrolled)\nTPComp (asm, single site)            pass 36 fail 0\nTPCompC (C emulation)                pass 36 fail 0\nTPCompLoop (asm, static unrolled)    pass 36 fail 0\nTPCompCLoop (C emulation)            pass 36 fail 0\ngen_asm (AsmJit dynamic unrolled)    pass 36 fail 0\nvectors: 36\n"
+  },
+  "text": {
+   "exit": 0,
+   "output": "text base 0x7FF751471000 size 0x60400\nsingle site      call 0: asm 1186036878352479283 C 1186036878352479283 equal\nsingle site      call 1: asm 949791880665423760 C 949791880665423760 equal\nsingle site      call 2: asm 949791880665423760 C 949791880665423760 equal\nsingle site      call 3: asm 949791880665423760 C 949791880665423760 equal\nstatic unrolled  call 0: asm 167786757184220098 C 167786757184220098 equal\nstatic unrolled  call 1: asm 10867109814155835541 C 10867109814155835541 equal\nstatic unrolled  call 2: asm 544546112327810145 C 544546112327810145 equal\nstatic unrolled  call 3: asm 18117439784953075224 C 18117439784953075224 equal\n"
+  },
+  "probe_L07": {
+   "n=148 TPCompLoop": 1,
+   "n=148 gen_asm": 1,
+   "n=148 TPCompCLoop": 0,
+   "n=149 TPCompLoop": 0,
+   "n=149 gen_asm": 0,
+   "n=149 TPCompCLoop": 0,
+   "n=296 TPCompLoop": 1,
+   "n=296 gen_asm": 1,
+   "n=296 TPCompCLoop": 0,
+   "n=297 TPCompLoop": 0,
+   "n=297 gen_asm": 0,
+   "n=297 TPCompCLoop": 0,
+   "n=592 TPCompLoop": 1,
+   "n=592 gen_asm": 1,
+   "n=592 TPCompCLoop": 0
+  }
+ },
+ "release": {
+  "build_ok": true,
+  "vectors": {
+   "exit": 0,
+   "output": "Number of pages: 2 Unrolled loop size per page: 148 Intro bytes: 0x5F Code size: 0x1B\nvector 0 R 1 8: TPComp (asm, single site)\nvector 0 R 1 8: TPCompC (C emulation)\nvector 0 R 1 8: TPCompLoop (asm, static unrolled)\nvector 0 R 1 8: TPCompCLoop (C emulation)\nvector 0 R 1 8: gen_asm (AsmJit dynamic unrolled)\nvector 1 R 2 16: TPComp (asm, single site)\nvector 1 R 2 16: TPCompC (C emulation)\nvector 1 R 2 16: TPCompLoop (asm, static unrolled)\nvector 1 R 2 16: TPCompCLoop (C emulation)\nvector 1 R 2 16: gen_asm (AsmJit dynamic unrolled)\nvector 2 R 3 24: TPComp (asm, single site)\nvector 2 R 3 24: TPCompC (C emulation)\nvector 2 R 3 24: TPCompLoop (asm, static unrolled)\nvector 2 R 3 24: TPCompCLoop (C emulation)\nvector 2 R 3 24: gen_asm (AsmJit dynamic unrolled)\nTPComp (asm, single site)            pass 36 fail 0\nTPCompC (C emulation)                pass 36 fail 0\nTPCompLoop (asm, static unrolled)    pass 36 fail 0\nTPCompCLoop (C emulation)            pass 36 fail 0\ngen_asm (AsmJit dynamic unrolled)    pass 36 fail 0\nvectors: 36\n"
+  },
+  "text": {
+   "exit": 0,
+   "output": "text base 0x7FF6C5EE1000 size 0x7800\nsingle site      call 0: asm 9426966047508445570 C 9426966047508445570 equal\nsingle site      call 1: asm 2581347671295303177 C 2581347671295303177 equal\nsingle site      call 2: asm 9426966047508445570 C 9426966047508445570 equal\nsingle site      call 3: asm 2581347671295303177 C 2581347671295303177 equal\nstatic unrolled  call 0: asm 9917422950718357834 C 9917422950718357834 equal\nstatic unrolled  call 1: asm 8890386242400162332 C 8890386242400162332 equal\nstatic unrolled  call 2: asm 13883241838928572941 C 13883241838928572941 equal\nstatic unrolled  call 3: asm 17509906277931031823 C 17509906277931031823 equal\n"
+  },
+  "probe_L07": {
+   "n=148 TPCompLoop": 3221225477,
+   "n=148 gen_asm": 3221225477,
+   "n=148 TPCompCLoop": 0,
+   "n=149 TPCompLoop": 0,
+   "n=149 gen_asm": 0,
+   "n=149 TPCompCLoop": 0,
+   "n=296 TPCompLoop": 3221225477,
+   "n=296 gen_asm": 3221225477,
+   "n=296 TPCompCLoop": 0,
+   "n=297 TPCompLoop": 0,
+   "n=297 gen_asm": 0,
+   "n=297 TPCompCLoop": 0,
+   "n=592 TPCompLoop": 3221225477,
+   "n=592 gen_asm": 3221225477,
+   "n=592 TPCompCLoop": 0
+  }
+ },
+ "prefix_release": {
+  "ref": "2e1b36c (HEAD when run; the pre-fix product source)",
+  "build_ok": true,
+  "text": {
+   "exit": 1,
+   "output": "text base 0x7FF6BEC11000 size 0x7800\nsingle site      call 0: asm 16953041947522468895 C 15445440731615878420 DIFFERENT\nsingle site      call 1: asm 16953041947522468895 C 5679816942002063569 DIFFERENT\nsingle site      call 2: asm 16953041947522468895 C 5679816942002063569 DIFFERENT\nsingle site      call 3: asm 16953041947522468895 C 5679816942002063569 DIFFERENT\nstatic unrolled  call 0: asm 8117455107906826582 C 10901974752491549973 DIFFERENT\nstatic unrolled  call 1: asm 14994190678805394318 C 11329391369937187919 DIFFERENT\nstatic unrolled  call 2: asm 7395633593724569913 C 16021836161977380090 DIFFERENT\nstatic unrolled  call 3: asm 16964683865203885087 C 7013246151716106826 DIFFERENT\n"
+  }
+ }
+}

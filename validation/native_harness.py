@@ -25,7 +25,78 @@ def runbat(name: str, lines: list) -> subprocess.CompletedProcess:
     return subprocess.run(["cmd", "/c", str(f)], cwd=B, capture_output=True, text=True, stdin=subprocess.DEVNULL)
 
 
+def build(cfg: str) -> int:
+    """cfg 'release': /O1 and no incremental link (symbols are the code itself); 'debug': /Od and incremental link (symbols are
+    `E9 rel32` thunks).  Both link /SECTION:.text,RWE as the product does (the static SMC kernels write their own code)."""
+    opt = "/Od" if cfg == "debug" else "/O1"
+    inc = "/INCREMENTAL" if cfg == "debug" else "/INCREMENTAL:NO"
+    out = f"smc_harness_{cfg}.exe"
+    r = runbat("ml.bat", [f'ml64 /nologo /c /Fo TP.obj /Fl"TP.lst" /Sa "{ROOT / "SelfModTamper/TP.asm"}"'])
+    if r.returncode:
+        print(r.stdout[-1500:], r.stderr[-800:])
+        return r.returncode
+    cl = (f'cl /nologo /EHsc /permissive- {opt} /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG /I "{VC / "include"}" "{ROOT / "validation/native/smc_harness.cpp"}" '
+          f'TP.obj /Fe:{out} /link {inc} /SECTION:.text,RWE /LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
+    r = runbat("cl.bat", [cl])
+    if r.returncode:
+        print(r.stdout[-2500:], r.stderr[-800:])
+        return r.returncode
+    shutil.copy(VC / "bin/asmjit.dll", B / "asmjit.dll")
+    return 0
+
+
+def prefix_release() -> dict:
+    """Release harness built from the product source as of the last commit before R12 (HEAD at call time must still hold the
+    pre-fix file, i.e. call before committing the fixes, or set REF to that commit): L03 predicts C emulation != asm kernel."""
+    ref = __import__("os").environ.get("PREFIX_REF", "HEAD")
+    pre = B / "prefix"
+    pre.mkdir(exist_ok=True)
+    src = subprocess.run(["git", "show", f"{ref}:SelfModTamper/SelfModTamper.cpp"], cwd=ROOT, capture_output=True).stdout
+    (pre / "SelfModTamper.cpp").write_bytes(src)
+    cl = (f'cl /nologo /EHsc /permissive- /O1 /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG /DPRODUCT_CPP=\\"{(pre / "SelfModTamper.cpp").as_posix()}\\" '
+          f'/I "{VC / "include"}" "{ROOT / "validation/native/smc_harness.cpp"}" TP.obj /Fe:pre_release.exe /link /INCREMENTAL:NO /SECTION:.text,RWE '
+          f'/LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
+    rec = {"ref": ref}
+    r = runbat("clp.bat", [cl])
+    rec["build_ok"] = r.returncode == 0
+    if r.returncode == 0:
+        r = subprocess.run([str(B / "pre_release.exe"), "--text"], cwd=B, capture_output=True, text=True)
+        rec["text"] = {"exit": r.returncode, "output": r.stdout[-1500:]}
+    return rec
+
+
+def probes(cfg: str) -> dict:
+    """L07: qword counts n with 148 | n crash the unrolled asm kernels; neighbours and the C emulation do not."""
+    out = {}
+    for n in (148, 149, 296, 297, 592):
+        for k in ("TPCompLoop", "gen_asm", "TPCompCLoop"):
+            r = subprocess.run([str(B / f"smc_harness_{cfg}.exe"), "--probe", str(8 * n), k], cwd=B, capture_output=True, text=True)
+            out[f"n={n} {k}"] = r.returncode
+    return out
+
+
+def acceptance() -> int:
+    """Build both configurations and run the Lean-vector replay and the introspective differential on each."""
+    results = {}
+    for cfg in ("debug", "release"):
+        rc = build(cfg)
+        rec = {"build_ok": rc == 0}
+        if rc == 0:
+            for mode, args in (("vectors", ["--vectors", str(ROOT / "validation/native/vectors.txt")]), ("text", ["--text"])):
+                r = subprocess.run([str(B / f"smc_harness_{cfg}.exe")] + args, cwd=B, capture_output=True, text=True)
+                rec[mode] = {"exit": r.returncode, "output": r.stdout[-3000:]}
+        if rc == 0:
+            rec["probe_L07"] = probes(cfg)
+        results[cfg] = rec
+        print(cfg, json.dumps({k: (v if k == "build_ok" else v.get("exit", v)) for k, v in rec.items()}))
+    results["prefix_release"] = prefix_release()
+    (ROOT / "validation/native/acceptance.json").write_text(json.dumps(results, indent=1) + chr(10))
+    return 0
+
+
 def main() -> int:
+    if "--acceptance" in sys.argv:
+        return acceptance()
     r = runbat("ml.bat", [f'ml64 /nologo /c /Fo TP.obj /Fl"TP.lst" /Sa "{ROOT / "SelfModTamper/TP.asm"}"'])
     print(r.stdout[-1500:], r.stderr[-800:])
     if r.returncode:
@@ -48,7 +119,7 @@ def main() -> int:
                        "intro_bytes": int(m.group(1), 16) if m else None,
                        "code_size": int(m.group(2), 16) if m else None}}
     (ROOT / "validation/layout").mkdir(exist_ok=True)
-    (ROOT / "validation/layout/dyn_x64.json").write_text(json.dumps(out) + "\n")
+    (ROOT / "validation/layout/dyn_x64.json").write_text(json.dumps(out) + chr(10))
     print("dyn_x64.json", len(data), out["printed"])
     return 0
 

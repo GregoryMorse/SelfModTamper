@@ -23,7 +23,7 @@ This work was presented at:
 
 > Morse, G.; Kozsik, T. **Tamper-Proofing with Self-Modifying Code**. *CECC 2022*, Smolenice, Slovakia, 28 June 2022.
 
-The full manuscript is currently **unpublished** — it is not yet available on arXiv or in any journal proceedings — and forms part of Gregory Morse's doctoral dissertation, which is under review at Eötvös Loránd University (ELTE).
+The manuscript is available as the preprint [arXiv:2604.12407](https://arxiv.org/abs/2604.12407) (v1), and forms part of Gregory Morse's doctoral dissertation, which is under review at Eötvös Loránd University (ELTE).
 
 ## Requirements
 
@@ -126,9 +126,8 @@ cmake --build --preset debug
 
 Output: `build\Release\SelfModTamper.exe` / `build\Debug\SelfModTamper.exe`
 
-> The preset uses the **Visual Studio 17 2022** generator.  If you only have Visual Studio
-> 2026 build tools, edit the `"generator"` field in `CMakePresets.json` to
-> `"Visual Studio 18 2026"`.
+> The default preset uses the **Visual Studio 18 2026** generator; use `--preset windows-x64-vs2022` for Visual Studio 2022. The
+> Visual Studio solution (`SelfModTamper.sln`) is the authoritative build; CMake is the secondary route.
 
 ---
 
@@ -257,6 +256,8 @@ SelfModTamper/
 | Performance Counter | 1 803 | 163 204 | 90.6× faster |
 
 ### `MACHINE_CLEARS.SMC` events over 10 000 runs
+
+> The program that produced these numbers printed the labels of its last two rows swapped: the row labelled `SMC Loop` measured the dynamic (AsmJit) kernel and the row labelled `Dyn SMC Loop` measured the static `TPCompLoop` (corrected in the current source; the variant table above is the correct mapping). The numbers below are as printed in the paper.
 
 | Variant | Event count |
 |---|---|

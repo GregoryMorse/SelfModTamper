@@ -265,6 +265,11 @@ TPCompFunc gen_asm(size_t& codeSize)
 		fclose(f);
 	}
 	cb.finalize();
+	// The intro is measured with placeholder immediates (measure_code_size); check that the emitted intro has the measured length.
+	if (code.labelOffset(labels[0]) != introbytes) {
+		printf("Emitted intro length %llu differs from the measured length %zu\n", (unsigned long long)code.labelOffset(labels[0]), introbytes);
+		return nullptr;
+	}
 	TPCompFunc fn;
 	Error err = rt.add(&fn, &code);
 	//printf("Code size: %llX", code.codeSize());
@@ -414,11 +419,18 @@ inline bool paritybyte(unsigned char v)
 	return (0x6996 >> v) & 1;
 }
 
+// With incremental linking a function symbol resolves to a thunk `E9 rel32` that jumps to the real code; without it (Release)
+// the symbol is the code itself.  Follow the thunk only if there is one.
+static PBYTE followThunk(PBYTE p)
+{
+	return p[0] == 0xE9 ? p + 5 + *(PLONG32)(p + 1) : p;
+}
+
 void __cdecl TPCompC(PULONG64 pData, ULONG64 ulSize, PULONG64 pResult)
 {
 	unsigned __int64 sum = 0;
 	static unsigned char op = 0;
-	const PBYTE pTPCompOffset = (PBYTE)TPComp + 5 + *(PULONG32)((PBYTE)TPComp + 1); //C compiler makes this point to a jump instruction E9 offs32
+	const PBYTE pTPCompOffset = followThunk((PBYTE)TPComp); //incremental-link thunk E9 offs32, if any
 	const size_t offsetInFunc = 0xF; //manually found based on MOV, LEA, XOR, CLC, ADC prefix
 	const PULONG64 pModOffset = (PULONG64)((ULONG64)((PBYTE)pTPCompOffset + offsetInFunc) & ~0x7ULL);
 	const unsigned char pModByteOffset = ((ULONG64)((PBYTE)pTPCompOffset + offsetInFunc) & 7) * 8+3; //convert to bits, add 3 bits for the ADC/SBB/XOR/CMP offset
@@ -455,7 +467,7 @@ void __cdecl TPCompCLoop(PULONG64 pData, ULONG64 ulSize, PULONG64 pResult)
 	const size_t numPages = 2;
 	const unsigned int loopLength = 148;
 	static unsigned char op[numPages * loopLength] = {};
-	const PBYTE pTPCompOffset = (PBYTE)TPCompLoop + 5 + *(PULONG32)((PBYTE)TPCompLoop + 1); //C compiler makes this point to a jump instruction E9 offs32
+	const PBYTE pTPCompOffset = followThunk((PBYTE)TPCompLoop); //incremental-link thunk E9 offs32, if any
 	size_t offsetInFunc = 0x60; //manually found based on MOV, LEA, XOR, CLC, ADC prefix
 	const size_t code_size = 0x1b;
 	struct ByteLCIndices {
@@ -671,6 +683,17 @@ int main()
 	DWORD size = 0;
 	GetCodeSegmentBaseSize(base, size);
 	printf("Code segment base: 0x%llX size: 0x%lX End address: 0x%llX\n", (ULONG64)base, size, (ULONG64)(base + size));
+	// Precondition of TPCompLoop / TPCompCLoop (and of the unrolled kernel): at least one qword and a whole number of qwords.
+	if (size < 8 || size % 8 != 0) {
+		printf("The code segment size 0x%lX is not a positive multiple of 8; the kernels require size >= 8 and 8 | size.\n", size);
+		return 1;
+	}
+	// L07: the termination patch of the unrolled kernels assumes the byte after the last executed unit is 0x48; for the last unit of a
+	// 148-unit page it is not, so a qword count that is a multiple of 148 jumps to a garbage target.
+	if ((size / 8) % 148 == 0) {
+		printf("The code segment size 0x%lX is a multiple of 148 qwords; the unrolled kernels do not support it (L07).\n", size);
+		return 1;
+	}
 
 	//printf("%X\n", CRC32((const unsigned char*)"ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1));
 	ULONG64 checksum = 0;
@@ -681,7 +704,7 @@ int main()
 	TPCompFunc TPCompF = gen_asm(codeSize);
 	VirtualLock(TPCompF, codeSize);
 	TPCompFunc testFuncs[] = { (TPCompFunc)TPCompC, TPComp, (TPCompFunc)TPCompCLoop, TPCompF, TPCompLoop };
-	const char* strFuncNames[] = { "C", "SMC", "C Loop", "SMC Loop", "Dyn SMC Loop" };
+	const char* strFuncNames[] = { "C", "SMC", "C Loop", "Dyn SMC Loop", "SMC Loop" }; //same order as testFuncs: dynamic (AsmJit) before static
 	const size_t trials = 10000;
 	std::ofstream out_file("out.txt");
 	for (size_t f = 0; f < sizeof(testFuncs) / sizeof(TPCompFunc); f++) {
@@ -697,10 +720,10 @@ int main()
 			for (size_t j = 0; j < numTimers; j++)
 				allTimers[j]->startTimer();
 			testFuncs[f]((PULONG64)base, size, &checksum);
-			std::cout << "MACHINE_CLEARS.SMC: " << (getSMCCount(hDevice) - smcClears) << std::endl;
 			for (size_t j = 0; j < numTimers; j++) {
 				timeVals[j] = allTimers[j]->endTimer();
 			}
+			std::cout << "MACHINE_CLEARS.SMC: " << (getSMCCount(hDevice) - smcClears) << std::endl; //after the timed interval
 			for (size_t j = 0; j < numTimers; j++) {
 				if (f == 1 && j == 1) out_file << timeVals[j] << ", ";
 				avgTimeVals[j] += timeVals[j];

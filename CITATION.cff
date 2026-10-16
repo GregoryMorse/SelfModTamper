@@ -37,29 +37,23 @@ keywords:
 license: MIT
 year-released: 2022
 preferred-citation:
-  type: unpublished
+  type: article
   title: "Tamper-Proofing with Self-Modifying Code"
   authors:
     - family-names: Morse
       given-names: Gregory
-      email: gregory.morse@live.com
       orcid: "https://orcid.org/0000-0002-0231-6557"
       affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
     - family-names: Kozsik
       given-names: Tamás
-      email: kto@elte.hu
       orcid: "https://orcid.org/0000-0003-4484-9172"
       affiliation: "Eötvös Loránd University (ELTE), Budapest, Hungary"
-  year: 2022
-  month: 6
-  conference:
-    name: "CECC 2022"
-    location: "Smolenice, Slovakia"
-    date-start: 2022-06-28
-    date-end: 2022-06-28
+  journal: "arXiv preprint arXiv:2604.12407"
+  year: 2026
+  identifiers:
+    - type: other
+      value: "arXiv:2604.12407"
   notes: >-
-    Presented at CECC 2022, Smolenice, Slovakia, 28 June 2022.
-    Full manuscript unpublished and not yet available on arXiv;
-    forms part of a doctoral dissertation under review at
+    Presented at CECC 2022, Smolenice, Slovakia, 28 June 2022. Forms part of a doctoral dissertation under review at
     Eötvös Loránd University (ELTE).
-  url: "https://github.com/GregoryMorse/SelfModTamper"
+  url: "https://arxiv.org/abs/2604.12407"

@@ -48,6 +48,9 @@ RET
 TPComp ENDP
 
 ; _TEXT$SMC ENDS
+; Note: the segment above (commented out) would have enclosed TPComp only. TPCompLoop below is in the ordinary .text section, so
+; the static unrolled loop is not page-aligned (the dynamic copy made by gen_asm is, via VirtualAlloc). Precondition of TPCompLoop:
+; the byte count in RDX is at least 8 and a multiple of 8.
 
 TPCompLoop PROC USES rbx rsi rdi
 mov rdi, rdx

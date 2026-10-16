@@ -1,14 +1,21 @@
 {
   "version": 3,
-  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "windows-x64",
       "displayName": "Windows x64 (vcpkg)",
-      "description": "Uses the Visual Studio 2022 generator. Change 'generator' to 'Visual Studio 18 2026' if VS 2022 build tools are not installed.",
+      "description": "Uses the Visual Studio 2026 generator; the preset windows-x64-vs2022 uses Visual Studio 2022. The Visual Studio solution is the authoritative build; CMake is the secondary route.",
       "binaryDir": "${sourceDir}/build",
-      "generator": "Visual Studio 17 2022",
-      "architecture": { "value": "x64", "strategy": "set" },
+      "generator": "Visual Studio 18 2026",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows"
@@ -18,6 +25,13 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "windows-x64-vs2022",
+      "inherits": "windows-x64",
+      "displayName": "Windows x64 (vcpkg, Visual Studio 2022)",
+      "binaryDir": "${sourceDir}/build-vs2022",
+      "generator": "Visual Studio 17 2022"
     }
   ],
   "buildPresets": [
