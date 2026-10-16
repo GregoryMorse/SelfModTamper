@@ -44,8 +44,12 @@ None mentions alarm, wins or detection (`validation/threat_audit.py`).
   Witnesses: A1 split write against a toggle-free kernel; A2cov a protected byte outside every region; A2intact the only unit neutralised;
   A3 `emulLB = 0`; A4 DMA write–use–restore; A5 replayed reading `1` with elapsed `100` (L2 clock, and L1 with an OS timer); A6 write–use–restore
   between checks; A8 the two-quadword collision `0 ↔ 0x8000000000000001` (P04 pair, kernel ADC→CMP).
-  **Open:** necessity witnesses for A2 `code ⊆ prot` and strong connectivity (need a two-unit system) and for A7; the 3-quadword
-  forgery construction (any target reachable from the canonical start) and the 2-quadword impossibility case are not formalised (plan D11 "Forgery").
+  `Threat/T3full` (`T3_full`) adds A7 (the response byte lies outside the unit's code and is modified; all checks are emulated, no alarm is effective), A2 code protected
+  and A2 strong connectivity (two units, a periodic timeline `Threat/Loop`: unit 1 is neutralised while its unprotected code byte is set, which unit 0 never sees, or unit 0 does not cover unit 1).
+  `Threat/Forgery` (A8 necessity, P04): `forgery_three` (from any kernel state, three adversary-chosen quadwords reach every target an honest run reaches),
+  `two_not_enough` (the target `(2^63+1, XOR)` is not reachable in two quadwords from the canonical state), `forgery_value` (for a unit with at least three quadwords and the opcode byte
+  outside the region, any tampering of the earlier quadwords is compensated by the last three: the unit's value is the honest one), via `tpCompC_abs` and `static_eq_c`.
+  The unreachable state is `(S, CMP)` with `toggle S = 0` (`HInv`, `reachable_inv`).
 * **T4** `Threat/Matrix`: `tsc_low_level` (L0/L1 with the inline timer give A1, A4, A5), `nec_A5_osApi` (L1 with an OS timer API can forge
   readings), L2 breaks A1 and A5, L4 breaks A4, `ext_clock_detects` (external clock, resolution `r`, jitter `j`: slowdowns ≥ `j+2r` exceed the calibrated
   threshold; `reading_indistinguishable` shows slowdowns < `r` can be invisible).

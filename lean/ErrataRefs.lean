@@ -64,10 +64,17 @@ import SmcTamper.Threat.Witnesses
 import SmcTamper.Threat.Witnesses2
 import SmcTamper.Threat.Witnesses3
 import SmcTamper.Threat.T3
+import SmcTamper.Threat.Witnesses4
+import SmcTamper.Threat.Loop
+import SmcTamper.Threat.Witnesses5
+import SmcTamper.Threat.T3full
+import SmcTamper.Threat.Forgery
 import SmcTamper.Threat.SplitMirror
 import SmcTamper.Threat.Matrix
 import SmcTamper.Threat.Scope
 
+#check @SmcTamper.forgery_value
+#check @SmcTamper.two_not_enough
 #check @SmcTamper.security
 #check @SmcTamper.witness_secure
 #check @SmcTamper.faithful_needs_med
@@ -77,6 +84,7 @@ import SmcTamper.Threat.Scope
 #check @SmcTamper.tsc_low_level
 #check @SmcTamper.ext_clock_detects
 #check @SmcTamper.injected_code_outside_goal
+#check @SmcTamper.T3_full
 #check @SmcTamper.injected_code_outside_goal
 #check @SmcTamper.noeffect_events
 #check @SmcTamper.necessary_A6

@@ -63,6 +63,11 @@ public import SmcTamper.Threat.Witnesses
 public import SmcTamper.Threat.Witnesses2
 public import SmcTamper.Threat.Witnesses3
 public import SmcTamper.Threat.T3
+public import SmcTamper.Threat.Witnesses4
+public import SmcTamper.Threat.Loop
+public import SmcTamper.Threat.Witnesses5
+public import SmcTamper.Threat.T3full
+public import SmcTamper.Threat.Forgery
 public import SmcTamper.Threat.SplitMirror
 public import SmcTamper.Threat.Matrix
 public import SmcTamper.Threat.Scope
