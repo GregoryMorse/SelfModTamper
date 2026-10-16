@@ -93,5 +93,5 @@ from the titles and general knowledge of the papers, not from re-reading them.
 * The unrolled kernel's reset is argued, not proved separately; the intro length is abstract; page-granule counts are bounded above only.
 * Emulation cost is a contract field (`emulLB`); the link to R8's `harvard_time_bound` is by argument, not a formal instance.
 * The model has one fetch view and one data view; the kernel's reads come from the data view. Hence T2 as above.
-* `Level.allows` for L0 allows only an initial run of writes; L3 has no extra events and is reserved.
+* `Level.allows` for L0 allows only an initial run of writes; L3 has no events beyond L2's (`Threat/LevelMono`: `allows_mono`, `L3_events_eq_L2`), so the table's L3 row is a monotone extension, not a new mediation result.
 * Witness systems are tiny (one unit, region 8 or 16 bytes); they show necessity, not realism.

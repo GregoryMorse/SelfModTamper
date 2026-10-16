@@ -71,3 +71,5 @@ public import SmcTamper.Threat.Forgery
 public import SmcTamper.Threat.SplitMirror
 public import SmcTamper.Threat.Matrix
 public import SmcTamper.Threat.Scope
+public import SmcTamper.Threat.LevelMono
+public import SmcTamper.Unrolled.Sites

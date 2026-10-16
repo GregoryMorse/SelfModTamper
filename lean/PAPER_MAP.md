@@ -15,7 +15,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | done (FC) | Contract/Timers.lean `reading_bounds`, `reading_indistinguishable`, `multimedia_min_inconsistent` (O1) |
 | C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | done (FD) | Data/Ratios.lean `c09_clocks_agree` (within 6 units) |
 | C10 | §2, §3 | API/toolchain facts (Windows/Linux clocks, MSVC inline asm, `/SECTION`, `VirtualAlloc`, `mmap`) | R | R1 | done | R-class verified in R1 (table below) |
-| C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | partial | Spec/Layout.lean `opOff` (= base + const); no finite-set lemma yet |
+| C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | done | Spec/Layout.lean `opOff`; `Unrolled/Sites` (296 distinct keys, shift by base) |
 | C12 | §4 ¶1, ¶3 | modifying in-flight code triggers machine clears; naive SMC is slow | FC | R9 | done (FC) | Contract/StaticClears.lean `static_clears_ge`, `static_time_ge` |
 | C13 | §4 ¶2 | unrolling + distinct pages reduce clears | FC | R9 | done (FC) | Contract/UnrolledClears.lean `pass_clears_page` (g = 4096: at most 2 ceil(W/8) per pass) |
 | C14 | §4 ¶4 | detection granule → false positives | FC | R9 | done (FC) | Contract/Facts.lean `false_positive` |
@@ -27,7 +27,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C20 | Fig. 2 | encodings in comments, `$-2-3-3-3-2-3` targets the ADC opcode | F + M | R3, R5 | done | X64/Facts.lean: `tpCompBytes_listing` (M: ml64 listing), `fig2_xor_targets_adc_opcode` |
 | C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | done | Static/Emulation.lean `static_eq_c`; Static/Main.lean `static_emulation` (46 bytes on the ISA = `tpCompC`), `cIter_isOp` (default branch unreachable) |
 | C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
-| C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | open | StateBound not done |
+| C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | partial | `Unrolled/Sites`: D distinct sites for depth D; "harder to emulate" is not a theorem |
 | C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | done (FC) | Contract/UnrolledClears.lean `g1_no_unit_clear`, `pass_clears_byte` (g = 1, W <= 1182, I >= 4) |
 | C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | done | X64/Facts.lean `unit_size_27`; Layout/Compare.lean `dyn_image_eq` (AsmJit bytes = 27-byte units), Layout/Targets.lean `unit_xor_target` |
 | C26 | §6 ¶2 | sizes measured with placeholders equal the emitted sizes | F + M | R5 | todo |  |
