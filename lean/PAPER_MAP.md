@@ -5,12 +5,12 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 
 | ID | v1 location | Claim | Class | Round | Status | Declaration / evidence |
 |---|---|---|---|---|---|---|
-| C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | todo |  |
-| C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | todo |  |
+| C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | done | Harvard/Interp.lean `interp_step`, `interp_simulates` |
+| C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | done | Harvard/Separation.lean `harvard_reads_sensitive`, `harvard_time_bound` (cost contract as hypothesis) |
 | C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | todo |  |
-| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 (L2 in R7) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation` |
+| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 (L2 `unrolled_refines` open, R7 skipped) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation` |
 | C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | todo |  |
-| C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | todo |  |
+| C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | done (witness) | Harvard/SplitMemory.lean `split_differs_from_vn`, `smc_detects_fetch_patch`; mediation variant in R11c |
 | C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | todo |  |
 | C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | todo |  |
 | C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | todo |  |

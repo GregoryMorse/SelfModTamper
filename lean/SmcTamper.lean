@@ -30,3 +30,8 @@ public import SmcTamper.Unrolled.Emulation
 public import SmcTamper.Unrolled.Patch
 public import SmcTamper.Unrolled.Main
 public import SmcTamper.Unrolled.Facts
+public import SmcTamper.Spec.Harvard
+public import SmcTamper.Harvard.NonInterference
+public import SmcTamper.Harvard.Separation
+public import SmcTamper.Harvard.Interp
+public import SmcTamper.Harvard.SplitMemory
