@@ -24,3 +24,9 @@ public import SmcTamper.Layout.Compare
 public import SmcTamper.Layout.Targets
 public import SmcTamper.Layout.Scan
 public import SmcTamper.Layout.AsmJitSize
+public import SmcTamper.Unrolled.Level1
+public import SmcTamper.Unrolled.Adjust
+public import SmcTamper.Unrolled.Emulation
+public import SmcTamper.Unrolled.Patch
+public import SmcTamper.Unrolled.Main
+public import SmcTamper.Unrolled.Facts

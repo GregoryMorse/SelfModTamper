@@ -8,14 +8,14 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | todo |  |
 | C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | todo |  |
 | C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | todo |  |
-| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | partial (static kernel done; unrolled in R6) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace` |
+| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 (L2 in R7) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation` |
 | C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | todo |  |
 | C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | todo |  |
 | C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | todo |  |
 | C08 | §2 ¶4–5 | coarse timers unsuitable for microbenchmarks (resolution) | FC | R10 | todo |  |
 | C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | todo |  |
 | C10 | §2, §3 | API/toolchain facts (Windows/Linux clocks, MSVC inline asm, `/SECTION`, `VirtualAlloc`, `mmap`) | R | R1 | done | R-class verified in R1 (table below) |
-| C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | todo |  |
+| C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | partial | Spec/Layout.lean `opOff` (= base + const); no finite-set lemma yet |
 | C12 | §4 ¶1, ¶3 | modifying in-flight code triggers machine clears; naive SMC is slow | FC | R9 | todo |  |
 | C13 | §4 ¶2 | unrolling + distinct pages reduce clears | FC | R9 | todo |  |
 | C14 | §4 ¶4 | detection granule → false positives | FC | R9 | todo |  |
@@ -27,12 +27,12 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C20 | Fig. 2 | encodings in comments, `$-2-3-3-3-2-3` targets the ADC opcode | F + M | R3, R5 | done | X64/Facts.lean: `tpCompBytes_listing` (M: ml64 listing), `fig2_xor_targets_adc_opcode` |
 | C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | done | Static/Emulation.lean `static_eq_c`; Static/Main.lean `static_emulation` (46 bytes on the ISA = `tpCompC`), `cIter_isOp` (default branch unreachable) |
 | C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
-| C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | todo |  |
+| C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | open | StateBound not done |
 | C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | todo |  |
 | C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | done | X64/Facts.lean `unit_size_27`; Layout/Compare.lean `dyn_image_eq` (AsmJit bytes = 27-byte units), Layout/Targets.lean `unit_xor_target` |
 | C26 | §6 ¶2 | sizes measured with placeholders equal the emitted sizes | F + M | R5 | todo |  |
 | C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | done | Layout/Numbers.lean `opcode_qwords_distinct`, `opOff_sep`; Layout/Targets.lean `unit_xor_target`, `unit_xor_other_page` |
-| C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 | todo |  |
+| C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 | done at Level 1 | Unrolled/Main.lean `unrolled_emulation` (patch applied, then restored); Unrolled/Facts.lean `next_byte_*` |
 | C29 | Fig. 5 | 148 units/page, intro 0x5F, unit 0x1B, base + size = end | F + FD + M | R5 | done (M) | Layout/Numbers.lean (`perPage_148`, `page1_fill`, `patch_target`, `bench_size_facts`, `fig5_sum`, `patch_xor`); Layout/Compare.lean (AsmJit and MASM bytes = Lean images); Layout/AsmJitSize.lean (intro 0x5F, cancellation) |
 | C30 | §7 ¶1 | static SMC ≈ 7.9× slower | FD | R10 | todo |  |
 | C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11a | todo |  |

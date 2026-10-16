@@ -47,4 +47,44 @@ def tpCompC (m : Mem) (opAddr p0 size op0 : Nat) : BitVec 64 × Nat :=
   let c := tpCompCIter m opAddr ((size + 7) / 8) ⟨p0, 0, op0⟩
   (c.sum, c.op)
 
+/-! ## `TPCompCLoop` (Fig. 3 for the unrolled kernel), transcribed
+
+`base` is `pTPCompOffset` (the address of the function). `adjustOffsets` is a `std::map` from the (8-aligned) address of a
+qword to `(byteidx, idx)`; `insert` keeps the first entry for a key. -/
+
+/-- The insertions into `adjustOffsets`, in program order: page 1 (`0x60 + 0x1b i`), then page 2 (`4097 + 0x1b i`, `idx = i + 148`). -/
+def adjustEntries (base : Nat) : List (Nat × Nat × Nat) :=
+  ((List.range 148).map (fun i => ((base + 0x60 + 0x1b * i) / 8 * 8, (base + 0x60 + 0x1b * i) % 8, i))) ++
+  ((List.range 148).map (fun i => ((base + 4097 + 0x1b * i) / 8 * 8, (base + 4097 + 0x1b * i) % 8, i + 148)))
+
+/-- `adjustOffsets.find(p)`: the first inserted entry with key `p`. -/
+def adjustFind (base p : Nat) : Option (Nat × Nat) :=
+  ((adjustEntries base).find? (fun e => e.1 == p)).map (fun e => (e.2.1, e.2.2))
+
+structure CLState where
+  p : Nat
+  sum : BitVec 64
+  lc : Nat
+  op : Nat → Nat
+
+/-- One iteration of the C loop body (against the unmodified image `m`). -/
+def tpCompCLoopStep (m : Mem) (base : Nat) (c : CLState) : CLState :=
+  let lc := if c.lc = 296 then 0 else c.lc
+  let raw := rd64 m c.p
+  let v := match adjustFind base c.p with
+    | some (bi, idx) => cSubst raw bi (c.op idx)
+    | none => raw
+  let r := cSwitch (c.op lc) c.sum v
+  let tgt := (lc + 148) % 296
+  { p := c.p + 8, sum := r.2, lc := lc + 1,
+    op := fun i => if i = tgt then cOpNext (c.op tgt) r.1 else c.op i }
+
+def tpCompCLoopIter (m : Mem) (base : Nat) : Nat → CLState → CLState
+  | 0, c => c
+  | n + 1, c => tpCompCLoopIter m base n (tpCompCLoopStep m base c)
+
+/-- `TPCompCLoop(pData = p0, ulSize = size, pResult)` with persistent `op` array `ops0`: `⌈size / 8⌉` iterations. -/
+def tpCompCLoop (m : Mem) (base p0 size : Nat) (ops0 : Nat → Nat) : CLState :=
+  tpCompCLoopIter m base ((size + 7) / 8) ⟨p0, 0, 0, ops0⟩
+
 end SmcTamper
