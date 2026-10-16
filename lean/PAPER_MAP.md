@@ -16,9 +16,9 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C09 | §2 ¶4 | Interrupt Time, QPC, precise UTC in the same precision class | FD | R10 | todo |  |
 | C10 | §2, §3 | API/toolchain facts (Windows/Linux clocks, MSVC inline asm, `/SECTION`, `VirtualAlloc`, `mmap`) | R | R1 | done | R-class verified in R1 (table below) |
 | C11 | §3 ¶5 | dynamic generation makes the monitored addresses contextual | F | R6 | partial | Spec/Layout.lean `opOff` (= base + const); no finite-set lemma yet |
-| C12 | §4 ¶1, ¶3 | modifying in-flight code triggers machine clears; naive SMC is slow | FC | R9 | todo |  |
-| C13 | §4 ¶2 | unrolling + distinct pages reduce clears | FC | R9 | todo |  |
-| C14 | §4 ¶4 | detection granule → false positives | FC | R9 | todo |  |
+| C12 | §4 ¶1, ¶3 | modifying in-flight code triggers machine clears; naive SMC is slow | FC | R9 | done (FC) | Contract/StaticClears.lean `static_clears_ge`, `static_time_ge` |
+| C13 | §4 ¶2 | unrolling + distinct pages reduce clears | FC | R9 | done (FC) | Contract/UnrolledClears.lean `pass_clears_page` (g = 4096: at most 2 ceil(W/8) per pass) |
+| C14 | §4 ¶4 | detection granule → false positives | FC | R9 | done (FC) | Contract/Facts.lean `false_positive` |
 | C15 | Table 1 | MSR/event identifiers (Intel, AMD) | R + M | R1, R12 | partial | see R-class table below |
 | C16 | §4 ¶6 | PMCs only for measurement, not needed by the mechanism | M | R5 | done (M) | Layout/Scan.lean: no `0F 30/32/33/A2` byte pair in either 8123-byte loop image or in TPComp (scan of emitted bytes); the ISA subset contains none of these instructions |
 | C17 | Table 2 | opcode pattern, bits 3–5, 2-bit toggle closure | F | R2 | todo |  |
@@ -28,7 +28,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | done | Static/Emulation.lean `static_eq_c`; Static/Main.lean `static_emulation` (46 bytes on the ISA = `tpCompC`), `cIter_isOp` (default branch unreachable) |
 | C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
 | C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | open | StateBound not done |
-| C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | todo |  |
+| C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | done (FC) | Contract/UnrolledClears.lean `g1_no_unit_clear`, `pass_clears_byte` (g = 1, W <= 1182, I >= 4) |
 | C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | done | X64/Facts.lean `unit_size_27`; Layout/Compare.lean `dyn_image_eq` (AsmJit bytes = 27-byte units), Layout/Targets.lean `unit_xor_target` |
 | C26 | §6 ¶2 | sizes measured with placeholders equal the emitted sizes | F + M | R5 | todo |  |
 | C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | done | Layout/Numbers.lean `opcode_qwords_distinct`, `opOff_sep`; Layout/Targets.lean `unit_xor_target`, `unit_xor_other_page` |
@@ -40,13 +40,13 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C33 | §7 ¶3 | ≈ 2.5× faster than static SMC (inconsistent, P02) | FD | R10 | todo |  |
 | C34 | §7 ¶3 | 3–4 pages no material improvement | X (data not reported) | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C35 | §7 ¶4 | 246 runs / 2.5% / 3.6% estimate (P01) | FD + FC | R10 | todo |  |
-| C36 | §7 ¶5, Table 6 | naive SMC clears ≫; unrolled reduced; clears at the start of unrolled iterations | FD + FC | R9 | todo |  |
+| C36 | §7 ¶5, Table 6 | naive SMC clears ≫; unrolled reduced; clears at the start of unrolled iterations | FD + FC | R9 | done (FD + FC) | Contract/Table6.lean `table6_naive`, `table6_loop_page`, `table6_loop_byte_inconsistent`; Contract/Facts.lean `intro_stores`, `tail_stores` |
 | C37 | Tables 4–5 | cross-timer consistency (TSC ≈ 2.59 GHz) | FD | R10 | todo |  |
 | C38 | Tables 4–5 | measured interval contents (P05) | M | R12 | todo |  |
 | C39 | §8 ¶1 | `c_nonSMC O(n) ≫ c_SMC O(n)` (notation, P09) | FD + X | R10 | todo |  |
 | C40 | §8 ¶2 | optimality hard, combinatorial; compilers can beat hand asm | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C41 | §8 ¶3 | Pentium III remark; branching expensive | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
-| C42 | §8 ¶3 | design rule: never modify the currently executing page | FC | R9 | todo |  |
+| C42 | §8 ¶3 | design rule: never modify the currently executing page | FC | R9 | done (FC) | Contract/Facts.lean `no_clear_of_disjoint` |
 | C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 | todo |  |
 | C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a | todo |  |
 | C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a | todo |  |

@@ -35,3 +35,9 @@ public import SmcTamper.Harvard.NonInterference
 public import SmcTamper.Harvard.Separation
 public import SmcTamper.Harvard.Interp
 public import SmcTamper.Harvard.SplitMemory
+public import SmcTamper.Spec.Contract
+public import SmcTamper.Contract.StaticClears
+public import SmcTamper.Contract.UnrolledStream
+public import SmcTamper.Contract.UnrolledClears
+public import SmcTamper.Contract.Facts
+public import SmcTamper.Contract.Table6

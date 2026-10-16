@@ -14,7 +14,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R6 | Unrolled kernel, Level 1 (+ StateBound should) | must | DONE (StateBound open) |
 | R7 | Unrolled kernel, Level 2 | should | SKIPPED (MVP path; open obligation) |
 | R8 | Von Neumann vs Harvard, split memory | must | DONE |
-| R9 | Clear contract | must | TODO |
+| R9 | Clear contract | must | DONE |
 | R10 | Timers, noise, estimator, data checks | must | TODO |
 | R11a | Detection predicate, policy, reset | must | TODO |
 | R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | TODO |
@@ -163,3 +163,22 @@ handoff: done / next / open obligations / hazards / evidence file).
   agree with carry clear). The plain checksum's blindness to the fetch view is by construction (`plainRun` has no fetch-view argument); the
   mediation variant (adversary mirrors SMC writes) belongs to R11c. The cost contract is a hypothesis field, not a claim about hardware.
 - Next: R9 (clear contract).
+
+### R9 (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `Spec/Contract` (`Ev`, `granHit`, `clearsAhead`, `clearCount`, `streamClear`, `clearTime`); `Contract/StaticClears` (C12: `static_clears_ge`,
+  `static_time_ge`; events line up with the `loop_run` trace via `staticEvents_pcs`); `Contract/UnrolledStream` (periodic stream of
+  the unrolled loop, `evR_hit`); `Contract/UnrolledClears` (C24 `g1_no_unit_clear`, `pass_clears_byte`: no unit store clears for
+  `g = 1`, `W <= 1182`, `I >= 4`; C13 `pass_clears_page`: at most `2 ceil(W/8)` unit-store clears per pass for `g = 4096`, `W <= 2000`);
+  `Contract/Facts` (C14 `false_positive`, C42 `no_clear_of_disjoint`, `intro_stores` = 3, `tail_stores` = 4); `Contract/Table6`
+  (FD: Table 6 vs the model); `lean/PLATFORM_CONTRACT.md` items 1-2.
+- Modelling choices to review: the intro is abstract (`I` events inside the intro, no stores; its three stores and the tail's four are
+  bounded by `runBound`); the stream is periodic, so the unit-store counts are steady-state per pass; lookahead of a store in a
+  finite trace is truncated at the trace end (`clearCount` undercounts near the end; only lower bounds use it).
+- Findings: (1) with byte granularity the nearest refetch of a stored opcode is 1183 instructions away (1179 + I for page 2), so no
+  unit store clears for any window up to 1182; (2) Table 6 SMC: 83 198 361 = 2 x 4160 x 10000 - 1639, i.e. about two events per
+  iteration (C12 needs one); (3) Table 6 loops (about 460 events per run) exceed the byte-granule prediction (at most 49) and are
+  reachable by the page-granule bound only if `W >= 105`.
+- Open: exact page-granule counts (the proof gives upper bounds only); `Data/Consistency` for the g = 64 line granule not done; the
+  intro's executed length `I` is not derived (needs Level 2 unrolled, R7 skipped).
+- Next: R10 (timers, noise, estimator, data checks).
