@@ -20,7 +20,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | DONE |
 | R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | DONE (witnesses A2code, A2conn, A7 and the forgery theorem open: GAPS G11, G12) |
 | R12 | Code fixes (not errata) and native acceptance | must | DONE |
-| R13 | Errata list (paper only) | must | TODO |
+| R13 | Errata list (paper only) | must | DONE (author review of the PDF pending) |
 | R14 | Coverage and fidelity audit | must | TODO |
 | R15 | Palomar package, CI, handoff (user submits and registers) | must | TODO |
 | R16 | Repository tag and arXiv v2 manuscript (after registration) | must | TODO |
@@ -243,3 +243,11 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Build: Visual Studio 2026 solution authoritative; CMake preset now VS 2026 default plus a VS 2022 preset (not exercised).
 - Open: G34 fix declined (precondition 148 not dividing n must appear in the Level-2 statement); G36 driver on Windows 11 (author action); G24 label order for the paper tables (author).
 - Next: R13 (errata list), then close the Lean gaps (GAPS.md) before R14.
+
+### R13 (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `validation/make_errata.py` rewritten for this project; `lean/errata/ERRATA.md`, `lean/errata/smctamper-2026-errata.tex`, `output/pdf/smctamper-2026-errata.pdf` (3 pages incl. the P11 appendix);
+  `audit_errata.py` inventory ok (17 items, every `before` unique in the v1 TeX), `ErrataRefs.lean` builds (16 declarations), PDF at most 3 pages. P14 (AMD cells) stays `ask-author` and is
+  marked open in the list. No code section (code fixes are in `CODE_FIXES.md`).
+- Note: `build_modules.py` and `axiom_audit.py` call the memory guard themselves; run them directly, not under `limited_run.py` (nesting aborts with "Another verification command is active").
+- Open: author review of the errata PDF (the one question of this round).
