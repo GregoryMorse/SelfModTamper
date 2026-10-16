@@ -1,0 +1,1 @@
+{"round":"R5","date":"2026-10-16","checks":{"build_modules_all":"pass, peak commit 0.98 GB (Layout.Compare)","lake_build":"CI only","axiom_audit":"clean","native":"validation/native_harness.py: gen_asm intro 0x5F, unit 0x1B, 8123 bytes","sorry":"none"}}

@@ -20,7 +20,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C13 | §4 ¶2 | unrolling + distinct pages reduce clears | FC | R9 | todo |  |
 | C14 | §4 ¶4 | detection granule → false positives | FC | R9 | todo |  |
 | C15 | Table 1 | MSR/event identifiers (Intel, AMD) | R + M | R1, R12 | partial | see R-class table below |
-| C16 | §4 ¶6 | PMCs only for measurement, not needed by the mechanism | M | R5 | todo |  |
+| C16 | §4 ¶6 | PMCs only for measurement, not needed by the mechanism | M | R5 | done (M) | Layout/Scan.lean: no `0F 30/32/33/A2` byte pair in either 8123-byte loop image or in TPComp (scan of emitted bytes); the ISA subset contains none of these instructions |
 | C17 | Table 2 | opcode pattern, bits 3–5, 2-bit toggle closure | F | R2 | todo |  |
 | C18 | Table 2 | LAT/RCP values | R (P07) | R1 | partial | see R-class table below |
 | C19 | Table 3 | instruction and condition-code semantics (S, G, P) | F + R | R3 | done | Spec/Step.lean (`aluW`, `cond`); X64/Step.lean: `cond_S`, `cond_P`, `cond_G`, `cond_L`, `aluW_adc_clear`, `aluW_sbb_clear`, `jg_after_cmp`; parity: Bits/Parity.lean |
@@ -29,11 +29,11 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
 | C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | todo |  |
 | C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | todo |  |
-| C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | partial | X64/Facts.lean: `unit_size_27`, `unit_adc_opcode_at_one` (the `+1` skips the REX byte); AsmJit dump bytes in R5 |
+| C25 | Fig. 4 | snippet = 27-byte unit; `+1` skips the REX prefix | F + M | R3, R5 | done | X64/Facts.lean `unit_size_27`; Layout/Compare.lean `dyn_image_eq` (AsmJit bytes = 27-byte units), Layout/Targets.lean `unit_xor_target` |
 | C26 | §6 ¶2 | sizes measured with placeholders equal the emitted sizes | F + M | R5 | todo |  |
-| C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | todo |  |
+| C27 | §6 ¶3 | dual-page layout: each unit writes the corresponding offset in the other page | F | R5, R6 | done | Layout/Numbers.lean `opcode_qwords_distinct`, `opOff_sep`; Layout/Targets.lean `unit_xor_target`, `unit_xor_other_page` |
 | C28 | §6 ¶3 | branch-free termination by SMC; code restored afterwards | F | R6, R7 | todo |  |
-| C29 | Fig. 5 | 148 units/page, intro 0x5F, unit 0x1B, base + size = end | F + FD + M | R5 | todo |  |
+| C29 | Fig. 5 | 148 units/page, intro 0x5F, unit 0x1B, base + size = end | F + FD + M | R5 | done (M) | Layout/Numbers.lean (`perPage_148`, `page1_fill`, `patch_target`, `bench_size_facts`, `fig5_sum`, `patch_xor`); Layout/Compare.lean (AsmJit and MASM bytes = Lean images); Layout/AsmJitSize.lean (intro 0x5F, cancellation) |
 | C30 | §7 ¶1 | static SMC ≈ 7.9× slower | FD | R10 | todo |  |
 | C31 | §7 ¶1–2 | heavy tail; minima stable; calibrate from quantiles | FC + X | R10, R11a | todo |  |
 | C32 | §7 ¶3 | dynamic ≈ 90.5× faster than non-SMC | FD | R10 | todo |  |

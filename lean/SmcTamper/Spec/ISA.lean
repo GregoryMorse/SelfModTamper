@@ -69,6 +69,8 @@ def decodeRexW (x : Nat) (r : List Nat) : Option (Instr × Nat) :=
     else if op < 0x40 ∧ op % 8 = 3 ∧ m / 64 = 0 ∧ m % 8 ≠ 4 ∧ m % 8 ≠ 5 then
       some (.aluM (Fin.ofNat 8 (op / 8)) (hi m) (lo m), 2)
     else if op = 0x8B ∧ m / 64 = 3 then some (.movRR (hi m) (lo m), 2)
+    else if op = 0x89 ∧ m / 64 = 3 then some (.movRR (lo m) (hi m), 2)
+    else if op < 0x40 ∧ op % 8 = 1 ∧ m / 64 = 3 then some (.alu (Fin.ofNat 8 (op / 8)) (lo m) (hi m), 2)
     else if op = 0x89 ∧ m / 64 = 0 ∧ m % 8 ≠ 4 ∧ m % 8 ≠ 5 then some (.movStore (lo m) (hi m), 2)
     else if op = 0x81 ∧ m / 64 = 3 then
       match rest with
@@ -133,6 +135,13 @@ def decodePlain (b0 : Nat) (r : List Nat) : Option (Instr × Nat) :=
     match r with
     | m :: n :: _ =>
       if m / 8 = 28 ∧ m % 8 < 4 then some (.shlB (Fin.ofNat 4 (m % 8)) (BitVec.ofNat 8 n), 3) else none
+    | _ => none
+  else if b0 = 0x08 then
+    match r with
+    | m :: _ =>
+      if m / 64 = 3 ∧ m / 8 % 8 < 4 ∧ m % 8 < 4 then
+        some (.orB (Fin.ofNat 4 (m % 8)) (Fin.ofNat 4 (m / 8 % 8)), 2)
+      else none
     | _ => none
   else if b0 = 0x0A then
     match r with
@@ -207,5 +216,13 @@ def encode : Instr → List Nat
   | .jcc cc r => [0x70 + cc.val, r.toNat]
   | .jmp32 r => [0xE9] ++ bytes32 r
   | .nop => [0x90]
+
+/-- The register-register forms as AsmJit emits them (direction bit clear: `op r/m, r`); every other instruction is
+encoded as in `encode`. The decoder accepts both directions (`decodeRexW`, `decodePlain`). -/
+def encodeA : Instr → List Nat
+  | .alu f d s => [rexOf s d, f.val * 8 + 1, modrm 3 s d]
+  | .movRR d s => [rexOf s d, 0x89, modrm 3 s d]
+  | .orB d s => [0x08, modrm 3 s d]
+  | i => encode i
 
 end SmcTamper

@@ -283,3 +283,6 @@ output/pdf/*.aux
 output/pdf/*.log
 /.private/
 *-eps-converted-to.pdf
+
+# The Lean module directory X64 must not match the Visual Studio "x64/" rule above
+!/lean/SmcTamper/X64/

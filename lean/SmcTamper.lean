@@ -16,3 +16,11 @@ public import SmcTamper.X64.Run
 public import SmcTamper.Static.Iter
 public import SmcTamper.Static.Loop
 public import SmcTamper.Static.Main
+public import SmcTamper.Spec.Layout
+public import SmcTamper.Layout.Numbers
+public import SmcTamper.Spec.Images
+public import SmcTamper.Layout.LayoutData
+public import SmcTamper.Layout.Compare
+public import SmcTamper.Layout.Targets
+public import SmcTamper.Layout.Scan
+public import SmcTamper.Layout.AsmJitSize
