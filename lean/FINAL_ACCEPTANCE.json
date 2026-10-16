@@ -1,0 +1,13 @@
+{
+  "exact_commit_verified": "e847cafd0f0958198fd6504f51605aa504c2ff60",
+  "palomar_full_preflight": "pass, run 38950705490 on e847cafd0f0958198fd6504f51605aa504c2ff60 (https://github.com/GregoryMorse/SelfModTamper/actions/runs/38950705490); an earlier run 38950502218 on 9d1004c failed only because validation/Vectors.lean was not a module (renamed)",
+  "proof_ci": "see the push run for e847cafd0f0958198fd6504f51605aa504c2ff60",
+  "axiom_audit": "0 violations (local, 3067 declarations); PalomarSMT.mathematical_result depends on propext, Classical.choice, Quot.sound",
+  "unverified": [
+    "Author review of the errata PDF",
+    "Comparator and NanoDa run records (run in the Palomar pipeline after submission)"
+  ],
+  "open_obligations": ["G01/G03/G13 Level-2 refinement of the unrolled kernel", "G04/G05 exact clear counts (non-claims)", "G20-G22 primary sources", "G24 table label order (author)", "P14 AMD cells (author)"],
+  "submission_performed": "not yet; by the author, never by the agent",
+  "registration_performed": "not yet"
+}
