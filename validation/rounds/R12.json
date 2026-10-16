@@ -1,0 +1,1 @@
+{"round": "R12", "date": "2026-10-16", "checks": {"build_modules_all": "pass", "lake_build": "CI only", "axiom_audit": "clean (2671 decls)", "sorry": "none", "threat_audit": "ok", "native_vectors": "36/36 x5 kernels, Debug+Release", "native_text_differential": "pass; pre-fix Release fails (L03)", "native_timing_pattern": "validation/data/native_runs.json (evidence only)"}}

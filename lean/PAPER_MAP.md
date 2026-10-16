@@ -42,7 +42,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C35 | §7 ¶4 | 246 runs / 2.5% / 3.6% estimate (P01) | FD + FC | R10 | done (FD + FC) | Contract/Estimator.lean `published_values`, `p01_smc`, `p01_nonsmc`, `p01_two_point_values`, `published_estimate_vacuous`, `markov_count`, `two_point` (P01 confirmed) |
 | C36 | §7 ¶5, Table 6 | naive SMC clears ≫; unrolled reduced; clears at the start of unrolled iterations | FD + FC | R9 | done (FD + FC) | Contract/Table6.lean `table6_naive`, `table6_loop_page`, `table6_loop_byte_inconsistent`; Contract/Facts.lean `intro_stores`, `tail_stores` |
 | C37 | Tables 4–5 | cross-timer consistency (TSC ≈ 2.59 GHz) | FD | R10 | done (FD) | Data/Ratios.lean `c37_tsc_over_clock` (259.0-259.3 cycles per 100 ns) |
-| C38 | Tables 4–5 | measured interval contents (P05) | M | R12 | todo |  |
+| C38 | Tables 4–5 | measured interval contents (P05) | M | R12 | done (evidence only) | R12 pre-fix binary: label order L01, console write and driver call inside the timed interval L02 (`SelfModTamper.cpp`); pattern check in `validation/data/native_runs.json`; no proof |
 | C39 | §8 ¶1 | `c_nonSMC O(n) ≫ c_SMC O(n)` (notation, P09) | FD + X | R10 | done (FD) | Data/Ratios.lean `c39_cycles_per_qword` (10168 vs 112); notation fix P09 |
 | C40 | §8 ¶2 | optimality hard, combinatorial; compilers can beat hand asm | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C41 | §8 ¶3 | Pentium III remark; branching expensive | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
@@ -50,17 +50,17 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C43 | §8 ¶3 | task switches dominate perturbation; priority mitigates | FC + X | R10 | done (FC; priority remark X) | Contract/Noise.lean `maxInterrupts_mono`, `undisturbed_exists` |
 | C44 | §9 ¶1 | many units; validation state machine; reset bounds state growth | F | R11a | done (F) | Detection/Reset.lean `reset_restores`, `reset_value_stable`, `no_reset_value_depends_on_calls` (the unrolled kernel is argued at the static-kernel level; see ROUNDS R11a) |
 | C45 | §9 ¶2 | thresholds from quantiles; k consecutive failures | FC | R11a | done (FC) | Detection/Policy.lean `no_false_alarm`, `alarm_of_persistent`, `calibration_no_alarm` |
-| C46 | §10 | A1–A4 scope the model; corrected: the complete threat model A1–A8 with T1–T4 (D11, P11) | F + FC | R11b, R11c | todo |  |
+| C46 | §10 | A1–A4 scope the model; corrected: the complete threat model A1–A8 with T1–T4 (D11, P11) | F + FC | R11b, R11c | done (R11c, see notes below) |  |
 | C47 | §10 ¶2 | reconfigurable hardware compatible; not attestation | X | R1 | done | listed as X (observation/opinion; nothing claimed) |
 | C48 | §11 | summary restates C12–C45 | X (summary; discharged through its referents C12-C45) | R14 | todo | refs only |
-| C49 | §10 A1 | von Neumann needed; pure Harvard outside. Corrected: coherence; SMC detects split views or forces costly mediation (T2) | F + FC | R8, R11c | todo |  |
-| C50 | §10 A2, §9 ¶1 | units cannot all be neutralised; many units. Corrected: structural coverage + one intact unit (T1); neutralise-all witness (T3) | F | R11b, R11c | todo |  |
-| C51 | §10 A3 | no equally fast faithful non-SMC implementation. Corrected: calibration condition under the cost contract (T1); emulation-under-τ witness (T3) | FC | R11b, R11c | todo |  |
-| C52 | §10 A4 | DMA/FPGA need a larger-area defense. Corrected: write–use race exists for every schedule with a gap (T3) | F | R11c | todo |  |
-| C53 | §1 "Relation to prior work" | local assurance without a remote verifier. Consequence: time source on the untrusted host; guarantees for ≤ L1 (T4) | FC + R | R11c | todo |  |
-| C54 | §1 "Practical stance" | a synthetic time source requires a full timing model (false: replay suffices, P13) | F | R11c | todo |  |
-| C55 | §1 "External inputs" | the scheme protects against debugging, thread injection, remote writes (qualified, P12) | F | R11c | todo |  |
-| C56 | §5 ¶2 | checksum not collision resistant; protection from dynamic state and timing (made precise by A8 and the forgery theorem) | F | R11c | todo |  |
+| C49 | §10 A1 | von Neumann needed; pure Harvard outside. Corrected: coherence; SMC detects split views or forces costly mediation (T2) | F + FC | R8, R11c | done (R11c, see notes below) |  |
+| C50 | §10 A2, §9 ¶1 | units cannot all be neutralised; many units. Corrected: structural coverage + one intact unit (T1); neutralise-all witness (T3) | F | R11b, R11c | done (R11c, see notes below) |  |
+| C51 | §10 A3 | no equally fast faithful non-SMC implementation. Corrected: calibration condition under the cost contract (T1); emulation-under-τ witness (T3) | FC | R11b, R11c | done (R11c, see notes below) |  |
+| C52 | §10 A4 | DMA/FPGA need a larger-area defense. Corrected: write–use race exists for every schedule with a gap (T3) | F | R11c | done (R11c, see notes below) |  |
+| C53 | §1 "Relation to prior work" | local assurance without a remote verifier. Consequence: time source on the untrusted host; guarantees for ≤ L1 (T4) | FC + R | R11c | done (R11c, see notes below) |  |
+| C54 | §1 "Practical stance" | a synthetic time source requires a full timing model (false: replay suffices, P13) | F | R11c | done (R11c, see notes below) |  |
+| C55 | §1 "External inputs" | the scheme protects against debugging, thread injection, remote writes (qualified, P12) | F | R11c | done (R11c, see notes below) |  |
+| C56 | §5 ¶2 | checksum not collision resistant; protection from dynamic state and timing (made precise by A8 and the forgery theorem) | F | R11c | done (R11c, see notes below) |  |
 
 ## R-class verification (R1, 2026-10-15)
 

@@ -17,9 +17,9 @@ handoff: done / next / open obligations / hazards / evidence file).
 | R9 | Clear contract | must | DONE |
 | R10 | Timers, noise, estimator, data checks | must | DONE |
 | R11a | Detection predicate, policy, reset | must | DONE |
-| R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | TODO |
-| R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | TODO |
-| R12 | Code fixes (not errata) and native acceptance | must | TODO |
+| R11b | Threat model I: definitions, level matrix, security theorem T1 (crux) | must | DONE |
+| R11c | Threat model II: necessity T3, SMC strengthening T2, forgery, replay, level matrix T4; §10 replacement text | must | DONE (witnesses A2code, A2conn, A7 and the forgery theorem open: GAPS G11, G12) |
+| R12 | Code fixes (not errata) and native acceptance | must | DONE |
 | R13 | Errata list (paper only) | must | TODO |
 | R14 | Coverage and fidelity audit | must | TODO |
 | R15 | Palomar package, CI, handoff (user submits and registers) | must | TODO |
@@ -228,3 +228,18 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Narrowed (open obligations): T2 does not give "T1 without A1" (split reads of non-executed bytes are invisible, see THREAT_MODEL section 3); witnesses for A2 `code <= prot`,
   A2 connectivity and A7 not done; the 3-quadword forgery construction and 2-quadword impossibility not formalised (A8 necessity uses the explicit P04 collision).
 - Next: R12 (code corrections and native acceptance).
+
+### R12 (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: L01-L06 and D01-D03 applied (commit 9b5e125); new defect L07 (qword counts divisible by 148 crash the unrolled asm kernels; guarded, root-cause fix declined
+  because it would move the R5-verified layout constants). Harness `validation/native/smc_harness.cpp` modes `--vectors`, `--text`, `--probe`, `--dump-dyn`; vectors from
+  the Lean models (`validation/Vectors.lean` -> `validation/native/vectors.txt`, 36 vectors, sizes avoid 148 | n). All five kernels agree with the Lean values in Debug and
+  Release; the `--text` differential agrees; the Release harness built from the pre-fix source fails `--text` (L03). Results: `validation/native/acceptance.json`.
+- Timing (evidence, not proof, nothing regenerated): unelevated runs before and after the fixes on this machine (i9-class, Windows 11, no driver) are in
+  `validation/native/runs/`, summarised by `validation/native_consistency.py` into `validation/data/native_runs.json`. Pattern agrees with the paper's Tables 4-5: the
+  single-site SMC kernel is about 20-30x the dynamic unrolled kernel (paper 17.8x between Tables 4 and 5); in the Debug build the C Loop is about 117x the dynamic kernel
+  (paper 90.5x); dynamic and static unrolled kernels are within 1-10% of each other (so the paper's "2.5x faster than static" has no basis here, P02). Debug numbers scale
+  with the segment size (882 KB here vs 220 KB in the paper) to the paper's order of magnitude.
+- Build: Visual Studio 2026 solution authoritative; CMake preset now VS 2026 default plus a VS 2022 preset (not exercised).
+- Open: G34 fix declined (precondition 148 not dividing n must appear in the Level-2 statement); G36 driver on Windows 11 (author action); G24 label order for the paper tables (author).
+- Next: R13 (errata list), then close the Lean gaps (GAPS.md) before R14.

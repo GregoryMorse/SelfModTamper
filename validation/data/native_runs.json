@@ -1,0 +1,161 @@
+{
+ "paper": {
+  "T4_smc": 8305286,
+  "T4_nonsmc": 1052981,
+  "T5_smc": 467241,
+  "T5_nonsmc": 42300670,
+  "segment_kb": 220
+ },
+ "runs": {
+  "pre_release": {
+   "segment_bytes": 35840,
+   "rows": {
+    "SMC": {
+     "rdtsc_avg": 1478423,
+     "min": 1415023,
+     "max": 9847353
+    },
+    "C Loop": {
+     "rdtsc_avg": 160494,
+     "min": 150003,
+     "max": 640600
+    },
+    "SMC Loop": {
+     "rdtsc_avg": 72093,
+     "min": 49165,
+     "max": 2995520
+    },
+    "Dyn SMC Loop": {
+     "rdtsc_avg": 66106,
+     "min": 48285,
+     "max": 10114891
+    }
+   },
+   "relabelled_L01": true,
+   "scaled_to_220KB": {
+    "SMC": 9292945,
+    "C Loop": 1008819,
+    "SMC Loop": 453156,
+    "Dyn SMC Loop": 415523
+   },
+   "ratios": {
+    "CLoop_over_dynamic": 2.4,
+    "SMCsingle_over_dynamic": 22.4,
+    "dynamic_over_static": 0.917
+   }
+  },
+  "pre_debug": {
+   "segment_bytes": 882688,
+   "rows": {
+    "SMC": {
+     "rdtsc_avg": 34776899,
+     "min": 33895587,
+     "max": 56131069
+    },
+    "C Loop": {
+     "rdtsc_avg": 131982784,
+     "min": 126167139,
+     "max": 163241645
+    },
+    "SMC Loop": {
+     "rdtsc_avg": 1116947,
+     "min": 1082584,
+     "max": 18729496
+    },
+    "Dyn SMC Loop": {
+     "rdtsc_avg": 1125388,
+     "min": 1080220,
+     "max": 10850457
+    }
+   },
+   "relabelled_L01": true,
+   "scaled_to_220KB": {
+    "SMC": 8875775,
+    "C Loop": 33684701,
+    "SMC Loop": 285068,
+    "Dyn SMC Loop": 287222
+   },
+   "ratios": {
+    "CLoop_over_dynamic": 117.3,
+    "SMCsingle_over_dynamic": 30.9,
+    "dynamic_over_static": 1.008
+   }
+  },
+  "post_release": {
+   "segment_bytes": 36352,
+   "rows": {
+    "SMC": {
+     "rdtsc_avg": 1180611,
+     "min": 1170003,
+     "max": 4964589
+    },
+    "C Loop": {
+     "rdtsc_avg": 239288,
+     "min": 220643,
+     "max": 2674902
+    },
+    "Dyn SMC Loop": {
+     "rdtsc_avg": 46086,
+     "min": 43743,
+     "max": 483397
+    },
+    "SMC Loop": {
+     "rdtsc_avg": 46015,
+     "min": 43518,
+     "max": 594066
+    }
+   },
+   "scaled_to_220KB": {
+    "SMC": 7316463,
+    "C Loop": 1482912,
+    "Dyn SMC Loop": 285603,
+    "SMC Loop": 285163
+   },
+   "ratios": {
+    "CLoop_over_dynamic": 5.2,
+    "SMCsingle_over_dynamic": 25.6,
+    "dynamic_over_static": 1.002
+   }
+  },
+  "post_debug": {
+   "segment_bytes": 884224,
+   "rows": {
+    "SMC": {
+     "rdtsc_avg": 27875380,
+     "min": 26776024,
+     "max": 65886034
+    },
+    "C Loop": {
+     "rdtsc_avg": 126211149,
+     "min": 118393904,
+     "max": 211004980
+    },
+    "Dyn SMC Loop": {
+     "rdtsc_avg": 1128988,
+     "min": 1080052,
+     "max": 9628179
+    },
+    "SMC Loop": {
+     "rdtsc_avg": 1110500,
+     "min": 1073540,
+     "max": 9559882
+    }
+   },
+   "scaled_to_220KB": {
+    "SMC": 7102008,
+    "C Loop": 32155707,
+    "Dyn SMC Loop": 287640,
+    "SMC Loop": 282930
+   },
+   "ratios": {
+    "CLoop_over_dynamic": 111.8,
+    "SMCsingle_over_dynamic": 24.7,
+    "dynamic_over_static": 1.017
+   }
+  }
+ },
+ "paper_ratios": {
+  "T5_nonsmc_over_smc": 90.5,
+  "T4_smc_over_T5_smc": 17.8
+ }
+}
