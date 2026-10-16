@@ -57,3 +57,12 @@ public import SmcTamper.Threat.Closure
 public import SmcTamper.Threat.Security
 public import SmcTamper.Threat.Witness
 public import SmcTamper.Threat.Levels
+public import SmcTamper.Threat.Tail
+public import SmcTamper.Threat.Necessity
+public import SmcTamper.Threat.Witnesses
+public import SmcTamper.Threat.Witnesses2
+public import SmcTamper.Threat.Witnesses3
+public import SmcTamper.Threat.T3
+public import SmcTamper.Threat.SplitMirror
+public import SmcTamper.Threat.Matrix
+public import SmcTamper.Threat.Scope

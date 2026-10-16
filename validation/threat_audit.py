@@ -4,7 +4,7 @@ Usage: python validation/threat_audit.py"""
 import re, sys
 from pathlib import Path
 src = (Path(__file__).parent.parent / "lean/SmcTamper/Spec/Threat.lean").read_text(encoding="utf8")
-start = src.index("structure Assumptions")
+start = src.index("def A1 ")
 body = src[start:src.index("end SmcTamper", start)]
 bad = re.compile(r"\b(Alarm|alarm|Wins|wins|detect\w*|ExecViolation|valueFailAt|timeFailAt|RespIntact)\b")
 errs = []

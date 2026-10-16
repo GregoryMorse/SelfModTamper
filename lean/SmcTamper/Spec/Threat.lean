@@ -224,31 +224,47 @@ def ModWrite (S : Sys) (tl : Nat → TEv) (x : Nat) : Prop :=
 
 def Intact (S : Sys) (tl : Nat → TEv) (x : Nat) : Prop := ¬ ModWrite S tl x
 
-structure Assumptions (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop where
-  /-- A1 coherence: the fetch view and the data view are one image throughout. -/
-  a1 : ∀ n, (worldAt S tl n).split = false
-  /-- A2 coverage: every protected byte lies in some unit's region, every unit's code is protected, the covers graph is strongly
-  connected, and at least one unit's code is never modified. -/
-  a2cov : ∀ a, S.prot a → ∃ x, x < S.n ∧ S.inRegion x a
-  a2code : ∀ x, x < S.n → ∀ a, (S.unit x).code a → S.prot a
-  a2conn : ∀ x y, x < S.n → y < S.n → Reach S x y
-  a2intact : ∃ v, v < S.n ∧ Intact S tl v
-  /-- A3 timing gap: native time ≤ threshold < emulation / debug-trap / mediation lower bound. -/
-  a3 : ∀ x, x < S.n → (S.unit x).native ≤ (S.unit x).tau ∧ (S.unit x).tau < C.emulLB x ∧
+/-- A1 coherence: the fetch view and the data view are one image throughout. -/
+def A1 (S : Sys) (tl : Nat → TEv) : Prop := ∀ n, (worldAt S tl n).split = false
+/-- A2 coverage: every protected byte lies in some unit's region. -/
+def A2cov (S : Sys) : Prop := ∀ a, S.prot a → ∃ x, x < S.n ∧ S.inRegion x a
+/-- A2: every unit's code is protected. -/
+def A2code (S : Sys) : Prop := ∀ x, x < S.n → ∀ a, (S.unit x).code a → S.prot a
+/-- A2: the covers graph is strongly connected. -/
+def A2conn (S : Sys) : Prop := ∀ x y, x < S.n → y < S.n → Reach S x y
+/-- A2: at least one unit's code is never modified. -/
+def A2intact (S : Sys) (tl : Nat → TEv) : Prop := ∃ v, v < S.n ∧ Intact S tl v
+/-- A3 timing gap: native time ≤ threshold < emulation / debug-trap / mediation lower bound. -/
+def A3 (S : Sys) (C : Cost) : Prop := ∀ x, x < S.n → (S.unit x).native ≤ (S.unit x).tau ∧ (S.unit x).tau < C.emulLB x ∧
     (S.unit x).tau < (S.unit x).native + C.kd ∧ (S.unit x).tau < (S.unit x).native + C.km
-  /-- A4: no writer outside the protected thread (DMA, other bus masters) acts. -/
-  a4 : ∀ i a b, tl i ≠ TEv.dmaWrite a b
-  /-- A5 time integrity: every reading equals the elapsed time. -/
-  a5 : ∀ i x p e r, tl i = TEv.check x p e r → r = e
-  /-- A6 persistence: a modifying write persists through the next `k` scheduled checks of every unit covering the byte. -/
-  a6 : ∀ i a b x m0, tl i = TEv.write a b → S.prot a → ¬ S.ops a → b ≠ S.I0 a → x < S.n → S.inRegion x a →
+/-- A4: no writer outside the protected thread (DMA, other bus masters) acts. -/
+def A4 (tl : Nat → TEv) : Prop := ∀ i a b, tl i ≠ TEv.dmaWrite a b
+/-- A5 time integrity: every reading equals the elapsed time. -/
+def A5 (tl : Nat → TEv) : Prop := ∀ i x p e r, tl i = TEv.check x p e r → r = e
+/-- A6 persistence: a modifying write persists through the next `k` scheduled checks of every unit covering the byte. -/
+def A6 (S : Sys) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop :=
+  ∀ i a b x m0, tl i = TEv.write a b → S.prot a → ¬ S.ops a → b ≠ S.I0 a → x < S.n → S.inRegion x a →
     i < sch.ck x m0 → (m0 = 0 ∨ sch.ck x (m0 - 1) ≤ i) →
     ∀ j, j < S.k → (worldAt S tl (sch.ck x (m0 + j))).D a ≠ S.I0 a
-  /-- A7 response coverage: each unit's response code is part of its own (protected) code. -/
-  a7 : ∀ x, x < S.n → ∀ a, (S.unit x).resp a → (S.unit x).code a ∧ ¬ S.ops a
-  /-- A8 non-compensation: whenever a modification lies in the region of an honestly running unit, its result differs. -/
-  a8 : ∀ x m e r, x < S.n → tl (sch.ck x m) = TEv.check x .honest e r →
+/-- A7 response coverage: each unit's response code is part of its own (protected) code. -/
+def A7 (S : Sys) : Prop := ∀ x, x < S.n → ∀ a, (S.unit x).resp a → (S.unit x).code a ∧ ¬ S.ops a
+/-- A8 non-compensation: whenever a modification lies in the region of an honestly running unit, its result differs. -/
+def A8 (S : Sys) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop :=
+  ∀ x m e r, x < S.n → tl (sch.ck x m) = TEv.check x .honest e r →
     (∃ a, S.inRegion x a ∧ ¬ S.ops a ∧ (worldAt S tl (sch.ck x m)).D a ≠ S.I0 a) →
     ¬ checkOk S (worldAt S tl (sch.ck x m)) x .honest
+
+structure Assumptions (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop where
+  a1 : A1 S tl
+  a2cov : A2cov S
+  a2code : A2code S
+  a2conn : A2conn S
+  a2intact : A2intact S tl
+  a3 : A3 S C
+  a4 : A4 tl
+  a5 : A5 tl
+  a6 : A6 S tl sch
+  a7 : A7 S
+  a8 : A8 S tl sch
 
 end SmcTamper
