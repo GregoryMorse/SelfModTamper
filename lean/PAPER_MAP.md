@@ -89,3 +89,7 @@ R2 also proved (support for C21, R4): SmcTamper.cSubst_eq_setByte (the Fig. 3 `p
 
 R11b (threat model I): T1 `Threat/Security.lean` `security` (no win under A1–A8 and the cost contract), `closure_detect`, `core_alarm`; hypothesis consistency
 `Threat/Witness.lean` `witness_secure`; `Threat/Levels.lean` `tsc_low_level`. §10 rows (P11, P12, P13) remain open until R11c; see `lean/THREAT_MODEL.md`.
+
+R11c rows: C46 sec 10 -> P11 text in `edits.json` (Threat.Security/T3/Matrix); C49 sec 10 A1 -> `nec_A1`, `faithful_needs_med` (T2 scoped, see THREAT_MODEL section 3); C50 sec 10 A2 -> `nec_A2cov`, `nec_A2intact`;
+C51 sec 10 A3 -> `nec_A3`; C52 sec 10 A4 -> `nec_A4`; C53 sec 1 prior work -> `T4`, `ext_clock_detects`; C54 sec 1 synthetic clock -> `nec_A5` (P13); C55 sec 1 external inputs -> `injected_code_outside_goal`, `nec_A6` (P12);
+C56 sec 5 collisions -> `nec_A8` (P04 pair). Open obligations: A2 code/connectivity and A7 necessity witnesses; 3-qword forgery theorem; SDM VMX/EPT/DR facts to be read from primary text before the v2 manuscript cites them.

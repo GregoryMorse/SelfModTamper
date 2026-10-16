@@ -218,3 +218,13 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Open (carried to R11c): T2 split-mirror, T3 necessity witnesses for A1–A8, T4 level matrix, P12/P13 scope witnesses, P11 §10 replacement text,
   literature and R-class citations, `lean_refs`.
 - Next: R11c.
+
+### R11c (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `Threat/{Tail,Necessity,Witnesses,Witnesses2,Witnesses3,T3}` (T3: `AllBut i`, `not_holds`, witnesses for A1, A2-coverage, A2-intact, A3, A4, A5, A6, A8),
+  `Threat/SplitMirror` (T2: `faithful_needs_med`, `mediated_timefail`), `Threat/Matrix` (T4, `nec_A5_osApi`, `ext_clock_detects`), `Threat/Scope` (P12 scope);
+  assumptions refactored into named defs `A1`..`A8` (fields unchanged). `lean/THREAT_MODEL.md` complete; literature DOIs verified via Crossref; MS Learn and CR4.TSD
+  facts recorded (VMX/EPT/DR facts not verified, named only). `edits.json` P11, P12, P13 filled with `lean_refs` (`audit_errata.py` ok; `ErrataRefs.lean` builds).
+- Narrowed (open obligations): T2 does not give "T1 without A1" (split reads of non-executed bytes are invisible, see THREAT_MODEL section 3); witnesses for A2 `code <= prot`,
+  A2 connectivity and A7 not done; the 3-quadword forgery construction and 2-quadword impossibility not formalised (A8 necessity uses the explicit P04 collision).
+- Next: R12 (code corrections and native acceptance).

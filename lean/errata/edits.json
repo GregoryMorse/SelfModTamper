@@ -246,14 +246,23 @@
    "before_pdf": [
     "The scope of the model is defined by four main assumptions"
    ],
-   "after": "(replacement text written in R11c from lean/THREAT_MODEL.md)",
+   "after": "\\section{Security assumptions and threat model}\\label{sec:assumptions}\n\nWe state the adversary, its goal, the assumptions the scheme needs, and what is proved.  The statements are formalised and checked in Lean (Section~\\ref{sec:summary}); platform behaviour enters only as explicit contract fields (timing bounds, which capabilities a privilege level has), not as proved facts about hardware.\n\n\\paragraph{Adversary levels.}\nL0: patches the protected bytes before execution.\nL1: user mode; may write to the protected process while it runs, single-step or breakpoint it, run it under emulation, and hook operating-system timer interfaces.\nL2: kernel or hypervisor; additionally may give instruction fetch and data reads different views of memory and may trap or offset the time-stamp counter.\nL4: additionally has physical writers such as DMA devices.\n(L3 is reserved and has the capabilities of L2 in the model.)\nThe \\emph{goal} is that a protected byte other than a legitimately varying SMC opcode byte is executed in modified form while no alarm is effective.\nAn alarm is effective when a checksum unit whose own response code is unmodified sees a wrong result, or $k$ consecutive checks of one unit exceed its time threshold $\\tau$.\n\n\\paragraph{Assumptions.}\nA1 (coherence, replaces ``von Neumann architecture''): the fetch and data views are one image.\nA2 (coverage, replaces ``cannot neutralize all functions''): every protected byte lies in the region of some checksum unit, each unit's own code is protected, the coverage graph of the units (a unit covers another when its region contains the other's code) is strongly connected, and at least one unit is never modified.\nA3 (timing gap, replaces the non-existence of an equally fast non-SMC implementation): the native check time is at most $\\tau$, and $\\tau$ is below the lower bounds on emulation, on a debug trap, and on mirroring an opcode write.\nA4 (no physical writer): no device other than the protected thread writes the protected memory; a larger-area defense narrows the window between check and use but cannot close it.\nA5 (time integrity): every timer reading equals the elapsed time.\nA6 (persistence): a modification persists through the next $k$ scheduled checks of each unit that covers it.\nA7 (response coverage): each unit's alarm response code is part of its own protected code.\nA8 (non-compensation): a modification inside the region of a running unit changes the unit's result.\nThe checksum is deliberately not collision resistant, so A8 is an assumption about the design, and it cannot be dropped: two modified quadwords can restore the final sum and opcode state.\n\n\\paragraph{Results.}\n(T1) Under A1--A8 and the platform contract, no adversary achieves the goal.\n(T2) With separate fetch and data views, a run that follows the SMC kernel's opcode trajectory needs one mirroring event per opcode-changing iteration, each costing at least the mirroring bound of A3; a plain checksum without opcode state can be blind to split views.\n(T3) Each of A1, A2 (coverage and one unmodified unit), A3, A4, A5, A6 and A8 is necessary: for each there is a system and an adversary that satisfies all the others and wins.\n(T4) With the inline time-stamp counter, levels L0 and L1 satisfy A1, A4 and A5; an operating-system timer interface can be hooked at L1; L2 breaks A1 and A5; L4 breaks A4.\nWith a time source outside the adversary's control, of resolution $r$ and jitter $j$, slowdowns of at least $j+2r$ are detected by a threshold calibrated on native runs.\n\n\\paragraph{Scope.}\nNot claimed: protection against code injected outside the checksummed bytes, against register tampering outside timed intervals, or against a modification that is undone before the next covering check; guarantees against L2 and above without an external clock; equivalence to cryptographic attestation.\nThe mechanism is a local runtime-integrity technique intended to raise attacker cost on commodity systems, and the proofs cover the model above, not the hardware.",
    "reason": "The section states no adversary capabilities, goal or security statement; assumption 3 is an uncheckable universal negative, assumption 4 a remark, and assumptions the scheme needs (time integrity, persistence, response coverage, non-compensation) are missing.",
    "status": "confirmed",
    "confidence": "certain",
-   "evidence": "Lean: Threat.Security, Threat.Necessity, Threat.Matrix (R11b-R11c).",
+   "evidence": "Lean: Threat.Security (T1), Threat.T3 (T3), Threat.SplitMirror (T2), Threat.Matrix (T4); consistency Threat.Witness; scope Threat.Scope.",
    "source": "Section 10; plan D11",
-   "pending": "R11c",
-   "lean_refs": [],
+   "lean_refs": [
+    "SmcTamper.security",
+    "SmcTamper.witness_secure",
+    "SmcTamper.faithful_needs_med",
+    "SmcTamper.mediated_timefail",
+    "SmcTamper.T3",
+    "SmcTamper.T4",
+    "SmcTamper.tsc_low_level",
+    "SmcTamper.ext_clock_detects",
+    "SmcTamper.injected_code_outside_goal"
+   ],
    "page": 10,
    "class": "formal"
   },
@@ -269,10 +278,13 @@
    "reason": "The sentence suggests that the proposed scheme protects against debugging, thread injection and remote memory writes; it does not.",
    "status": "confirmed",
    "confidence": "certain",
-   "evidence": "Lean: Threat.Transient and Threat.Necessity (witness attacks against each omitted assumption, R11c).",
+   "evidence": "Lean: Threat.Scope (injected_code_outside_goal, noeffect_events), Threat.T3 (necessary_A6: write-execute-restore between checks wins).",
    "source": "Section 1",
-   "pending": "R11c",
-   "lean_refs": [],
+   "lean_refs": [
+    "SmcTamper.injected_code_outside_goal",
+    "SmcTamper.noeffect_events",
+    "SmcTamper.necessary_A6"
+   ],
    "page": 2,
    "class": "formal"
   },
@@ -288,10 +300,14 @@
    "reason": "Replaying recorded timer readings defeats any timing predicate when the adversary controls the clock, so a synthetic time source needs no timing model.",
    "status": "confirmed",
    "confidence": "certain",
-   "evidence": "Lean: Threat.Replay (R11c).",
+   "evidence": "Lean: Threat.Witnesses (nec_A5: a replayed native reading passes while a slow emulation runs), Threat.Matrix (nec_A5_osApi, T4, ext_clock_detects).",
    "source": "Section 1; plan D11",
-   "pending": "R11c",
-   "lean_refs": [],
+   "lean_refs": [
+    "SmcTamper.necessary_A5",
+    "SmcTamper.nec_A5_osApi",
+    "SmcTamper.T4",
+    "SmcTamper.ext_clock_detects"
+   ],
    "page": 2,
    "class": "formal"
   },

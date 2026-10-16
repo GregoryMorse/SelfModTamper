@@ -1,0 +1,1 @@
+{"round": "R11c", "date": "2026-10-16", "checks": {"build_modules_all": "pass", "lake_build": "CI only", "axiom_audit": "clean (2671 decls)", "sorry": "none", "threat_audit": "ok", "audit_errata": "ok"}}
