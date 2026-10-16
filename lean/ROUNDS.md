@@ -233,7 +233,7 @@ handoff: done / next / open obligations / hazards / evidence file).
 
 - Done: L01-L06 and D01-D03 applied (commit 9b5e125); new defect L07 (qword counts divisible by 148 crash the unrolled asm kernels; guarded, root-cause fix declined
   because it would move the R5-verified layout constants). Harness `validation/native/smc_harness.cpp` modes `--vectors`, `--text`, `--probe`, `--dump-dyn`; vectors from
-  the Lean models (`validation/Vectors.lean` -> `validation/native/vectors.txt`, 36 vectors, sizes avoid 148 | n). All five kernels agree with the Lean values in Debug and
+  the Lean models (`validation/vectors_gen.lean.txt (copy it to a .lean file to run it; the preflight requires every .lean file to be a module)` -> `validation/native/vectors.txt`, 36 vectors, sizes avoid 148 | n). All five kernels agree with the Lean values in Debug and
   Release; the `--text` differential agrees; the Release harness built from the pre-fix source fails `--text` (L03). Results: `validation/native/acceptance.json`.
 - Timing (evidence, not proof, nothing regenerated): unelevated runs before and after the fixes on this machine (i9-class, Windows 11, no driver) are in
   `validation/native/runs/`, summarised by `validation/native_consistency.py` into `validation/data/native_runs.json`. Pattern agrees with the paper's Tables 4-5: the

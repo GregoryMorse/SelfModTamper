@@ -2,7 +2,7 @@
 // (TPComp, TPCompC, TPCompLoop, TPCompCLoop and the AsmJit generator gen_asm) can be called without administrator rights or the
 // WinRing0 driver.
 //   smc_harness.exe --dump-dyn <file>   writes the generated machine code bytes of the dynamic kernel to <file>
-//   smc_harness.exe --vectors <file>    replays validation/native/vectors.txt (generated from the Lean models by validation/Vectors.lean)
+//   smc_harness.exe --vectors <file>    replays validation/native/vectors.txt (generated from the Lean models by validation/vectors_gen.lean.txt (copy it to a .lean file to run it; the preflight requires every .lean file to be a module))
 //   smc_harness.exe --text              differential run on the harness's own .text (introspective): asm kernel vs C emulation
 // Exit code 0 means every comparison agreed.  Evidence, not proof.
 #define main smt_product_main
@@ -17,7 +17,7 @@ static unsigned long long xorshift64(unsigned long long x) {
 	return x;
 }
 
-// Same generator as validation/Vectors.lean: state = seed * 0x9E3779B97F4A7C15 + 1, then one xorshift step per qword.
+// Same generator as validation/vectors_gen.lean.txt (copy it to a .lean file to run it; the preflight requires every .lean file to be a module): state = seed * 0x9E3779B97F4A7C15 + 1, then one xorshift step per qword.
 static void fillBuffer(char kind, unsigned long long seed, std::vector<unsigned long long>& q) {
 	unsigned long long st = seed * 0x9E3779B97F4A7C15ULL + 1;
 	for (auto& v : q) {

@@ -21,7 +21,7 @@ product itself needs administrator rights and the WinRing0 driver and is never r
 
 ## R12 evidence
 
-* `validation/native/acceptance.json`: Debug and Release harness builds; 36 Lean-generated vectors (`validation/Vectors.lean`) pass for `TPComp`, `TPCompC`,
+* `validation/native/acceptance.json`: Debug and Release harness builds; 36 Lean-generated vectors (`validation/vectors_gen.lean.txt (copy it to a .lean file to run it; the preflight requires every .lean file to be a module)`) pass for `TPComp`, `TPCompC`,
   `TPCompLoop`, `TPCompCLoop` and the AsmJit kernel; the introspective `--text` differential passes; the Release harness built from the pre-fix source fails
   `--text` (L03: C emulations differ from the asm kernels); L07 probes (qword counts 148, 296, 592 crash, 149, 297 do not).
 * `validation/data/native_runs.json`, `validation/native/runs/`: unelevated product runs before and after the fixes (counters read zero: no driver). Pattern
