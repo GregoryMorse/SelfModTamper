@@ -86,3 +86,6 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 * C15 AMD column (P14): primary source for MSR C000_0301 and PMCx021 not yet found.
 
 R2 also proved (support for C21, R4): SmcTamper.cSubst_eq_setByte (the Fig. 3 `preserve`/shift substitution replaces exactly byte j by `opcodeOf op`), rd64_wr8_outside / rd64_wr8_inside / rd64_wr8_aligned (Bits/Bytes.lean).
+
+R11b (threat model I): T1 `Threat/Security.lean` `security` (no win under A1–A8 and the cost contract), `closure_detect`, `core_alarm`; hypothesis consistency
+`Threat/Witness.lean` `witness_secure`; `Threat/Levels.lean` `tsc_low_level`. §10 rows (P11, P12, P13) remain open until R11c; see `lean/THREAT_MODEL.md`.

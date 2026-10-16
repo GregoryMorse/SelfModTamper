@@ -51,3 +51,9 @@ public import SmcTamper.Spec.Detection
 public import SmcTamper.Detection.Predicate
 public import SmcTamper.Detection.Policy
 public import SmcTamper.Detection.Reset
+public import SmcTamper.Spec.Threat
+public import SmcTamper.Threat.Timeline
+public import SmcTamper.Threat.Closure
+public import SmcTamper.Threat.Security
+public import SmcTamper.Threat.Witness
+public import SmcTamper.Threat.Levels

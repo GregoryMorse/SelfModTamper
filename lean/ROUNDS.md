@@ -208,3 +208,13 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Collision witness: first qword `0x8000000000000000` turns `ADC` into `CMP` (even parity, negative), so the second qword is not added; second qword `0` and
   `0x8000000000000001` give the same toggle, hence equal sum and equal final opcode byte.
 - Next: R11b (threat model I: definitions, level matrix, security theorem), the crux.
+
+### R11b (Claude Sonnet 5.5, 2026-10-16)
+
+- Done: `Spec/Threat` (system, events, worlds, levels, cost contract, schedule, `Alarm`, `Wins`, `Assumptions` A1–A8); `Threat/Timeline`, `Threat/Closure`,
+  `Threat/Security` (**T1** `security`), `Threat/Witness` (consistency of the hypotheses), `Threat/Levels` (levels < L2 with the inline timer give A1, A4, A5);
+  `validation/threat_audit.py`; `lean/THREAT_MODEL.md` §1–§3. The event type is `TEv` (name clash with `Ev` of `Spec/Contract`).
+- Design fix during the round: `Sched` is indexed by the number of units (a check event for every index would make the hypotheses unsatisfiable).
+- Open (carried to R11c): T2 split-mirror, T3 necessity witnesses for A1–A8, T4 level matrix, P12/P13 scope witnesses, P11 §10 replacement text,
+  literature and R-class citations, `lean_refs`.
+- Next: R11c.
