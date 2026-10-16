@@ -8,7 +8,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | todo |  |
 | C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | todo |  |
 | C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | todo |  |
-| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | todo |  |
+| C04 | §1 Model | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | partial (static kernel done; unrolled in R6) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace` |
 | C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | todo |  |
 | C06 | §1 "Relation to prior work", §10 A1 | SMC checksumming detects memory-splitting (Harvard-mimicking) attacks that defeat plain self-checksumming; hence A1 | F | R8 | todo |  |
 | C07 | §2 ¶1 | RDTSC/RDTSCP reliable statistically via repetition | FC | R10 | todo |  |
@@ -25,7 +25,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C18 | Table 2 | LAT/RCP values | R (P07) | R1 | partial | see R-class table below |
 | C19 | Table 3 | instruction and condition-code semantics (S, G, P) | F + R | R3 | done | Spec/Step.lean (`aluW`, `cond`); X64/Step.lean: `cond_S`, `cond_P`, `cond_G`, `cond_L`, `aluW_adc_clear`, `aluW_sbb_clear`, `jg_after_cmp`; parity: Bits/Parity.lean |
 | C20 | Fig. 2 | encodings in comments, `$-2-3-3-3-2-3` targets the ADC opcode | F + M | R3, R5 | done | X64/Facts.lean: `tpCompBytes_listing` (M: ml64 listing), `fig2_xor_targets_adc_opcode` |
-| C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | todo |  |
+| C21 | Fig. 3 | the C++ code emulates the SMC kernel precisely (with stated preconditions, P06) | F | R4 | done | Static/Emulation.lean `static_eq_c`; Static/Main.lean `static_emulation` (46 bytes on the ISA = `tpCompC`), `cIter_isOp` (default branch unreachable) |
 | C22 | §5 ¶5 | RIP-relative addressing reaches nearby code without an address register | F + R | R3 | done | Spec/Step.lean `ripEA`; X64/Step.lean `exec_xorMB_mem`; X64/Facts.lean (Fig. 2 displacement) |
 | C23 | §5 last ¶ | unrolling: emulator must track more sites as depth grows | F (should) | R6 | todo |  |
 | C24 | §5 last ¶ | with suitable offset and depth, clears may disappear | FC | R9 | todo |  |

@@ -40,6 +40,7 @@ def main():
         r = subprocess.run([sys.executable, str(ROOT / "validation/limited_run.py"), "--cwd", str(LEAN), "--timeout", "3000", "--",
             str(BIN / "lean.exe"), str(path(m).relative_to(LEAN)), "-o", str(target), "-i", str(target.with_suffix(".ilean"))],
             capture_output=True, text=True, encoding="utf-8", errors="replace")
-        print(r.stdout[-6000:], r.stderr[-2000:], flush=True)
+        out = r.stdout
+        print(out if len(out) <= 10000 else out[:7000] + "\n...\n" + out[-3000:], r.stderr[-2000:], flush=True)
         if r.returncode: sys.exit(f"FAILED {m}")
 if __name__ == "__main__": main()

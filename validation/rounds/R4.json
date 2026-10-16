@@ -1,0 +1,1 @@
+{"round":"R4","date":"2026-10-16","checks":{"build_modules_all":"pass, peak commit 0.62 GB","lake_build":"CI only (exceeds the 1.5 GB cap locally)","axiom_audit":"declarations=857 violations=0","sorry":"none"}}

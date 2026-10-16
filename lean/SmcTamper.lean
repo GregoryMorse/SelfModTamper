@@ -12,3 +12,7 @@ public import SmcTamper.X64.Step
 public import SmcTamper.Spec.Kernel
 public import SmcTamper.Spec.CModel
 public import SmcTamper.Static.Emulation
+public import SmcTamper.X64.Run
+public import SmcTamper.Static.Iter
+public import SmcTamper.Static.Loop
+public import SmcTamper.Static.Main
