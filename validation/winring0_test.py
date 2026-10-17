@@ -63,7 +63,7 @@ def sysinfo(driver: Path) -> dict:
     info["device_guard"] = ps("(Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\\Microsoft\\Windows\\DeviceGuard -ErrorAction SilentlyContinue | "
                               "Select-Object SecurityServicesRunning,SecurityServicesConfigured | ConvertTo-Json -Compress)")
     info["driver_file"] = str(driver) if driver.exists() else None
-    if driver.exists():
+    if driver.exists() and readable(driver):
         info["driver_sha256"] = hashlib.sha256(driver.read_bytes()).hexdigest()
         info["driver_size"] = driver.stat().st_size
         info["driver_signature"] = ps(f"(Get-AuthenticodeSignature -FilePath '{driver}' | ForEach-Object {{ $_.Status.ToString() + ' / ' + $_.SignerCertificate.Subject }})")
@@ -102,11 +102,23 @@ def remove_service() -> str:
     return "STILL REGISTERED (a reboot removes a service marked for deletion)"
 
 
+def readable(p: Path) -> bool:
+    try:
+        p.read_bytes()
+        return True
+    except OSError:
+        return False
+
+
 def download_signed() -> Path:
     import urllib.request
     dst = SIGNED_DIR / "WinRing0x64.sys"
-    if dst.exists():
+    if dst.exists() and readable(dst):
         return dst
+    try:
+        dst.unlink(missing_ok=True)      # a copy that Defender quarantined shows up as present but unreadable
+    except OSError:
+        pass
     print("Downloading the signed WinRing0x64.sys (pinned xmrig commit) ...")
     data = urllib.request.urlopen(SIGNED_URL, timeout=120).read()
     blob = hashlib.sha1(b"blob %d\x00" % len(data) + data).hexdigest()
@@ -115,11 +127,23 @@ def download_signed() -> Path:
     SIGNED_DIR.mkdir(parents=True, exist_ok=True)
     dst.write_bytes(data)
     time.sleep(2)
-    if not dst.exists() or dst.stat().st_size != len(data):
+    if not readable(dst) or dst.stat().st_size != len(data):
         raise SystemExit(
-            "Windows Defender removed the driver (it is a known vulnerable driver).  Re-run with --defender-exclusion, which excludes only "
-            f"{SIGNED_DIR} for the duration of the run and removes the exclusion afterwards.")
+            "Windows Defender removed the driver (it is a known vulnerable driver) even though the directory should be excluded.  "
+            f"Check Windows Security > Protection history, restore/allow the file, and delete {SIGNED_DIR} before re-running.")
     return dst
+
+
+def defender_exclude(paths):
+    """Exclude the given directories from Defender for this run (only those that were not already excluded); returns what was added."""
+    have = ps("(Get-MpPreference).ExclusionPath -join [char]10").splitlines()
+    added = []
+    for d in paths:
+        d.mkdir(parents=True, exist_ok=True)
+        if str(d) not in have:
+            ps(f"Add-MpPreference -ExclusionPath '{d}'")
+            added.append(d)
+    return added
 
 
 def find_built() -> Path:
@@ -218,17 +242,19 @@ def main() -> int:
     ap.add_argument("--rebuild", action="store_true", help="recompile both products even if validation/.build has them")
     ap.add_argument("--driver", choices=["signed", "build"], default="signed",
                     help="signed: the Microsoft-signed 1.2.0 driver from a pinned xmrig commit (default, loads without test-signing); build: built from source (unsigned)")
-    ap.add_argument("--defender-exclusion", action="store_true", help="exclude the driver download directory from Defender for the run only")
+    ap.add_argument("--no-defender-exclusion", action="store_true",
+                    help="do not exclude the driver directories from Defender (by default validation/.build/winring0-signed and the output folder "
+                         "are excluded for the duration of the run only, and the exclusions are removed afterwards)")
     ap.add_argument("--testsign", action="store_true", help="test-sign the driver when it is built (loads only in Windows test-signing mode)")
     ap.add_argument("--elevated", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
     if not is_admin():
         return elevate([x for x in sys.argv[1:] if x != "--elevated"])
-    excl = False
+    excl = []
     try:
-        if a.defender_exclusion:
-            ps(f"Add-MpPreference -ExclusionPath '{SIGNED_DIR}'")
-            excl = True
+        if not a.no_defender_exclusion:
+            excl = defender_exclude([SIGNED_DIR, OUT])
+            print("Defender exclusions added for this run:", [str(x) for x in excl])
         dest = OUT / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         dest.mkdir(parents=True, exist_ok=True)
         print("Removing any leftover driver service first:", remove_service())
@@ -255,8 +281,10 @@ def main() -> int:
         return 0
     finally:
         print("Final cleanup, driver service:", remove_service())
+        for d in excl:
+            ps(f"Remove-MpPreference -ExclusionPath '{d}'")
         if excl:
-            ps(f"Remove-MpPreference -ExclusionPath '{SIGNED_DIR}'")
+            print("Defender exclusions removed.")
         if a.elevated:
             input("\nPress Enter to close this window...")
 
