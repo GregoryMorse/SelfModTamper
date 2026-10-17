@@ -1,0 +1,18 @@
+vector 0 R 1 8: TPComp (asm, single site)
+vector 0 R 1 8: TPCompC (C emulation)
+vector 0 R 1 8: TPCompLoop (asm, static unrolled)
+vector 0 R 1 8: TPCompCLoop (C emulation)
+vector 1 R 2 16: TPComp (asm, single site)
+vector 1 R 2 16: TPCompC (C emulation)
+vector 1 R 2 16: TPCompLoop (asm, static unrolled)
+vector 1 R 2 16: TPCompCLoop (C emulation)
+vector 2 R 3 24: TPComp (asm, single site)
+vector 2 R 3 24: TPCompC (C emulation)
+vector 2 R 3 24: TPCompLoop (asm, static unrolled)
+vector 2 R 3 24: TPCompCLoop (C emulation)
+TPComp (asm, single site)            pass 36 fail 0
+TPCompC (C emulation)                pass 36 fail 0
+TPCompLoop (asm, static unrolled)    pass 36 fail 0
+TPCompCLoop (C emulation)            pass 36 fail 0
+gen_asm (AsmJit dynamic unrolled)    pass 0 fail 0
+vectors: 36

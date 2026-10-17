@@ -4,18 +4,28 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#ifdef _WIN32
 #include <Windows.h>
 //#include <realtimeapiset.h>
 //#include <timeapi.h>
 #include <time.h>
 #include <inttypes.h> // uint32_t, uint8_t
 #include <intrin.h>
+#define SMC_HAVE_ASMJIT 1
+#else
+#include "platform_posix.h"  // Linux: Windows-API shim and perf_event_open counter (no driver)
+#ifdef SMC_WITH_ASMJIT
+#define SMC_HAVE_ASMJIT 1
+#endif
+#endif
 
-#include <asmjit/x86.h>
 #include <functional>
 #include <map>
 
+#ifdef SMC_HAVE_ASMJIT
+#include <asmjit/x86.h>
 using namespace asmjit;
+#endif
 
 class TimeVariant
 {
@@ -143,6 +153,7 @@ typedef void (__cdecl *TPCompFunc)(LPVOID, ULONG64, LPVOID);
 //cmake --build .
 //https://asmjit.com/asmgrid/ AsmGrid^{BETA}
 //(?<!x)(add|or|adc|sbb|and|sub|xor|cmp)\sr64\,\sr64
+#ifdef SMC_HAVE_ASMJIT
 static void dumpCode(BaseBuilder& builder, const char* phase, FILE* f) {
 	String sb;
 	FormatOptions fo;
@@ -286,6 +297,10 @@ TPCompFunc gen_asm(size_t& codeSize)
 	return buf;
 }
 
+#else
+TPCompFunc gen_asm(size_t& codeSize) { codeSize = 0; return nullptr; }  // built without asmjit: no dynamic variant
+#endif
+
 //extern "C" TPCompFunc TPComp;
 extern "C" void __cdecl TPComp(LPVOID, ULONG64, LPVOID);
 extern "C" void __cdecl TPCompLoop(LPVOID, ULONG64, LPVOID);
@@ -326,6 +341,7 @@ uint32_t CRC32(const uint8_t data[], size_t data_length) {
 	return crc32;
 }
 
+#ifdef _WIN32
 #include <Psapi.h>
 #pragma comment(lib, "psapi")
 
@@ -400,6 +416,8 @@ void GetCodeSegmentBaseSize(PBYTE & base, DWORD & size)
 	}
 }
 
+#endif
+
 bool parity(unsigned __int64 v)
 {
 	bool parity = false;  // parity will be the parity of v
@@ -449,7 +467,9 @@ void __cdecl TPCompC(PULONG64 pData, ULONG64 ulSize, PULONG64 pResult)
 	}
 	*pResult = sum;
 }
+#ifdef _MSC_VER
 #define __attribute__(x) //__attribute__ in GCC/Clang only
+#endif
 template< unsigned N > struct CodeRepeat {
 	static void generate() __attribute__((always_inline)) {
 		//__asm__ volatile ("nop");
@@ -508,6 +528,7 @@ void __cdecl TPCompCLoop(PULONG64 pData, ULONG64 ulSize, PULONG64 pResult)
 	*pResult = sum;
 }
 
+#ifdef _WIN32
 #define IA32_PMC0 0xC1
 #define IA32_PERFEVTSEL0 0x186
 #define IA32_PERF_GLOBAL_CTRL 0x38F
@@ -665,14 +686,20 @@ unsigned long long getSMCCount(HANDLE hDevice)
 	//return __readpmc(0x0); //requires CR4.PCE Performonce-monitoring Counters Enabled from protected/virtual 8086 mode
 }
 
+#endif
+
 void useExtraData();
 int main()
 {
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
+#ifdef _WIN32
 	SetThreadAffinityMask(GetCurrentThread(), 1); //attach to a single logical processor for performance monitoring
 	SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+#else
+	smc_pin_thread();
+#endif
 	std::wstring id = L"WinRing0_1_2_0";
 	disablePerfCounters(id, NULL);
 	HANDLE hDevice = enablePerfCounters(id, L"WinRing0x64.sys");
@@ -702,12 +729,16 @@ int main()
 	const size_t numTimers = sizeof(allTimers) / sizeof(TimeVariant*);
 	size_t codeSize;
 	TPCompFunc TPCompF = gen_asm(codeSize);
-	VirtualLock(TPCompF, codeSize);
+	if (TPCompF) VirtualLock(TPCompF, codeSize);
 	TPCompFunc testFuncs[] = { (TPCompFunc)TPCompC, TPComp, (TPCompFunc)TPCompCLoop, TPCompF, TPCompLoop };
 	const char* strFuncNames[] = { "C", "SMC", "C Loop", "Dyn SMC Loop", "SMC Loop" }; //same order as testFuncs: dynamic (AsmJit) before static
 	const size_t trials = 10000;
 	std::ofstream out_file("out.txt");
 	for (size_t f = 0; f < sizeof(testFuncs) / sizeof(TPCompFunc); f++) {
+		if (testFuncs[f] == nullptr) {
+			std::cout << strFuncNames[f] << ": skipped (built without asmjit)" << std::endl << std::endl;
+			continue;
+		}
 		std::cout << strFuncNames[f] << std::endl;
 		ULONG64 avgTimeVals[numTimers] = {};
 		ULONG64 minTimeVals[numTimers] = {};
@@ -740,12 +771,19 @@ int main()
 	}
 	disablePerfCounters(id, hDevice);
 	for (size_t i = 0; i < numTimers; i++) delete allTimers[i];
-	VirtualUnlock(TPCompF, codeSize);
-	VirtualFree(TPCompF, 0, MEM_RELEASE);
+	if (TPCompF) {
+		VirtualUnlock(TPCompF, codeSize);
+		VirtualFree(TPCompF, 0, MEM_RELEASE);
+	}
 }
 
+#ifdef _MSC_VER
 #pragma const_seg(push, ".text")
-const char* extraData = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
+#define SMC_EXTRA_DATA const char* extraData =
+#else
+#define SMC_EXTRA_DATA const char extraData[] __attribute__((section(".text"))) =
+#endif
+SMC_EXTRA_DATA "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
@@ -1456,7 +1494,9 @@ const char* extraData = "0123456789012345678901234567890123456789012345678901234
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+#ifdef _MSC_VER
 #pragma const_seg(pop)
+#endif
 void useExtraData() {
 	printf("%s\n", extraData);
 }

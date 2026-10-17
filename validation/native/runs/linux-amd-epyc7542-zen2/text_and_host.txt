@@ -1,0 +1,13 @@
+text base 0x402000 size 0x16F30
+single site      call 0: asm 13154535728637250979 C 13154535728637250979 equal
+single site      call 1: asm 6971665805375165164 C 6971665805375165164 equal
+single site      call 2: asm 13154535728637250979 C 13154535728637250979 equal
+single site      call 3: asm 6971665805375165164 C 6971665805375165164 equal
+static unrolled  call 0: asm 13469643474086672295 C 13469643474086672295 equal
+static unrolled  call 1: asm 9572722856640913134 C 9572722856640913134 equal
+static unrolled  call 2: asm 9894131365837930325 C 9894131365837930325 equal
+static unrolled  call 3: asm 10534452488069053805 C 10534452488069053805 equal
+Model name:                              AMD EPYC 7542 32-Core Processor
+Linux 5.14.0-687.36.1.el9_8.x86_64
+gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14)
+2

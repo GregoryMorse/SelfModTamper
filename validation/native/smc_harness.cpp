@@ -32,7 +32,9 @@ static int runVectors(const char* path) {
 	if (!in) { printf("cannot open %s\n", path); return 2; }
 	size_t codeSize = 0;
 	TPCompFunc dyn = gen_asm(codeSize);
+#ifdef SMC_HAVE_ASMJIT
 	if (!dyn) return 3;
+#endif
 	struct K { const char* name; TPCompFunc fn; bool loopSum; size_t pass = 0, fail = 0, skipped = 0; };
 	K ks[] = { {"TPComp (asm, single site)", TPComp, false}, {"TPCompC (C emulation)", (TPCompFunc)TPCompC, false},
 	           {"TPCompLoop (asm, static unrolled)", TPCompLoop, true}, {"TPCompCLoop (C emulation)", (TPCompFunc)TPCompCLoop, true},
@@ -44,6 +46,7 @@ static int runVectors(const char* path) {
 		buf.resize((size + 7) / 8);
 		fillBuffer(kind, seed, buf);
 		for (auto& k : ks) {
+			if (!k.fn) continue; // built without asmjit: no dynamic kernel
 			ULONG64 r = 0xDEADBEEF;
 			if (k.loopSum && (size / 8) % 148 == 0 && k.fn != (TPCompFunc)TPCompCLoop) { k.skipped++; continue; } // L07, see --probe
 			if (n < 3 || getenv("HARNESS_TRACE")) printf("vector %zu %c %llu %llu: %s\n", n, kind, seed, size, k.name);
@@ -81,6 +84,7 @@ static int runText() {
 	return bad ? 1 : 0;
 }
 
+#ifdef _WIN32
 // Probe one size on the unrolled kernels: SEH-guarded, prints the sum or the exception code (L07: termination patch).
 static int callGuarded(TPCompFunc fn, void* buf, ULONG64 size, ULONG64* r, unsigned long* code) {
 	__try { fn(buf, size, r); return 0; }
@@ -101,20 +105,30 @@ static int runProbe(unsigned long long size, const char* only) {
 	}
 	return bad ? 1 : 0;
 }
+#endif // _WIN32
 int main(int argc, char** argv) {
+#ifdef SMC_HAVE_ASMJIT
 	if (argc == 3 && std::string(argv[1]) == "--dump-dyn") {
 		size_t codeSize = 0;
 		TPCompFunc fn = gen_asm(codeSize);
 		if (!fn) return 2;
 		FILE* f = nullptr;
+#ifdef _WIN32
 		if (fopen_s(&f, argv[2], "wb") != 0 || !f) return 3;
+#else
+		f = fopen(argv[2], "wb");
+		if (!f) return 3;
+#endif
 		fwrite((const void*)fn, 1, codeSize, f);
 		fclose(f);
 		printf("code size: %zu bytes\n", codeSize);
 		return 0;
 	}
+#endif
 	if (argc == 3 && std::string(argv[1]) == "--vectors") return runVectors(argv[2]);
 	if (argc == 2 && std::string(argv[1]) == "--text") return runText();
+#ifdef _WIN32
 	if ((argc == 3 || argc == 4) && std::string(argv[1]) == "--probe") return runProbe(strtoull(argv[2], nullptr, 10), argc == 4 ? argv[3] : nullptr);
+#endif
 	return 1;
 }

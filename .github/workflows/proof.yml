@@ -80,3 +80,20 @@ jobs:
           cmake --build pmc-build --config Release
           exe=$(find pmc-build -type f \( -name smc_pmc_probe -o -name smc_pmc_probe.exe \) | head -1)
           "$exe" --selftest --iters 20000 --reps 3
+  posix-native:
+    # The real benchmark and the evidence harness on Linux (x86-64): TP.asm is translated to GNU as by scripts/masm2gas.py and the
+    # Lean-generated vectors are replayed against the static kernels. Hosted runners have no PMU, so counter columns read 0 here.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build, replay vectors, run the benchmark briefly
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B posix-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build posix-build
+          (cd posix-build && ./smc_harness --vectors ../validation/native/vectors.txt | tail -8 && ./smc_harness --text | tail -3)
+          (cd posix-build && timeout 120 ./SelfModTamper > bench.txt && grep -v '^MACHINE_CLEARS.SMC: [0-9]*$' bench.txt | head -40)

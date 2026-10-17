@@ -67,6 +67,18 @@ cmake --build build_vs2022_x64 --config Release
 `SelfModTamper\PropertySheet.props` reads `$(ASMJIT_DIR)` automatically; no manual editing
 of the property sheet is required.
 
+### Linux (x86-64)
+
+The benchmark also builds and runs on Linux, with no driver: `cmake -S . -B build && cmake --build build`, then `./build/SelfModTamper`.
+`TP.asm` is translated to GNU as by `scripts/masm2gas.py` (so no separate assembler is needed), the Windows calls are replaced by
+`SelfModTamper/platform_posix.h`, and `MACHINE_CLEARS.SMC` is read with `perf_event_open` (user mode, this thread; Intel and AMD, needs
+`kernel.perf_event_paranoid <= 2` or root and bare metal).  On AMD Zen the counter is the instruction-cache invalidation count
+`ic_cache_inval.fill_invalidated`, a proxy, not a pipeline-restart count; set `SMC_EVENT` to use another raw event.  The dynamic
+(asmjit) variant is built only if asmjit is found (`-DCMAKE_PREFIX_PATH=...`); otherwise it is skipped.  The evidence harness is built as
+well: `./build/smc_harness --vectors validation/native/vectors.txt` replays the Lean-generated vectors against the static kernels.
+The GNU-as encodings of a few register moves differ from MASM's (same length); the self-modified bytes and the layout the Lean model uses are the same.
+Measured so far: `validation/native/runs/linux-amd-epyc7542-zen2/`.
+
 ### Portable counter probe (recommended)
 
 `python validation/pmc_test.py` builds `validation/pmc/` with CMake and measures self-modifying-code machine clears around a small

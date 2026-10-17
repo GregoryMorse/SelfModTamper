@@ -1,0 +1,46 @@
+Counter: AMD ic_cache_inval.fill_invalidated (instruction-cache invalidation proxy), raw event 0x18C, perf_event_open (user mode, this thread)
+The page size for this system is 4096 bytes.
+Code segment base: 0x402000 size: 0x15950 End address: 0x417950
+C
+C
+101463 91843 262856
+101463 91843 261522
+349 317 627
+34988 31661 62670
+349 317 626
+0 0 1
+0 0 1
+
+SMC
+1071352 1066069 1361202
+1071354 1066069 1361231
+3694 3676 4695
+369477 367621 469502
+3694 3676 4695
+0 0 1
+0 0 1
+
+C Loop
+477655 467828 881455
+477657 467828 881484
+1647 1613 3041
+164729 161330 304091
+1647 1613 3040
+0 0 1
+0 0 1
+
+Dyn SMC Loop: skipped (built without asmjit)
+
+SMC Loop
+45842 45008 75023
+45844 45008 75023
+158 155 260
+15809 15520 25990
+158 155 260
+0 0 1
+0 0 1
+
+cumulative counter after 10000 trials, SMC 224489454
+cumulative counter after 10000 trials, C 2368731
+cumulative counter after 10000 trials, SMC Loop 97477434
+cumulative counter after 10000 trials, C Loop 3611476

@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
-project(SelfModTamper CXX ASM_MASM)
+project(SelfModTamper LANGUAGES CXX)
+if(WIN32)
+    enable_language(ASM_MASM)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,6 +10,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ── x64-only guard ────────────────────────────────────────────────────────────
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "SelfModTamper requires a 64-bit (x64) build.")
+endif()
+
+if(NOT WIN32)
+    include(cmake/posix.cmake)
+    return()
 endif()
 
 # ── Dependencies (resolved by vcpkg) ─────────────────────────────────────────
