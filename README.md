@@ -85,11 +85,15 @@ scripts\Build-WinRing0.cmd
 It writes `WinRing0x64.sys` into the repository root (excluded from version control) and CMake copies it next to the executable.
 `python validation\winring0_test.py` runs this automatically when the file is missing.
 
-**The result is unsigned.**  Windows loads kernel drivers only when they are signed, so on a machine with Secure Boot, Memory
-integrity (HVCI) or the vulnerable-driver blocklist the product runs but the counters read zero.  On a dedicated test machine
-`scripts\Build-WinRing0.cmd -DWINRING0_TESTSIGN=ON` test-signs the driver with a self-made certificate; Windows then loads it only
-in test-signing mode (`bcdedit /set testsigning on`, which needs Secure Boot and Memory integrity off).  Nothing here changes boot
-or security settings.
+**The source build is unsigned.**  Windows loads kernel drivers only when they are signed, so on a machine with Secure Boot, Memory
+integrity (HVCI) or the vulnerable-driver blocklist an unsigned build does not load and the counters read zero (`-DWINRING0_TESTSIGN=ON`
+test-signs it, which Windows accepts only in test-signing mode).
+
+**Measurement runs use the signed 1.2.0 driver instead** (`python validation\winring0_test.py`, option `--driver signed`, the default): the
+file committed to the xmrig repository is downloaded from a pinned commit and checked against its git blob id before it is written.
+WinRing0 1.2.0 is a **known vulnerable driver** (CVE-2020-14979, CVE-2021-41285) on Microsoft's blocklist, so the runner stops and deletes its
+service after each run, and again at the end, also when a run fails, and removes its copies.  Defender may delete the file on download;
+`--defender-exclusion` excludes only the download directory for the duration of the run.  Use `--driver build` for the source build.
 
 The executable registers and starts the driver as a Windows service on each run and
 stops/deletes it cleanly on exit.

@@ -74,20 +74,70 @@ def sysinfo(driver: Path) -> dict:
     return info
 
 
-def find_driver() -> Path:
+SVC = "WinRing0_1_2_0"
+# The signed 1.2.0 driver as committed to the xmrig repository (2019-12-14), pinned by commit and by git blob id (verified before anything is
+# written to disk).  WinRing0 1.2.0 is a KNOWN VULNERABLE driver (CVE-2020-14979, CVE-2021-41285: arbitrary MSR / physical-memory access
+# for any caller) and is on Microsoft's vulnerable-driver blocklist, so this script loads it only for the run and removes the service at
+# once, also when the run fails.
+SIGNED_URL = "https://raw.githubusercontent.com/xmrig/xmrig/a6f381403cc8ffda6836bdd31ddd6e7677c2b6d1/bin/WinRing0/WinRing0x64.sys"
+SIGNED_BLOB = "197c255adea745c8a78f529c8a38a3ceaf68711d"
+SIGNED_DIR = BUILD / "winring0-signed"
+
+
+def remove_service() -> str:
+    """Stop and delete the driver service; return a one-line state ('absent' when it is gone)."""
+    ps_out = ps(f"sc.exe query {SVC}")
+    if "1060" in ps_out:
+        return "absent"
+    ps(f"sc.exe stop {SVC}")
+    for _ in range(20):
+        if "STOPPED" in ps(f"sc.exe query {SVC}") or "1060" in ps(f"sc.exe query {SVC}"):
+            break
+        time.sleep(0.5)
+    ps(f"sc.exe delete {SVC}")
+    for _ in range(20):
+        if "1060" in ps(f"sc.exe query {SVC}"):
+            return "absent"
+        time.sleep(0.5)
+    return "STILL REGISTERED (a reboot removes a service marked for deletion)"
+
+
+def download_signed() -> Path:
+    import urllib.request
+    dst = SIGNED_DIR / "WinRing0x64.sys"
+    if dst.exists():
+        return dst
+    print("Downloading the signed WinRing0x64.sys (pinned xmrig commit) ...")
+    data = urllib.request.urlopen(SIGNED_URL, timeout=120).read()
+    blob = hashlib.sha1(b"blob %d\x00" % len(data) + data).hexdigest()
+    if blob != SIGNED_BLOB:
+        raise SystemExit(f"downloaded file has git blob id {blob}, expected {SIGNED_BLOB}: refusing to use it")
+    SIGNED_DIR.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(data)
+    time.sleep(2)
+    if not dst.exists() or dst.stat().st_size != len(data):
+        raise SystemExit(
+            "Windows Defender removed the driver (it is a known vulnerable driver).  Re-run with --defender-exclusion, which excludes only "
+            f"{SIGNED_DIR} for the duration of the run and removes the exclusion afterwards.")
+    return dst
+
+
+def find_built() -> Path:
     for p in [ROOT / "WinRing0x64.sys", BUILD / "WinRing0x64.sys", ROOT / "x64/Release/WinRing0x64.sys"]:
         if p.exists():
             return p
     return ROOT / "WinRing0x64.sys"
 
 
-def ensure_driver(testsign: bool = False) -> Path:
-    d = find_driver()
+def ensure_driver(kind: str, testsign: bool = False) -> Path:
+    if kind == "signed":
+        return download_signed()
+    d = find_built()
     if not d.exists():
         script = ROOT / "scripts/Build-WinRing0.cmd"
         print("WinRing0x64.sys not found; building it from source with", script)
         subprocess.run(["cmd", "/c", str(script)] + (["-DWINRING0_TESTSIGN=ON"] if testsign else []), cwd=ROOT)
-        d = find_driver()
+        d = find_built()
     return d
 
 
@@ -166,29 +216,47 @@ def main() -> int:
     ap.add_argument("--only", choices=["pre", "post"])
     ap.add_argument("--timeout", type=int, default=3600, help="seconds per variant")
     ap.add_argument("--rebuild", action="store_true", help="recompile both products even if validation/.build has them")
+    ap.add_argument("--driver", choices=["signed", "build"], default="signed",
+                    help="signed: the Microsoft-signed 1.2.0 driver from a pinned xmrig commit (default, loads without test-signing); build: built from source (unsigned)")
+    ap.add_argument("--defender-exclusion", action="store_true", help="exclude the driver download directory from Defender for the run only")
     ap.add_argument("--testsign", action="store_true", help="test-sign the driver when it is built (loads only in Windows test-signing mode)")
     ap.add_argument("--elevated", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
     if not is_admin():
         return elevate([x for x in sys.argv[1:] if x != "--elevated"])
+    excl = False
     try:
+        if a.defender_exclusion:
+            ps(f"Add-MpPreference -ExclusionPath '{SIGNED_DIR}'")
+            excl = True
         dest = OUT / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         dest.mkdir(parents=True, exist_ok=True)
-        driver = ensure_driver(a.testsign)
+        print("Removing any leftover driver service first:", remove_service())
+        driver = ensure_driver(a.driver, a.testsign)
         info = sysinfo(driver)
+        info["driver_kind"] = a.driver
         (dest / "sysinfo.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
         print(json.dumps(info, indent=2))
         variants = [a.only] if a.only else ["post", "pre"]
         exes = {v: ensure_build(v, rebuild=a.rebuild) for v in variants}
         summary = {"sysinfo": "sysinfo.json", "runs": []}
         for v in variants:
-            summary["runs"].append(run_variant(v, exes[v], driver, dest, a.timeout))
+            try:
+                summary["runs"].append(run_variant(v, exes[v], driver, dest, a.timeout))
+            finally:
+                # the vulnerable driver must not stay registered or on disk next to the run
+                summary.setdefault("service_after", {})[v] = remove_service()
+                (dest / v / "WinRing0x64.sys").unlink(missing_ok=True)
             (dest / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-        info["driver_service_after"] = ps("sc.exe query WinRing0_1_2_0")
+        info["driver_service_after"] = remove_service()
         (dest / "sysinfo.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
-        print("\nDone. Send me:", dest)
+        print("\nDriver service after the run:", info["driver_service_after"])
+        print("Done. Send me:", dest)
         return 0
     finally:
+        print("Final cleanup, driver service:", remove_service())
+        if excl:
+            ps(f"Remove-MpPreference -ExclusionPath '{SIGNED_DIR}'")
         if a.elevated:
             input("\nPress Enter to close this window...")
 
