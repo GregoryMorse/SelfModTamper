@@ -29,13 +29,26 @@ The manuscript is available as the preprint [arXiv:2604.12407](https://arxiv.org
 
 | Requirement | Details |
 |---|---|
-| OS | Windows 10 / 11 (x64) |
-| Compiler | Visual Studio 2019 or later (MSVC + MASM/ml64) |
+| OS | Windows 10 / 11, Linux, macOS (all x86-64) |
+| Compiler | Windows: Visual Studio 2022 or 2026 (MSVC + MASM/ml64); Linux/macOS: GCC or Clang |
 | Architecture | x86-64 only |
-| Privileges | **Administrator** required at runtime (kernel driver for MSR access) |
+| Privileges | none to build or run the program; only reading a hardware counter can need more, see the table below |
 | Build system | CMake >= 3.21 (Windows, Linux, macOS x86-64), or the Visual Studio solution (2022 / v143 and 2026 / v145) |
 | External library | [AsmJit](https://github.com/asmjit/asmjit), downloaded by the build from a pinned, SHA-512-checked archive (no vcpkg, no manual step) |
 | Kernel driver | none. The counter is read with `perf_event_open` on Linux; on Windows see `validation/pmc/README.md` |
+
+### When administrator / root is needed
+
+| What you do | Windows | Linux | macOS |
+|---|---|---|---|
+| Build (CMake, MSBuild, any script in `validation/` that only compiles) | no | no | no |
+| Run `SelfModTamper` / `smc_harness` (timing, checksums, vectors) | **no** (the real-time priority request is silently lowered to high without admin; counter columns read 0) | **no** (counter columns read 0 unless the setting below is made) | **no** (no counter) |
+| Counter in the program or the probe, Intel or AMD | not read in-process; use the trace route below | needs `kernel.perf_event_paranoid <= 2` (set once with `sudo sysctl kernel.perf_event_paranoid=2`) or root, and bare metal; the run itself is then unprivileged | not available |
+| Counter on Windows through a kernel trace (`python validation/pmc_test.py --register-wpr` once, then `python validation/pmc_trace.py`) | **administrator prompt** | n/a | n/a |
+| Windows/AMD fallback through the signed PawnIO driver | **administrator prompt** and PawnIO installed | n/a | n/a |
+| Legacy WinRing0 path (not used for results) | administrator prompt and a driver you supply | n/a | n/a |
+
+The scripts check this themselves and say so (`needs an administrator prompt`, or the `perf_event_open failed ... paranoid` line on Linux).
 
 > **Note:** hardware counters are optional. Without one (virtual machines, hosted CI runners, macOS) the `MACHINE_CLEARS.SMC` columns read zero and the timing results are unaffected.
 
@@ -87,7 +100,7 @@ cmake --build build/cmake --config Release
 ```
 
 or on Windows `cmake --preset windows-x64` then `cmake --build --preset release` (`--preset windows-x64-vs2022` for Visual Studio 2022).
-macOS builds the portable probe and the harness' non-counter parts only if the Mach-O port is present; the CI grid shows what is built where.
+On macOS x86-64 the same CMake build produces the benchmark and the harness without a counter (CI builds and runs it).
 
 ### Visual Studio solution
 
@@ -111,7 +124,7 @@ build\msbuild\v145\x64\Release\SelfModTamper.exe
 ```
 
 The program:
-1. Pins itself to logical processor 0 and raises its priority to real-time.
+1. Pins itself to logical processor 0 (Windows, Linux) and asks for real-time priority (Windows; without administrator rights Windows grants high priority instead).
 2. Where a counter is available, configures it to count `MACHINE_CLEARS.SMC` events (otherwise those columns read zero).
 3. Iterates over five checksum variants × all seven timers for 10 000 trials each.
 4. Prints average / min / max times and total `MACHINE_CLEARS.SMC` count per variant.
