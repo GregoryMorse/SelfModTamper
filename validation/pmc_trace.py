@@ -44,16 +44,22 @@ def pmc_events(dumper, tid):
 
 
 def analyze(rows, ncases, reps):
-    """Markers: two consecutive events at least 3 ms apart whose counter values are (almost) equal, i.e. the thread slept."""
-    marks = []
-    for (t0, v0), (t1, v1) in zip(rows, rows[1:]):
-        if t1 - t0 >= 3000 and abs(v1 - v0) <= 64:
-            marks.append((v0, v1))  # value when the thread left the CPU, value when it came back
+    """The trace has one counter event per context switch of the thread.  The probe sleeps 5 ms (about 15 ms of wall time) before and
+    after every repetition, so the events that follow a gap of at least 3 ms alternate: before a repetition, after it.  The count of
+    a repetition is the difference of the pair; events closer together than 3 ms (other threads running in between) are ignored."""
+    ev = []
+    prev = None
+    for t, v in rows:
+        if prev is None or t - prev >= 3000:
+            ev.append(v)
+        prev = t
     need = 2 * ncases * reps
-    if len(marks) < need:
-        return None, "found %d sleep markers, expected %d" % (len(marks), need)
-    marks = marks[-need:]
-    counts = [marks[2 * i + 1][0] - marks[2 * i][1] for i in range(ncases * reps)]  # leave(post) - return(pre)
+    if len(ev) < need:
+        return None, "found %d sleep events, expected %d" % (len(ev), need)
+    ev = ev[-need:]
+    counts = [ev[2 * i + 1] - ev[2 * i] for i in range(ncases * reps)]
+    if min(counts) < 0:
+        return None, "the events do not alternate (negative count)"
     return [counts[c * reps:(c + 1) * reps] for c in range(ncases)], ""
 
 

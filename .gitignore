@@ -292,3 +292,5 @@ output/pdf/*.log
 /out.txt
 
 validation/native/pmc/trace_diag/
+validation/native/pmc/trace-*/*.etl
+validation/native/pmc/trace-*/dumper.txt

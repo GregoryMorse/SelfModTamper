@@ -478,6 +478,8 @@ int main(int argc, char** argv) {
 #ifdef _WIN32
     printf("trace-markers: thread id %lu; each repetition is bracketed by a 5 ms sleep (a context switch the kernel trace records)\n", (unsigned long)GetCurrentThreadId());
     SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
+    SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);  // so that the thread is not switched out at quantum end: the only switches are the sleeps
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 #endif
     fflush(stdout);
   }
