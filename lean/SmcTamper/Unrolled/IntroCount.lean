@@ -35,4 +35,8 @@ most `1181` instructions. -/
 theorem pass_clears_byte_real (base W : Nat) (hW : W ≤ 1181) : passUnitClears 1 W base 3 = 0 :=
   pass_clears_byte base 3 W (by omega) (by omega)
 
+/-- The page-granule upper bound `pass_clears_page` is attained: for the real intro (`I = 3`), page-aligned code and every window
+`W = 8k` with `k < 4`, the pass clears exactly `2k` unit stores (a kernel evaluation, not a closed form for all `W`). -/
+theorem pass_clears_page_tight : ∀ k, k < 4 → passUnitClears 4096 (8 * k) 0 3 = 2 * k := by decide +kernel
+
 end SmcTamper
