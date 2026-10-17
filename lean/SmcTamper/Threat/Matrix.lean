@@ -37,22 +37,22 @@ theorem T4 :
       (∀ n, (worldAt S tl n).split = false) ∧ (∀ i a b, tl i ≠ TEv.dmaWrite a b) ∧
         (∀ i x p e r, tl i = TEv.check x p e r → r = e)) ∧
     -- L1 with the OS timer API: A5 can fail with a winning adversary
-    (∃ (C : Cost) (sch : Sched zSys.n (zTlE 100 1)), WF zSys C .L1 .osApi (zTlE 100 1) ∧ Wins zSys (zTlE 100 1) sch ∧
-      ¬ A5 (zTlE 100 1)) ∧
+    (∃ (C : Cost) (sch : Sched zSys.n (zTlE 100 1)), WF zSys C .L1 .osApi (zTlE 100 1) ∧ AllBut 5 zSys C (zTlE 100 1) sch ∧
+      Wins zSys (zTlE 100 1) sch ∧ ¬ A5 (zTlE 100 1)) ∧
     -- L2: A5 (replayed readings) and A1 (split views) can fail with a winning adversary
-    (∃ (C : Cost) (sch : Sched zSys.n (zTlE 100 1)), WF zSys C .L2 .tsc (zTlE 100 1) ∧ Wins zSys (zTlE 100 1) sch ∧
-      ¬ A5 (zTlE 100 1)) ∧
-    (∃ (C : Cost) (sch : Sched sys1.n sTl), WF sys1 C .L2 .tsc sTl ∧ Wins sys1 sTl sch ∧ ¬ A1 sys1 sTl) ∧
+    (∃ (C : Cost) (sch : Sched zSys.n (zTlE 100 1)), WF zSys C .L2 .tsc (zTlE 100 1) ∧ AllBut 5 zSys C (zTlE 100 1) sch ∧
+      Wins zSys (zTlE 100 1) sch ∧ ¬ A5 (zTlE 100 1)) ∧
+    (∃ (C : Cost) (sch : Sched sys1.n sTl), WF sys1 C .L2 .tsc sTl ∧ AllBut 1 sys1 C sTl sch ∧ Wins sys1 sTl sch ∧ ¬ A1 sys1 sTl) ∧
     -- L4: A4 (physical writes) can fail with a winning adversary
-    (∃ (C : Cost) (sch : Sched (sysP 16).n (honTl L4)), WF (sysP 16) C .L4 .tsc (honTl L4) ∧ Wins (sysP 16) (honTl L4) sch ∧
-      ¬ A4 (honTl L4)) := by
+    (∃ (C : Cost) (sch : Sched (sysP 16).n (honTl L4)), WF (sysP 16) C .L4 .tsc (honTl L4) ∧ AllBut 4 (sysP 16) C (honTl L4) sch ∧
+      Wins (sysP 16) (honTl L4) sch ∧ ¬ A4 (honTl L4)) := by
   refine ⟨fun S C l tl hwf h => tsc_low_level S C l tl hwf h, ?_, ?_, ?_, ?_⟩
-  · obtain ⟨C, sch, h1, _, h3, h4⟩ := nec_A5_osApi; exact ⟨C, sch, h1, h3, h4⟩
-  · obtain ⟨C, sch, h1, _, h3, h4⟩ := nec_A5; exact ⟨C, sch, h1, h3, h4⟩
+  · obtain ⟨C, sch, h1, h2, h3, h4⟩ := nec_A5_osApi; exact ⟨C, sch, h1, h2, h3, h4⟩
+  · obtain ⟨C, sch, h1, h2, h3, h4⟩ := nec_A5; exact ⟨C, sch, h1, h2, h3, h4⟩
   · obtain ⟨C, sch, h1, h2, h3⟩ := nec_A1
-    exact ⟨C, sch, h1, h3, not_holds sys1 C .L2 .tsc sTl sch h1 h3 1 (by omega) h2⟩
+    exact ⟨C, sch, h1, h2, h3, not_holds sys1 C .L2 .tsc sTl sch h1 h3 1 (by omega) h2⟩
   · obtain ⟨C, sch, h1, h2, h3⟩ := nec_A4
-    exact ⟨C, sch, h1, h3, not_holds (sysP 16) C .L4 .tsc (honTl L4) sch h1 h3 4 (by omega) h2⟩
+    exact ⟨C, sch, h1, h2, h3, not_holds (sysP 16) C .L4 .tsc (honTl L4) sch h1 h3 4 (by omega) h2⟩
 
 /-! ### An external clock: resolution plus jitter -/
 

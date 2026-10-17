@@ -5,8 +5,8 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 
 | ID | v1 location | Claim | Class | Round | Status | Declaration / evidence |
 |---|---|---|---|---|---|---|
-| C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | done | Harvard/Interp.lean `interp_step`, `interp_simulates` |
-| C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | done | Harvard/Separation.lean `harvard_reads_sensitive`, `harvard_time_bound` (cost contract as hypothesis) |
+| C01 | §1 ¶1 | SMC on a deterministic machine can be simulated by non-SMC code (Harvard interpreter) | F | R8 | done (supporting; not in the selected Palomar statement) | Harvard/Interp.lean `interp_step`, `interp_simulates` |
+| C02 | Abstract, §1 ¶2, ¶4 | Timing-faithful non-SMC reproduction must read the code bytes it emulates; costlier under the cost contract | F + FC | R8 | done (supporting; a general observation, not selected: the time bound assumes the per-read charge) | Harvard/Separation.lean `harvard_reads_sensitive`, `harvard_time_bound` (cost contract as hypothesis); `SmcTamper.Paper.harvard_separation` |
 | C03 | §1 Model, §9 ¶1 | `P(T,C)` true iff code unmodified (overclaim, P04); corrected: completeness + conditional soundness | FC | R11a | done (FC) | Detection/Predicate.lean `P_complete`, `P_sound_value`, `P_sound_time`, `P_not_iff` (collision witness; P04 confirmed) |
 | C04 | §1 Model (P08) | "constant-time kernels": control flow and instruction count are data-independent | F | R4, R6 | done at Level 1 and Level 2 (`unrolled_refines`, conditions in GAPS G01) | Static/Main.lean `constant_flow` (trace depends on ⌈ulSize/8⌉ only), `tpCompTrace`; Unrolled/Main.lean `unrolled_emulation`; Unrolled/L2Main.lean `unrolled_refines` |
 | C05 | §1 Model | data stored as code (SMC-backed storage) is covered by the checksum | F | R11a | done (F) | Detection/Reset.lean `value_frame` (value determined by the covered bytes), `storage_tamper_detected` |

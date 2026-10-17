@@ -93,7 +93,7 @@ theorem nec_A7 : ∃ (C : Cost) (sch : Sched rSys.n rTl),
       exact preSeq_prop zL (fun ev => rCost.admits rSys ev) (by simp [zL, Cost.admits]) i hi
     · simp [Cost.admits, rCost]
   have hA6 : A6 rSys rTl rSch := by
-    refine tail_a6 _ _ _ _ _ _ rfl zL_nc ?_
+    refine tail_a6 _ _ _ _ _ _ rfl (by decide) zL_nc ?_
     intro i hi a b h _ _
     have : preSeq zL i ∈ zL := preSeq_mem zL i hi
     rw [h] at this
@@ -103,7 +103,7 @@ theorem nec_A7 : ∃ (C : Cost) (sch : Sched rSys.n rTl),
     simp [wr8, rSys, mkSysR]
   have hnr : ¬ A7 rSys := by
     intro h
-    have := (h 0 (by simp [rSys, mkSysR])) 8 (by simp [rSys, mkSysR])
+    have := ((h 0 (by simp [rSys, mkSysR])).2) 8 (by simp [rSys, mkSysR])
     simp [rSys, mkSysR] at this
   refine ⟨rCost, rSch, hwf, ⟨tail_a1 _ _ _ _ _ _ zL_ns, rSys_cov, Or.inr rSys_code, Or.inr rSys_conn,
     ⟨0, by simp [rSys, mkSysR], tail_intact _ _ _ _ _ _ 0 rfl ?_⟩, ?_, tail_a4 _ _ _ _ _ zL_nd, tail_a5 _ _ _ _ _ rfl zL_nc, hA6,
@@ -125,7 +125,7 @@ theorem nec_A7 : ∃ (C : Cost) (sch : Sched rSys.n rTl),
     rw [this]
     simp [wr8, rSys, mkSysR]
   · rintro ⟨x, hx, hresp, _⟩
-    have := hresp zL.length 8 (by simp [rSys, mkSysR])
+    have := hresp.2 zL.length 8 (by simp [rSys, mkSysR])
     rw [hW] at this
     simp [wr8, rSys, mkSysR] at this
 

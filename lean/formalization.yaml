@@ -7,13 +7,18 @@ project:
     The selected statement is an abstract threat model for checksum units whose opcode state lives in the memory
     they checksum: a system of units with regions and code, a timeline of write, execute, check, split-view and DMA
     events, adversary levels L0-L4, a cost contract with lower bounds on emulation, forgery and mediation, and eight
-    structural assumptions A1-A8 (none of the form "the attacker is detected"). The development proves that under
-    A1-A8 an adversary never executes a modified protected byte without an effective alarm (T1), that a faithful
-    split-view run must mediate every iteration with a non-zero toggle and that this is a timing failure under the
-    timing gap (T2), that each of the eleven assumptions is necessary by an explicit winning adversary (T3, including a
-    three-quadword forgery of the checksum and the proof that two quadwords do not suffice), what each adversary level
-    gives and loses (T4), and that a Harvard machine reproducing a von Neumann machine must read every sensitive byte
-    (C01, C02). Supporting material, not part of the selected statement, covers the x86-64 model of the kernels, the
+    structural assumptions A1-A8 (none of the form "the attacker is detected"). An effective alarm needs a unit with a
+    response code (at least one response byte, all of it unmodified) and either a value mismatch or a positive number k
+    of consecutive timing failures; A6 therefore includes k > 0 and A7 includes that every unit has a response byte.
+    The development proves that under A1-A8 an adversary never executes a modified protected byte without an effective
+    alarm (T1), that a faithful split-view run must mediate every iteration with a non-zero toggle and that this is a
+    timing failure under the timing gap (T2), that each of the eleven assumptions is necessary by an explicit winning
+    adversary that satisfies all the others (T3, including a three-quadword forgery of the checksum and the proof that
+    two quadwords do not suffice), and what each adversary level gives and loses (T4: below L2 with the inline timer
+    A1, A4 and A5 hold; L1 with an operating-system timer, L2 and L4 each admit a winning adversary against a system
+    satisfying every other assumption). The paper's Harvard/von Neumann observation (C01, C02) is proved in the
+    development but is not part of the selected statement: it is a general fact about observation-preserving simulation,
+    and its time bound assumes the per-read charge it uses. Supporting material, not part of the selected statement, covers the x86-64 model of the kernels, the
     static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level and at the instruction level, the byte layout against
     assembler output, a clear-count contract checked against the paper's tables, timers, the noise estimator, the
     detection predicate and the data ratios, together with native test vectors for the corrected sources.
@@ -33,8 +38,9 @@ sources:
     author_endorsement: "participated"
     note: >-
       arXiv:2604.12407v1. The selected results replace the informal Section 10 and the statements about memory splitting, with
-      exact minimal corrections P01-P13 (P14, the AMD event cells of Table 1, is open and ask-author), quoted from the arXiv
-      v1 text in errata/ERRATA.md and errata/edits.json, and legacy source fixes L01-L07 and D01-D03 (CODE_FIXES.md). The
+      exact minimal corrections P01-P13 (P14, the AMD event cells of Table 1, was checked against AMD primary documents and is
+      withdrawn), quoted from the arXiv v1 text in errata/ERRATA.md and errata/edits.json, and legacy source fixes L01-L07 and
+      D01-D03 (CODE_FIXES.md). The
       threat model is formalized as an abstract model: the cost contract, the level capabilities and the eight assumptions
       are hypotheses, and no theorem says that a given processor, hypervisor or operating system satisfies them. Not
       modeled and not claimed: any processor's pipeline, caches, machine-clear behavior, timers or handling of
@@ -54,13 +60,17 @@ related_formalizations: []
 status:
   scope: >-
     The selected Palomar record is PalomarSMT.mathematical_result: security under the structural assumptions A1-A8 (T1),
-    the mediation cost of split views (T2), the necessity of each assumption (T3), the level matrix (T4) and the
-    Harvard separation (C01, C02). The model is abstract: every dependence on a processor, hypervisor or operating system
+    the mediation cost of split views (T2), the necessity of each assumption (T3) and the level matrix (T4). The
+    Harvard/von Neumann observation (C01, C02) is proved in the development and is not selected. The model is abstract: every dependence on a processor, hypervisor or operating system
     is a field of the cost contract, the level capabilities or the well-formedness structure, and no theorem says that any
     real system satisfies it. The x86-64 model, the static and unrolled kernel theorems, the layout against assembler
     bytes, the clear contract checked against Table 6, the timer and noise contract and the detection predicate are
     supporting material, not selected registered claims; PAPER_MAP.md lists every claim with its status and
-    PLATFORM_CONTRACT.md every contract field. Instruction-level execution of the 296-unit kernel is an open obligation (G01).
+    PLATFORM_CONTRACT.md every contract field. The instruction-level execution of the 296-unit kernel is proved
+    (unrolled_refines, gap G01 closed) on the x86-64 model for a final pass whose qword count is not a multiple of 148 and
+    under the stated address bound. Not claimed, and not proved: exact page-granule clear counts (only the bounds that the
+    paper's tables use, shown attained for W = 8k), a probability model of the noise, any property of a real processor,
+    and that split reads of bytes that are never executed are detected (THREAT_MODEL section 3).
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -88,7 +98,7 @@ fidelity:
     the 2.5x ratio (P02), the table caption size (P03), the checksum-as-predicate overclaim and the collision example (P04),
     interval contents and labels (P05), preconditions of the C++ emulation (P06), latency cells (P07), "constant-time"
     (P08), notation (P09, P10), and the replacement of Section 10 by the threat model with its scope statements (P11-P13);
-    P14 (AMD cells of Table 1) is open. Corrections to the code are L01-L07 and D01-D03 (CODE_FIXES.md), including the
+    P14 (AMD cells of Table 1) was checked against AMD primary documents and is withdrawn. Corrections to the code are L01-L07 and D01-D03 (CODE_FIXES.md), including the
     crash when the qword count is a multiple of 148 (L07). The threat model is relative to its cost contract and
     assumptions; T2 does not claim that all split-view attacks are detected. The unrolled kernel is verified at an abstract
     level and at the instruction level on the x86-64 model, for a final pass that is not a multiple of 148 qwords. No further mismatch is claimed absent after an unspecified universal review.

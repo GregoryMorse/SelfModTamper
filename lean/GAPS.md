@@ -56,3 +56,13 @@ records (`ROUNDS.md`) and `PAPER_MAP.md` point here.
 | G42 | R15 Palomar package; Palomar policy assets not copied; `palomar-full.yml` dispatch needs the author's go-ahead; submission and registration by the author | R15 | package complete; Palomar preflight passed on an earlier commit (run 38950705490); a preflight on the final commit needs the author's go-ahead for `palomar-full.yml`; submission and registration are the author's |
 | G43 | R16 tag (name to confirm), arXiv v2 manuscript in `paper/` | R16 | open |
 | G44 | PAPER_MAP statuses are stale for several rows (R11b/R11c rows still `todo`) | refresh in R14 | closed: PAPER_MAP rows refreshed in R14; no `todo` row |
+
+## E. Palomar automated review of the first submission (commit 69a9d34, 2026-10-17)
+
+| ID | Finding | Resolution | Status |
+|----|---------|------------|--------|
+| G45 | T1 with `k = 0`: the timing branch of `Alarm` holds with no failed check | `Alarm`'s timing branch requires `0 < S.k`; A6 carries `0 < S.k`, so T1 still holds; every necessity witness has `k = 2` (`tail_noalarm`, `tail_a6`) | closed (`Spec/Threat.lean`, `Threat/Security`, `Threat/Tail`) |
+| G46 | T4's existential witnesses were not required to satisfy the other assumptions | each T4 conjunct now carries `OthersHold i` (A5 for L1/OS timer and L2, A1 for L2, A4 for L4), derived from the `AllBut` facts the witnesses already had | closed (`Spec/Paper.lean` `LevelMatrix`, `Threat/Matrix` `T4`, `Paper.level_matrix`) |
+| G47 | A unit with no response code had a vacuously intact response | `RespIntact` requires a response byte; A7 requires every unit to have one in its own code; the witnesses (`mkSys`, `duoSys`, `rSys`, `wSys`) have one | closed (`Spec/Threat.lean`, `Threat/Tail` `mk_resp`, `Threat/Witness`, `Threat/Witnesses5`) |
+| G48 | Harvard result (C01, C02): general noninterference observation; time bound assumes the per-read cost | removed from the selected statement (`ROOTS` in `make_challenge.py`, `comparator.json`, `Solution.lean`); still proved as `Paper.harvard_separation`, listed as supporting in PAPER_MAP; a separation tied to a specified computation under a justified cost model would be a new result and is not claimed | closed by narrowing the statement |
+| G49 | Conflicting status statements (instruction-level proof "open", P14 "open") | `formalization.yaml`, `PALOMAR_SEMANTICS.md`, `PALOMAR_SUBMISSION.md`, `FINAL_ACCEPTANCE.json` now say: G01 closed with its hypotheses, P14 withdrawn | closed |

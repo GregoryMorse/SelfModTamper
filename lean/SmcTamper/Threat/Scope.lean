@@ -41,7 +41,7 @@ theorem injected_code_outside_goal : ∃ (C : Cost) (sch : Sched (sysP 16).n (ho
   refine ⟨⟨fun _ => 2, 1, 1⟩, honSch 16 Lj Lj_nc, hwf, ⟨h1, mk_cov _ _ _ _ _ _ _ _ _ (by decide), h2c, h2n,
     ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl (fun i hi a b h => by rw [hwr i hi a b h]; simp [sysP, mkSys])⟩, h3,
     tail_a4 _ _ _ _ _ Lj_nd, h5,
-    tail_a6 _ _ _ _ _ _ rfl Lj_nc (fun i hi a b h hp _ => by rw [hwr i hi a b h] at hp; simp [sysP, mkSys] at hp), h7, h8⟩, ?_, ?_⟩
+    tail_a6 _ _ _ _ _ _ rfl (by decide) Lj_nc (fun i hi a b h hp _ => by rw [hwr i hi a b h] at hp; simp [sysP, mkSys] at hp), h7, h8⟩, ?_, ?_⟩
   · have hw1 : worldAt (sysP 16) (honTl Lj) 1 = ⟨wr8 (fun _ => 0) 100 1, wr8 (fun _ => 0) 100 1, false⟩ := by
       simp [honTl, worldAt, stepW, tailTl, preSeq, Lj, World.init, sysP, mkSys]
     refine ⟨1, 100, by simp [honTl, tailTl, preSeq, Lj], by simp [sysP, mkSys], ?_⟩

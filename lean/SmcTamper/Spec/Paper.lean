@@ -71,15 +71,21 @@ def MediationTheorem : Prop :=
       ToggleAt (S.unit x).cu.opAddr (vRun (S.unit x).cu.opAddr med 0 j s0) ≠ 0 → timeFailAt S tl c x)
 
 /-- T4: what each level gives and loses. Below L2 with the inline timer, A1, A4 and A5 hold; each of L1 with an OS timer, L2, and L4
-admits a winning adversary against a system that satisfies the assumptions that level does not remove. -/
+admits a winning adversary against a system that satisfies every assumption except the one that level removes (`OthersHold`, as in
+T3), so the win is due to that capability alone. -/
 def LevelMatrix : Prop :=
   (∀ (S : Sys) (C : Cost) (l : Level) (tl : Nat → TEv), WF S C l .tsc tl → l.rank < 2 → A1 S tl ∧ A4 tl ∧ A5 tl) ∧
-  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl), WF S C .L1 .osApi tl ∧ Wins S tl sch ∧ ¬ A5 tl) ∧
-  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl), WF S C .L2 .tsc tl ∧ Wins S tl sch ∧ ¬ A5 tl) ∧
-  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl), WF S C .L2 .tsc tl ∧ Wins S tl sch ∧ ¬ A1 S tl) ∧
-  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl), WF S C .L4 .tsc tl ∧ Wins S tl sch ∧ ¬ A4 tl)
+  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl),
+      WF S C .L1 .osApi tl ∧ OthersHold 5 S C tl sch ∧ Wins S tl sch ∧ ¬ A5 tl) ∧
+  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl),
+      WF S C .L2 .tsc tl ∧ OthersHold 5 S C tl sch ∧ Wins S tl sch ∧ ¬ A5 tl) ∧
+  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl),
+      WF S C .L2 .tsc tl ∧ OthersHold 1 S C tl sch ∧ Wins S tl sch ∧ ¬ A1 S tl) ∧
+  (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl),
+      WF S C .L4 .tsc tl ∧ OthersHold 4 S C tl sch ∧ Wins S tl sch ∧ ¬ A4 tl)
 
-/-- C01 and C02. A Harvard machine reproducing the observation of a von Neumann machine on all memories reads every sensitive byte
+/-- C01 and C02 (supporting, not part of the selected Palomar statement: a general observation about observation-preserving
+simulation, whose time bound assumes the per-read charge it uses). A Harvard machine reproducing the observation of a von Neumann machine on all memories reads every sensitive byte
 the von Neumann machine reads, and a time bound that charges `ρ` per such read follows for any list of distinct sensitive bytes. -/
 def HarvardSeparation : Prop :=
   ∀ {C S Obs : Type} (H : Harvard C) (V : VonNeumann S) (emb : S → C) (N : Nat) (obsH : C → Obs) (obsV : S → Obs),

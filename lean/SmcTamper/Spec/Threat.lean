@@ -193,14 +193,17 @@ def timeFailAt (S : Sys) (tl : Nat → TEv) (c x : Nat) : Prop :=
 def valueFailAt (S : Sys) (tl : Nat → TEv) (c x : Nat) : Prop :=
   ∃ p e r, tl c = TEv.check x p e r ∧ ¬ checkOk S (worldAt S tl c) x p
 
-/-- A unit's response code is never modified (so its alarm takes effect). -/
+/-- A unit has a response mechanism and it is never modified (so its alarm takes effect): there is at least one response byte, and
+every response byte keeps its original value. A unit without any response byte has nothing that could take effect. -/
 def RespIntact (S : Sys) (tl : Nat → TEv) (x : Nat) : Prop :=
-  ∀ n a, (S.unit x).resp a → (worldAt S tl n).F a = S.I0 a
+  (∃ a, (S.unit x).resp a) ∧ ∀ n a, (S.unit x).resp a → (worldAt S tl n).F a = S.I0 a
 
-/-- An effective alarm: some unit with intact response code sees a value mismatch, or `k` consecutive timing failures. -/
+/-- An effective alarm: some unit with an intact response code sees a value mismatch, or a positive number `k` of consecutive
+timing failures (with `k = 0` the timing branch would hold with no failed check at all, so it is excluded). -/
 def Alarm (S : Sys) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop :=
   ∃ x, x < S.n ∧ RespIntact S tl x ∧
-    ((∃ m, valueFailAt S tl (sch.ck x m) x) ∨ (∃ s, ∀ j, j < S.k → timeFailAt S tl (sch.ck x (s + j)) x))
+    ((∃ m, valueFailAt S tl (sch.ck x m) x) ∨
+      (0 < S.k ∧ ∃ s, ∀ j, j < S.k → timeFailAt S tl (sch.ck x (s + j)) x))
 
 /-- Goal (a): a protected, non-opcode byte is executed while the fetch view differs from the original image. -/
 def ExecViolation (S : Sys) (tl : Nat → TEv) : Prop :=
@@ -241,13 +244,15 @@ def A3 (S : Sys) (C : Cost) : Prop := ∀ x, x < S.n → (S.unit x).native ≤ (
 def A4 (tl : Nat → TEv) : Prop := ∀ i a b, tl i ≠ TEv.dmaWrite a b
 /-- A5 time integrity: every reading equals the elapsed time. -/
 def A5 (tl : Nat → TEv) : Prop := ∀ i x p e r, tl i = TEv.check x p e r → r = e
-/-- A6 persistence: a modifying write persists through the next `k` scheduled checks of every unit covering the byte. -/
+/-- A6 persistence: the alarm count `k` is positive, and a modifying write persists through the next `k` scheduled checks of
+every unit covering the byte. -/
 def A6 (S : Sys) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop :=
-  ∀ i a b x m0, tl i = TEv.write a b → S.prot a → ¬ S.ops a → b ≠ S.I0 a → x < S.n → S.inRegion x a →
+  0 < S.k ∧ ∀ i a b x m0, tl i = TEv.write a b → S.prot a → ¬ S.ops a → b ≠ S.I0 a → x < S.n → S.inRegion x a →
     i < sch.ck x m0 → (m0 = 0 ∨ sch.ck x (m0 - 1) ≤ i) →
     ∀ j, j < S.k → (worldAt S tl (sch.ck x (m0 + j))).D a ≠ S.I0 a
-/-- A7 response coverage: each unit's response code is part of its own (protected) code. -/
-def A7 (S : Sys) : Prop := ∀ x, x < S.n → ∀ a, (S.unit x).resp a → (S.unit x).code a ∧ ¬ S.ops a
+/-- A7 response coverage: each unit has a response code (at least one response byte), and all of it is part of the unit's own
+(protected) code. -/
+def A7 (S : Sys) : Prop := ∀ x, x < S.n → (∃ a, (S.unit x).resp a) ∧ ∀ a, (S.unit x).resp a → (S.unit x).code a ∧ ¬ S.ops a
 /-- A8 non-compensation: whenever a modification lies in the region of an honestly running unit, its result differs. -/
 def A8 (S : Sys) (tl : Nat → TEv) (sch : Sched S.n tl) : Prop :=
   ∀ x m e r, x < S.n → tl (sch.ck x m) = TEv.check x .honest e r →

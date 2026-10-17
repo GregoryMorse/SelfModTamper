@@ -7,7 +7,8 @@
     "Author review of the errata PDF",
     "Comparator and NanoDa run records (run in the Palomar pipeline after submission)"
   ],
-  "open_obligations": ["G01/G03/G13 Level-2 refinement of the unrolled kernel", "G04/G05 exact clear counts (non-claims)", "G20-G22 primary sources", "G24 table label order (author)", "P14 AMD cells (author)"],
+  "open_obligations": ["G04/G05 exact clear counts (non-claims)", "the author's review of the errata PDF", "G10 variant (inherent), G14 probability model (not claimed)"],
+  "superseded_note": "the fields above describe the first submission commit; the second submission is prepared after the 2026-10-17 automated review (GAPS G45-G49)",
   "submission_performed": "not yet; by the author, never by the agent",
   "registration_performed": "not yet"
 }

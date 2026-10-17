@@ -38,7 +38,7 @@ theorem zE_core (C : Cost) (l : Level) (t : TimerSrc) (e r : Nat) (hl : 1 ≤ l.
   have hI : ∀ a, zSys.I0 a = 0 := fun _ => rfl
   refine ⟨?_, tail_a1 _ _ _ _ _ _ zL_ns, mk_cov _ _ _ _ _ _ _ _ _ (by decide), mk_code _ _ _ _ _ _ _ _ _ (by decide),
     mk_conn _ _ _ _ _ _ _ _ _, ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl ?_⟩, tail_a4 _ _ _ _ _ zL_nd,
-    tail_a6 _ _ _ _ _ _ rfl zL_nc ?_, mk_resp _ _ _ _ _ _ _ _ _ (by decide), ?_, ?_⟩
+    tail_a6 _ _ _ _ _ _ rfl (by decide) zL_nc ?_, mk_resp _ _ _ _ _ _ _ _ _ (by decide), ?_, ?_⟩
   · refine tail_wf _ _ _ _ _ _ C l t ?_ ?_ ?_ ?_ zL_nc (by simp) (by simp) (by simp)
     · intro i hi
       have := preSeq_prop zL (fun ev => l.allows t (zTlE e r) i ev) ?_ i hi

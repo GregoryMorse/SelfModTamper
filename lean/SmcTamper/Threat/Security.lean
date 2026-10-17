@@ -69,10 +69,11 @@ theorem core_alarm (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat →
     (i c : Nat) (b : BitVec 8) (hw : tl i = TEv.write c b) (hprot : S.prot c) (hops : ¬ S.ops c) (hb : b ≠ S.I0 c)
     (hreg : S.inRegion y c) : Alarm S tl sch := by
   obtain ⟨m0, hm1, hm2⟩ := first_check_after _ tl sch y i
-  have hpers := hA.a6 i c b y m0 hw hprot hops hb hy hreg hm1 hm2
+  have hpers := hA.a6.2 i c b y m0 hw hprot hops hb hy hreg hm1 hm2
   have hresp : RespIntact S tl y := by
+    refine ⟨(hA.a7 y hy).1, ?_⟩
     intro n a ha
-    obtain ⟨hca, hoa⟩ := hA.a7 y hy a ha
+    obtain ⟨hca, hoa⟩ := (hA.a7 y hy).2 a ha
     exact intact_code_orig S tl hA.a1 hA.a4 y hint a hca hoa n
   refine ⟨y, hy, hresp, ?_⟩
   by_cases hh : ∃ j, j < S.k ∧ ∃ e r, tl (sch.ck y (m0 + j)) = TEv.check y .honest e r
@@ -82,7 +83,7 @@ theorem core_alarm (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat →
     have hnot := hA.a8 y (m0 + j) e r hy hev ⟨c, hreg, hops, hpers j hj⟩
     exact ⟨.honest, e, r, hev, hnot⟩
   · right
-    refine ⟨m0, ?_⟩
+    refine ⟨hA.a6.1, m0, ?_⟩
     intro j hj
     obtain ⟨p, e, r, hev⟩ := sch.isChk y (m0 + j) hy
     rcases check_cases S C l t tl sch hwf hA y hy hint (sch.ck y (m0 + j)) p e r hev with ⟨e', r', h'⟩ | hf

@@ -1,9 +1,11 @@
 # Selected Palomar statement
 
-`PalomarSMT.mathematical_result` (Challenge: one deliberate `sorry`; Solution: no holes) is the conjunction of five result
+`PalomarSMT.mathematical_result` (Challenge: one deliberate `sorry`; Solution: no holes) is the conjunction of four result
 definitions in `SmcTamper/Spec/Paper.lean`. They formalize the threat-model results that replace Section 10 of Gregory Morse and
-Tamás Kozsik, *Tamper-Proofing with Self-Modifying Code* (arXiv:2604.12407v1), together with the Harvard/von Neumann separation of
-its Sections 1 and 10, as corrected by the errata in `errata/` (P01-P14; P14 is open and marked ask-author).
+Tamás Kozsik, *Tamper-Proofing with Self-Modifying Code* (arXiv:2604.12407v1), as corrected by the errata in `errata/` (P01-P13;
+P14, the AMD cells of Table 1, was checked against AMD primary documents and is withdrawn). The Harvard/von Neumann observation of
+Sections 1 and 10 (C01, C02) is proved in the development (`SmcTamper.Paper.harvard_separation`) but is **not** selected: it is a
+general noninterference fact about observation-preserving simulation and its time bound assumes the per-read charge it uses.
 
 `Challenge.lean` is generated mechanically by `validation/make_challenge.py` from the Spec modules reachable from `Spec/Paper.lean`,
 with proofs removed and declarations that the five statements do not mention pruned. It imports nothing (Lean core only), so
@@ -15,11 +17,10 @@ that the kernel state of the checksum pulls in.
 
 | Selected declaration | Meaning and scope | Paper / ledger |
 | --- | --- | --- |
-| `SmcTamper.Paper.SecurityTheorem` | T1. For every system, cost contract, adversary level, timer source and timeline that is well-formed (`WF`) and satisfies the structural assumptions A1-A8, the adversary does not execute a modified protected byte without an effective alarm (`¬ Wins`). | §10, C46, C50, C56 |
+| `SmcTamper.Paper.SecurityTheorem` | T1. For every system, cost contract, adversary level, timer source and timeline that is well-formed (`WF`) and satisfies the structural assumptions A1-A8, the adversary does not execute a modified protected byte without an effective alarm (`¬ Wins`). An effective alarm needs a unit with a response code (at least one byte, none ever modified) and a value mismatch or a **positive** number `k` of consecutive timing failures; A6 includes `0 < k`, A7 includes that every unit has a response byte. | §10, C46, C50, C56 |
 | `SmcTamper.Paper.AssumptionsNecessary` | T3. For each of the eleven assumptions (A1, A2 coverage / code / connectivity / intact unit, A3, A4, A5, A6, A7, A8) there is a well-formed system satisfying all the others in which the adversary wins and that one fails. | §10, C46, C49-C52, C54-C56 |
 | `SmcTamper.Paper.MediationTheorem` | T2. In a faithful split-view run every iteration with a non-zero toggle (apart from the last) is mediated, and under A3 and A5 a faithful mediated check with such an iteration is a timing failure. It does not say that every split-view attack is detected (see THREAT_MODEL section 3). | §1, §10 A1, C49 |
-| `SmcTamper.Paper.LevelMatrix` | T4. Below L2 with the inline timer A1, A4, A5 hold; L1 with the OS timer API, L2 and L4 each admit a winning adversary against a system satisfying the other assumptions. | §1, §10, C53 |
-| `SmcTamper.Paper.HarvardSeparation` | C01-C02. A Harvard machine that reproduces the observation of a von Neumann machine on all memories reads every sensitive byte, and a time bound charging per read follows. | §1, §10 A1, C01, C02 |
+| `SmcTamper.Paper.LevelMatrix` | T4. Below L2 with the inline timer A1, A4, A5 hold; L1 with the OS timer API (A5 removed), L2 (A5, and A1) and L4 (A4) each admit a winning adversary against a system that satisfies every other assumption (`OthersHold`, as in T3), so the win is due to that level's capability alone. | §1, §10, C53 |
 
 ## Model boundaries (read before relying on the statement)
 

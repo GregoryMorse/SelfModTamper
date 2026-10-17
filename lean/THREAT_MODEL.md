@@ -12,7 +12,9 @@ never a proved fact about hardware. Evidence is not proof; nothing here claims m
 * **Levels** L0–L4 (`Level.allows`), timer source `tsc` / `osApi` (`Level.forgesReading`). Timing enters only as the cost contract `Cost`
   (`emulLB`, `kd`, `km`: lower bounds on emulation, debug trap, mediation).
 * **Goal**: `Wins` = a protected non-opcode byte is executed while the fetch view differs from `I0` (`ExecViolation`) and no effective alarm
-  (`Alarm`: a value mismatch, or `k` consecutive timing failures, at a unit whose response code is intact).
+  (`Alarm`: at a unit with an intact response code (`RespIntact`: at least one response byte, none ever modified), a value mismatch, or `k > 0`
+  consecutive timing failures; with `k = 0` the timing branch would hold without any failed check, so it is excluded).
+  A6 carries `0 < k` and A7 carries "every unit has a response byte", so T1 guarantees an alarm that a unit can actually raise.
 
 ## 2. Assumptions (`Assumptions`; named defs `A1`…`A8`)
 
@@ -23,8 +25,8 @@ never a proved fact about hardware. Evidence is not proof; nothing here claims m
 | A3 | `A3` | native ≤ τ < emulation / debug-trap / mediation lower bounds | "no equally fast non-SMC implementation" |
 | A4 | `A4` | no writer outside the protected thread (DMA) | "larger-area defense" remark |
 | A5 | `A5` | every reading equals the elapsed time | missing |
-| A6 | `A6` | a modification persists through the next `k` checks of each covering unit | missing |
-| A7 | `A7` | response code lies in the unit's own protected code | missing |
+| A6 | `A6` | the alarm count `k` is positive, and a modification persists through the next `k` checks of each covering unit | missing |
+| A7 | `A7` | every unit has a response code (at least one byte) and it lies in the unit's own protected code | missing |
 | A8 | `A8` | a modification in an honestly running unit's region changes its result | missing ("not collision resistant") |
 
 None mentions alarm, wins or detection (`validation/threat_audit.py`).

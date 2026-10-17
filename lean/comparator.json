@@ -8,8 +8,7 @@
     "SmcTamper.Paper.SecurityTheorem",
     "SmcTamper.Paper.AssumptionsNecessary",
     "SmcTamper.Paper.MediationTheorem",
-    "SmcTamper.Paper.LevelMatrix",
-    "SmcTamper.Paper.HarvardSeparation"
+    "SmcTamper.Paper.LevelMatrix"
   ],
   "permitted_axioms": [
     "propext",

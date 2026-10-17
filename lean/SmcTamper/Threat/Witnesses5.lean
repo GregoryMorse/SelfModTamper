@@ -182,6 +182,7 @@ theorem q_intact : Intact qSys qTl 0 := by
   simp [qSys, duoSys] at hc
 
 theorem q_a6 : A6 qSys qTl qSch := by
+  refine ⟨by simp [qSys, duoSys], ?_⟩
   intro i a b x m0 hw hprot _ hb _ _ _ _ j _
   obtain ⟨rfl, rfl⟩ := qwrite i a b hw
   rw [qck, qW _ (by omega)]
@@ -203,7 +204,7 @@ theorem q_a8 : A8 qSys qTl qSch := by
 theorem q_noalarm : ¬ Alarm qSys qTl qSch := by
   rintro ⟨x, hx, _, h⟩
   have hx2 : x = 0 ∨ x = 1 := by have : x < 2 := hx; omega
-  rcases h with ⟨m, c0, e, r, hc, hnot⟩ | ⟨s, hs⟩
+  rcases h with ⟨m, c0, e, r, hc, hnot⟩ | ⟨_, s, hs⟩
   · rw [qck] at hc hnot
     obtain ⟨hi, hcc⟩ := qchk _ x c0 e r hc
     rcases hcc with ⟨_, rfl, rfl, _⟩ | ⟨_, rfl, rfl, _⟩
@@ -236,8 +237,13 @@ theorem nec_A2conn : ∃ (C : Cost) (sch : Sched qSys.n qTl),
   · intro i x p e r h
     obtain ⟨_, hc⟩ := qchk i x p e r h
     rcases hc with ⟨_, _, _, rfl, rfl⟩ | ⟨_, _, _, rfl, rfl⟩ <;> rfl
-  · intro x hx a ha
-    by_cases h : x = 0 <;> simp [qSys, duoSys, h] at ha ⊢ <;> omega
+  · intro x hx
+    refine ⟨?_, ?_⟩
+    · by_cases h : x = 0
+      · exact ⟨0, by simp [qSys, duoSys, h]⟩
+      · exact ⟨16, by simp [qSys, duoSys, h]⟩
+    · intro a ha
+      by_cases h : x = 0 <;> simp [qSys, duoSys, h] at ha ⊢ <;> omega
   · simp [qTl, loopTl, qPre, preSeq]
   · simp [qSys, duoSys]
   · simp [qSys, duoSys]
@@ -410,6 +416,7 @@ theorem k_intact : Intact kSys kTl 0 := by
   rcases kwrite i a b h with ⟨rfl, _⟩ | rfl <;> simp [kSys, duoSys] at hc
 
 theorem k_a6 : A6 kSys kTl kSch := by
+  refine ⟨by simp [kSys, duoSys], ?_⟩
   intro i a b x m0 hw hprot _ hb _ _ _ _ j _
   rcases kwrite i a b hw with ⟨rfl, rfl⟩ | rfl
   · rw [kck, kW _ (by omega)]
@@ -433,7 +440,7 @@ theorem k_a8 : A8 kSys kTl kSch := by
 
 theorem k_noalarm : ¬ Alarm kSys kTl kSch := by
   rintro ⟨x, hx, _, h⟩
-  rcases h with ⟨m, c0, e, r, hc, hnot⟩ | ⟨s, hs⟩
+  rcases h with ⟨m, c0, e, r, hc, hnot⟩ | ⟨_, s, hs⟩
   · rw [kck] at hc hnot
     obtain ⟨hi, hcc⟩ := kchk _ x c0 e r hc
     rcases hcc with ⟨h3, rfl, rfl, _⟩ | ⟨_, rfl, rfl, _⟩
@@ -481,8 +488,13 @@ theorem nec_A2code : ∃ (C : Cost) (sch : Sched kSys.n kTl),
   · intro i x p e r h
     obtain ⟨_, hc⟩ := kchk i x p e r h
     rcases hc with ⟨_, _, _, rfl, rfl⟩ | ⟨_, _, _, rfl, rfl⟩ <;> rfl
-  · intro x hx a ha
-    by_cases h : x = 0 <;> simp [kSys, duoSys, h] at ha ⊢ <;> omega
+  · intro x hx
+    refine ⟨?_, ?_⟩
+    · by_cases h : x = 0
+      · exact ⟨0, by simp [kSys, duoSys, h]⟩
+      · exact ⟨16, by simp [kSys, duoSys, h]⟩
+    · intro a ha
+      by_cases h : x = 0 <;> simp [kSys, duoSys, h] at ha ⊢ <;> omega
   · simp [kTl, loopTl, kPre, preSeq]
   · simp [kSys, duoSys]
   · simp [kSys, duoSys]

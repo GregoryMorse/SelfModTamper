@@ -80,7 +80,9 @@ theorem mk_conn : A2conn (mkSys I0 op size canon c p tau native k) := by
   exact Reach.refl hx
 
 theorem mk_resp (hc : 0 < c) : A7 (mkSys I0 op size canon c p tau native k) := by
-  intro x _ a ha
+  intro x _
+  refine ⟨⟨0, by simp [mkSys]⟩, ?_⟩
+  intro a ha
   simp [mkSys] at ha ⊢
   omega
 
@@ -136,7 +138,7 @@ theorem tail_noalarm (hn : S.n = 1) (hk : 0 < S.k) (hnc : ∀ i, i < N → ∀ x
   intro ⟨x, hx, _, h⟩
   have hx0 : x = 0 := by omega
   subst hx0
-  rcases h with ⟨m, c, e', r', hc, hnot⟩ | ⟨s, hs⟩
+  rcases h with ⟨m, c, e', r', hc, hnot⟩ | ⟨_, s, hs⟩
   · simp only [tailSch] at hc hnot
     rw [tailTl_tail] at hc
     simp only [TEv.check.injEq] at hc
@@ -212,10 +214,11 @@ theorem tail_intact (v : Nat) (hv : v = 0)
   · rw [tailTl_pre pre N _ hi] at h; exact hw i hi a b h
   · simp [tailTl, hi] at h
 
-theorem tail_a6 (hn : S.n = 1) (hnc : ∀ i, i < N → ∀ x p e r, pre i ≠ TEv.check x p e r)
+theorem tail_a6 (hn : S.n = 1) (hk : 0 < S.k) (hnc : ∀ i, i < N → ∀ x p e r, pre i ≠ TEv.check x p e r)
     (hper : ∀ i, i < N → ∀ a b, pre i = TEv.write a b → S.prot a → b ≠ S.I0 a →
       (worldAt S (tailTl pre N (TEv.check 0 p e r)) N).D a ≠ S.I0 a) :
     A6 S (tailTl pre N (TEv.check 0 p e r)) (tailSch S hn pre N p e r hnc) := by
+  refine ⟨hk, ?_⟩
   intro i a b x m0 hw hprot _ hb _ _ _ _ j _
   have hi : i < N := by
     refine Classical.byContradiction (fun h => ?_)

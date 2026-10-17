@@ -269,4 +269,9 @@ handoff: done / next / open obligations / hazards / evidence file).
 - Statement: `s.rip = base+3`, `rcx = p0`, `rdx = size`, image up to the 296 opcode bytes, `8 ≤ finalBytes size`, `finalUnits ∉ {148, 296}`, `p0 + size + 2368 < 2^63`;
   then some run reaches `base+8119` with `rbx = (callUnrolled ..).sum` and the memory equal to `wr64 (callUnrolled ..).mem r8 sum`. Axiom audit: 3747 declarations, 0 violations.
 - Docs updated: GAPS (G01, G13 closed; G03 partly; G34), PAPER_MAP C04/C28, PLATFORM_CONTRACT §6, PALOMAR_SEMANTICS, PALOMAR_SUBMISSION, formalization.yaml, README.
-- Still open: G03 (the abstract `I`), G14 (could), G20-G22 primary sources, G24 and P14 (author), the author's review of the errata PDF.
+- Still open at the time: G03 (the abstract `I`), G14 (could), G20-G22 primary sources, G24 and P14 (author), the author's review of the errata PDF (G03, G20-G22, G24 and P14 were closed later, see GAPS).
+
+### Palomar review follow-up (G45-G49), 2026-10-17
+- The first submission (commit 69a9d34) passed the mechanical gate and received a negative automated review. Fixed: `Alarm`/`A6` (`k > 0`), `RespIntact`/`A7` (a response byte), `LevelMatrix` (`OthersHold`), Harvard result removed from the selected statement, status notes made consistent. See GAPS section E.
+- Checks: `python validation/build_modules.py SmcTamper` green, `axiom_audit.py` 0 violations, `threat_audit.py`, `coverage_audit.py --build` (56 rows), `audit_errata.py`, `make_challenge.py --check`; Solution and Challenge compile.
+- Next: Palomar preflight on the new commit (needs the author's go-ahead), then the author submits a new submission.

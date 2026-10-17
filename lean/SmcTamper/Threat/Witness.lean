@@ -13,8 +13,8 @@ the inline timer.  This shows the hypothesis set is consistent; it does not say 
 def wSys : Sys where
   I0 := fun _ => 0
   n := 1
-  unit := fun _ => ⟨⟨64, 0, 8, 0x13⟩, fun _ => False, fun _ => False, 1, 1⟩
-  prot := fun _ => False
+  unit := fun _ => ⟨⟨64, 0, 8, 0x13⟩, fun a => a < 8, fun a => a = 0, 1, 1⟩
+  prot := fun a => a < 8
   ops := fun _ => False
   k := 2
 
@@ -45,8 +45,8 @@ theorem wWF : WF wSys wCost .L0 .tsc wTl where
     intro i
     simp [wTl, Cost.admits, wSys]
   honestCode := by
-    intro i x e r h a hc
-    exact absurd hc (by simp [wSys])
+    intro i x e r h a hc _
+    rw [wWorld]; rfl
   neutralMod := by
     intro i x e r h
     simp [wTl] at h
@@ -56,8 +56,8 @@ theorem wWF : WF wSys wCost .L0 .tsc wTl where
 
 theorem wAssumptions : Assumptions wSys wCost wTl wSch where
   a1 := by intro n; rw [wWorld]; rfl
-  a2cov := by intro a h; exact absurd h (by simp [wSys])
-  a2code := by intro x _ a h; exact absurd h (by simp [wSys])
+  a2cov := by intro a h; exact ⟨0, by simp [wSys], by simp [wSys, Sys.inRegion] at h ⊢; omega⟩
+  a2code := by intro x _ a h; simpa [wSys] using h
   a2conn := by
     intro x y hx hy
     have hx0 : x = 0 := by simp [wSys] at hx; omega
@@ -70,8 +70,10 @@ theorem wAssumptions : Assumptions wSys wCost wTl wSch where
   a3 := by intro x _; simp [wSys, wCost]
   a4 := by intro i a b; simp [wTl]
   a5 := by intro i x p e r h; simp [wTl] at h; omega
-  a6 := by intro i a b x m0 h; simp [wTl] at h
-  a7 := by intro x _ a h; exact absurd h (by simp [wSys])
+  a6 := ⟨by simp [wSys], by intro i a b x m0 h; simp [wTl] at h⟩
+  a7 := by
+    intro x _
+    exact ⟨⟨0, by simp [wSys]⟩, by intro a h; simp [wSys] at h ⊢; omega⟩
   a8 := by
     intro x m e r _ _ ⟨a, _, _, h⟩
     rw [wWorld] at h

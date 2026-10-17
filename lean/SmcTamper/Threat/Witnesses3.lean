@@ -36,7 +36,7 @@ theorem nec_A2intact : ∃ (C : Cost) (sch : Sched (sysP 16).n nTl),
   have h3 : A3 (sysP 16) ⟨fun _ => 2, 1, 1⟩ := by intro x hx; simp [sysP, mkSys]
   refine ⟨⟨fun _ => 2, 1, 1⟩, nSch, ?_, ⟨Or.inr (tail_a1 _ _ _ _ _ _ Ln_ns), Or.inr (mk_cov _ _ _ _ _ _ _ _ _ (by decide)),
     mk_code _ _ _ _ _ _ _ _ _ (by decide), mk_conn _ _ _ _ _ _ _ _ _, Or.inl rfl, Or.inr h3, Or.inr (tail_a4 _ _ _ _ _ Ln_nd),
-    Or.inr (tail_a5 _ _ _ _ _ rfl Ln_nc), Or.inr (tail_a6 _ _ _ _ _ _ rfl Ln_nc ?_),
+    Or.inr (tail_a5 _ _ _ _ _ rfl Ln_nc), Or.inr (tail_a6 _ _ _ _ _ _ rfl (by decide) Ln_nc ?_),
     mk_resp _ _ _ _ _ _ _ _ _ (by decide), Or.inr ?_⟩, ?_⟩
   · refine tail_wf _ _ _ _ _ _ _ .L1 .tsc ?_ ?_ ?_ ?_ Ln_nc (by simp) ?_ (by simp)
     · intro i hi
@@ -92,7 +92,7 @@ theorem nec_A1 : ∃ (C : Cost) (sch : Sched sys1.n sTl),
     mk_code _ _ _ _ _ _ _ _ _ (by decide), mk_conn _ _ _ _ _ _ _ _ _,
     Or.inr ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl (fun i hi a b h => absurd h (Ls_nw i hi a b))⟩, Or.inr h3,
     Or.inr (tail_a4 _ _ _ _ _ Ls_nd), Or.inr (tail_a5 _ _ _ _ _ rfl Ls_nc),
-    Or.inr (tail_a6 _ _ _ _ _ _ rfl Ls_nc (fun i hi a b h => absurd h (Ls_nw i hi a b))),
+    Or.inr (tail_a6 _ _ _ _ _ _ rfl (by decide) Ls_nc (fun i hi a b h => absurd h (Ls_nw i hi a b))),
     mk_resp _ _ _ _ _ _ _ _ _ (by decide), Or.inr ?_⟩, ?_⟩
   · refine tail_wf _ _ _ _ _ _ _ .L2 .tsc ?_ ?_ ?_ ?_ Ls_nc ?_ (by simp) (by simp)
     · intro i hi
@@ -164,7 +164,7 @@ theorem nec_A8 : ∃ (C : Cost) (sch : Sched sys8.n cTl),
     mk_code _ _ _ _ _ _ _ _ _ (by decide), mk_conn _ _ _ _ _ _ _ _ _,
     Or.inr ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl hcode⟩, Or.inr h3,
     Or.inr (tail_a4 _ _ _ _ _ L8_nd), Or.inr (tail_a5 _ _ _ _ _ rfl L8_nc),
-    Or.inr (tail_a6 _ _ _ _ _ _ rfl L8_nc ?_),
+    Or.inr (tail_a6 _ _ _ _ _ _ rfl (by decide) L8_nc ?_),
     mk_resp _ _ _ _ _ _ _ _ _ (by decide), Or.inl rfl⟩, ?_⟩
   · refine tail_wf _ _ _ _ _ _ _ .L1 .tsc ?_ ?_ ?_ ?_ L8_nc ?_ (by simp) (by simp)
     · intro i hi

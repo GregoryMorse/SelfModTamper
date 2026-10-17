@@ -57,10 +57,10 @@ theorem level_matrix : LevelMatrix := by
   obtain ⟨h0, h1, h2, h3, h4⟩ := T4
   refine ⟨fun S C l tl hwf hr => ?_, ?_, ?_, ?_, ?_⟩
   · exact h0 S C l tl hwf hr
-  · obtain ⟨C, sch, a, b, c⟩ := h1; exact ⟨_, C, _, sch, a, b, c⟩
-  · obtain ⟨C, sch, a, b, c⟩ := h2; exact ⟨_, C, _, sch, a, b, c⟩
-  · obtain ⟨C, sch, a, b, c⟩ := h3; exact ⟨_, C, _, sch, a, b, c⟩
-  · obtain ⟨C, sch, a, b, c⟩ := h4; exact ⟨_, C, _, sch, a, b, c⟩
+  · obtain ⟨C, sch, a, o, b, c⟩ := h1; exact ⟨_, C, _, sch, a, othersHold_of_allBut o, b, c⟩
+  · obtain ⟨C, sch, a, o, b, c⟩ := h2; exact ⟨_, C, _, sch, a, othersHold_of_allBut o, b, c⟩
+  · obtain ⟨C, sch, a, o, b, c⟩ := h3; exact ⟨_, C, _, sch, a, othersHold_of_allBut o, b, c⟩
+  · obtain ⟨C, sch, a, o, b, c⟩ := h4; exact ⟨_, C, _, sch, a, othersHold_of_allBut o, b, c⟩
 
 theorem harvard_separation : HarvardSeparation := by
   intro C S Obs H V emb N obsH obsV hsim s m

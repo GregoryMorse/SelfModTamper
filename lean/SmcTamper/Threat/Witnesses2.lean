@@ -95,7 +95,7 @@ theorem nec_A4 : ∃ (C : Cost) (sch : Sched (sysP 16).n (honTl L4)),
   have h3 : A3 (sysP 16) ⟨fun _ => 2, 1, 1⟩ := by intro x hx; simp [sysP, mkSys]
   refine ⟨⟨fun _ => 2, 1, 1⟩, honSch 16 L4 L4_nc, hwf, ⟨Or.inr h1, Or.inr (mk_cov _ _ _ _ _ _ _ _ _ (by decide)), h2c, h2n,
     Or.inr ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl (fun i hi a b h => absurd h (L4_nw i hi a b))⟩, Or.inr h3, Or.inl rfl,
-    Or.inr h5, Or.inr (tail_a6 _ _ _ _ _ _ rfl L4_nc (fun i hi a b h => absurd h (L4_nw i hi a b))), h7, Or.inr h8⟩, ?_, hna⟩
+    Or.inr h5, Or.inr (tail_a6 _ _ _ _ _ _ rfl (by decide) L4_nc (fun i hi a b h => absurd h (L4_nw i hi a b))), h7, Or.inr h8⟩, ?_, hna⟩
   refine tail_exec _ _ _ _ _ _ 1 8 (by simp [L4]) (by simp [preSeq, L4]) (by simp [sysP, mkSys]) (by simp [sysP, mkSys]) ?_
   have : worldAt (sysP 16) (honTl L4) 1 = ⟨wr8 (fun _ => 0) 8 1, wr8 (fun _ => 0) 8 1, false⟩ := by
     simp [honTl, worldAt, stepW, tailTl, preSeq, L4, World.init, sysP, mkSys]
@@ -171,7 +171,7 @@ theorem nec_A2cov : ∃ (C : Cost) (sch : Sched (sysP 21).n (honTl Lc)),
     simp [sysP, mkSys]
   refine ⟨⟨fun _ => 2, 1, 1⟩, honSch 21 Lc Lc_nc, hwf, ⟨Or.inr h1, Or.inl rfl, h2c, h2n,
     Or.inr ⟨0, by decide, tail_intact _ _ _ _ _ _ 0 rfl hcode⟩, Or.inr h3, Or.inr (tail_a4 _ _ _ _ _ Lc_nd),
-    Or.inr h5, Or.inr (tail_a6 _ _ _ _ _ _ rfl Lc_nc ?_), h7, Or.inr h8⟩, ?_, hna⟩
+    Or.inr h5, Or.inr (tail_a6 _ _ _ _ _ _ rfl (by decide) Lc_nc ?_), h7, Or.inr h8⟩, ?_, hna⟩
   · intro i hi a b h _ _
     obtain ⟨rfl, rfl⟩ := Lc_write i hi a b h
     rw [hW]
