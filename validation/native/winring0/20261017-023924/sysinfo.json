@@ -1,0 +1,15 @@
+{
+  "time": "2026-10-17T02:39:26",
+  "admin": true,
+  "os": "Microsoft Windows 11 Education 10.0.26200 build 26200",
+  "cpu": "Intel(R) Core(TM) i9-14900HX / 24 cores / 32 threads",
+  "hypervisor_present": "True",
+  "memory_integrity_hvci_enabled": "1",
+  "vulnerable_driver_blocklist_enabled": "1",
+  "secure_boot": "True",
+  "device_guard": "{\"SecurityServicesRunning\":[1,2],\"SecurityServicesConfigured\":[2]}",
+  "driver_file": null,
+  "driver_service": "[SC] EnumQueryServicesStatus:OpenService FAILED 1060:\n\nThe specified service does not exist as an installed service.",
+  "code_integrity_events_winring0": "",
+  "driver_service_after": "[SC] EnumQueryServicesStatus:OpenService FAILED 1060:\n\nThe specified service does not exist as an installed service."
+}

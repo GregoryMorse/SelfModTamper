@@ -81,12 +81,12 @@ def find_driver() -> Path:
     return ROOT / "WinRing0x64.sys"
 
 
-def ensure_driver() -> Path:
+def ensure_driver(testsign: bool = False) -> Path:
     d = find_driver()
     if not d.exists():
         script = ROOT / "scripts/Build-WinRing0.cmd"
         print("WinRing0x64.sys not found; building it from source with", script)
-        subprocess.run(["cmd", "/c", str(script)], cwd=ROOT)
+        subprocess.run(["cmd", "/c", str(script)] + (["-DWINRING0_TESTSIGN=ON"] if testsign else []), cwd=ROOT)
         d = find_driver()
     return d
 
@@ -166,6 +166,7 @@ def main() -> int:
     ap.add_argument("--only", choices=["pre", "post"])
     ap.add_argument("--timeout", type=int, default=3600, help="seconds per variant")
     ap.add_argument("--rebuild", action="store_true", help="recompile both products even if validation/.build has them")
+    ap.add_argument("--testsign", action="store_true", help="test-sign the driver when it is built (loads only in Windows test-signing mode)")
     ap.add_argument("--elevated", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
     if not is_admin():
@@ -173,7 +174,7 @@ def main() -> int:
     try:
         dest = OUT / datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         dest.mkdir(parents=True, exist_ok=True)
-        driver = ensure_driver()
+        driver = ensure_driver(a.testsign)
         info = sysinfo(driver)
         (dest / "sysinfo.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
         print(json.dumps(info, indent=2))

@@ -72,16 +72,18 @@ of the property sheet is required.
 The kernel driver `WinRing0x64.sys` is required to read hardware performance counters (`MACHINE_CLEARS.SMC`).
 Without it the benchmark still runs but counter columns show zero.
 
-No binary is downloaded.  The driver is built from source: `cmake/winring0/` fetches a pinned commit of the open-source
-[GermanAizek/WinRing0](https://github.com/GermanAizek/WinRing0) repository (GPL-3.0, a maintained fork of the OpenLibSys
-WinRing0 1.2 sources; same device name `WinRing0_1_2_0`) and builds it with MSBuild and the Windows Driver Kit (WDK):
+No binary of the driver is downloaded.  `cmake/winring0/` clones a pinned commit of the open-source
+[GermanAizek/WinRing0](https://github.com/GermanAizek/WinRing0) repository (a maintained fork of the OpenLibSys WinRing0 1.2
+sources; same device name `WinRing0_1_2_0`), takes the kernel-mode headers and libraries from Microsoft's pinned
+`Microsoft.Windows.WDK.x64` NuGet package (SHA-256 checked; no WDK installer, no administrator rights) and compiles it with the
+MSVC tools of Visual Studio / Build Tools:
 
 ```bat
 scripts\Build-WinRing0.cmd
 ```
 
-This needs Visual Studio (or Build Tools) with the C++ workload and the matching WDK; it writes `WinRing0x64.sys` into the
-repository root (excluded from version control) and CMake copies it next to the executable.
+It writes `WinRing0x64.sys` into the repository root (excluded from version control) and CMake copies it next to the executable.
+`python validation\winring0_test.py` runs this automatically when the file is missing.
 
 **The result is unsigned.**  Windows loads kernel drivers only when they are signed, so on a machine with Secure Boot, Memory
 integrity (HVCI) or the vulnerable-driver blocklist the product runs but the counters read zero.  On a dedicated test machine
