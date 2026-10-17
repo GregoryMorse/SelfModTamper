@@ -161,6 +161,18 @@ std::unique_ptr<Counter> openCounter(uint64_t cfg, std::string& why) {
   return c;
 }
 #elif defined(_WIN32) && SMC_X64
+static bool enablePrivilege(const wchar_t* name) {
+  HANDLE tok;
+  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &tok)) return false;
+  TOKEN_PRIVILEGES tp;
+  tp.PrivilegeCount = 1;
+  tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+  bool ok = LookupPrivilegeValueW(nullptr, name, &tp.Privileges[0].Luid) && AdjustTokenPrivileges(tok, FALSE, &tp, 0, nullptr, nullptr) &&
+            GetLastError() == ERROR_SUCCESS;
+  CloseHandle(tok);
+  return ok;
+}
+
 struct EtwCounter : Counter {
   HANDLE h = nullptr;
   PERFORMANCE_DATA a, b;
@@ -200,8 +212,9 @@ struct EtwCounter : Counter {
       return false;
     }
     ULONG sid = (ULONG)id;
+    bool priv = enablePrivilege(L"SeSystemProfilePrivilege");
     rc = TraceSetInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceConfigInfo, &sid, sizeof sid);
-    if (rc != ERROR_SUCCESS) { why = "TraceSetInformation(profile source config) failed, error " + std::to_string(rc) + (rc == ERROR_ACCESS_DENIED ? " (run from an administrator prompt)" : ""); return false; }
+    if (rc != ERROR_SUCCESS) { why = "TraceSetInformation(profile source config) failed, error " + std::to_string(rc) + (rc == ERROR_ACCESS_DENIED || rc == ERROR_PRIVILEGE_NOT_HELD ? (priv ? " (run from an administrator prompt)" : " (SeSystemProfilePrivilege could not be enabled: run from an administrator prompt)") : ""); return false; }
     SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
     rc = EnableThreadProfiling(GetCurrentThread(), 0x1, 1, &h);
     if (rc != ERROR_SUCCESS) { why = "EnableThreadProfiling failed, error " + std::to_string(rc); return false; }
