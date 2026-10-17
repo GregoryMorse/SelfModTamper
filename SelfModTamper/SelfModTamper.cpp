@@ -293,7 +293,7 @@ TPCompFunc gen_asm(size_t& codeSize)
 	rt.release(fn);
 	codeSize = code.codeSize();
 	TPCompFunc buf = (TPCompFunc)VirtualAlloc(NULL, codeSize, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	if (buf) memcpy(buf, fn, codeSize);
+	if (buf) memcpy((void*)buf, (const void*)fn, codeSize);
 	return buf;
 }
 

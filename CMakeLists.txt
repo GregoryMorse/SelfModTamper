@@ -17,8 +17,8 @@ if(NOT WIN32)
     return()
 endif()
 
-# ── Dependencies (resolved by vcpkg) ─────────────────────────────────────────
-find_package(asmjit CONFIG REQUIRED)
+# ── Dependencies (fetched by CMake from a pinned, hash-checked archive) ─────
+include(cmake/asmjit.cmake)
 
 # ── Target ────────────────────────────────────────────────────────────────────
 add_executable(SelfModTamper
@@ -26,24 +26,21 @@ add_executable(SelfModTamper
     SelfModTamper/TP.asm
 )
 
+# Same compiler settings as the Visual Studio project (Unicode character set, conformance mode).
+target_compile_definitions(SelfModTamper PRIVATE UNICODE _UNICODE _CONSOLE)
+target_compile_options(SelfModTamper PRIVATE /permissive-)
+
 target_link_libraries(SelfModTamper PRIVATE
     asmjit::asmjit
     psapi       # EnumProcessModules, GetModuleInformation
     winmm       # timeBeginPeriod, timeGetTime, timeEndPeriod
+    mincore     # QueryInterruptTimePrecise
 )
 
 # The .text section must be read-write-execute for the static SMC variants.
 target_link_options(SelfModTamper PRIVATE "/SECTION:.text,RWE")
 
-# ── Runtime DLLs ──────────────────────────────────────────────────────────────
-# Copies asmjit.dll (and any other vcpkg runtime DLLs) next to the executable.
-add_custom_command(TARGET SelfModTamper POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:SelfModTamper>
-        $<TARGET_FILE_DIR:SelfModTamper>
-    COMMAND_EXPAND_LISTS
-    COMMENT "Copying runtime DLLs"
-)
+# asmjit is linked statically (cmake/asmjit.cmake), so there are no runtime DLLs to copy.
 
 # ── WinRing0 driver (optional) ────────────────────────────────────────────────
 # Place WinRing0x64.sys in the repository root (run scripts/Build-WinRing0.cmd)

@@ -1,46 +1,63 @@
+exit=0
 Counter: AMD ic_cache_inval.fill_invalidated (instruction-cache invalidation proxy), raw event 0x18C, perf_event_open (user mode, this thread)
 The page size for this system is 4096 bytes.
-Code segment base: 0x402000 size: 0x15950 End address: 0x417950
+Code segment base: 0x402000 size: 0x358E0 End address: 0x4378E0
+Number of pages: 2 Unrolled loop size per page: 148 Intro bytes: 0x5F Code size: 0x1B
+Number of pages: 2 Unrolled loop size per page: 148 Intro bytes: 0x5F Code size: 0x1B
 C
-C
-101463 91843 262856
-101463 91843 261522
-349 317 627
-34988 31661 62670
-349 317 626
+445482 436102 772937
+445483 436102 772995
+1536 1504 2665
+153627 150390 266560
+1536 1503 2666
 0 0 1
 0 0 1
 
 SMC
-1071352 1066069 1361202
-1071354 1066069 1361231
-3694 3676 4695
-369477 367621 469502
-3694 3676 4695
-0 0 1
-0 0 1
+2702897 2667739 11542725
+2702913 2667739 11542783
+9322 9199 39804
+932206 919923 3980392
+9322 9199 39804
+0 0 4
+0 0 4
 
 C Loop
-477655 467828 881455
-477657 467828 881484
-1647 1613 3041
-164729 161330 304091
-1647 1613 3040
+1358759 1289514 1737361
+1358765 1289485 1737448
+4685 4447 5992
+468594 444662 599222
+4685 4446 5992
 0 0 1
 0 0 1
 
-Dyn SMC Loop: skipped (built without asmjit)
+Dyn SMC Loop
+112304 110983 152888
+112305 110983 152917
+387 382 527
+38728 38260 52730
+387 382 527
+0 0 1
+0 0 1
 
 SMC Loop
-45842 45008 75023
-45844 45008 75023
-158 155 260
-15809 15520 25990
-158 155 260
+112415 110867 401476
+112415 110867 401621
+387 382 1385
+38765 38230 138541
+387 382 1385
 0 0 1
 0 0 1
 
-cumulative counter after 10000 trials, SMC 224489454
-cumulative counter after 10000 trials, C 2368731
-cumulative counter after 10000 trials, SMC Loop 97477434
-cumulative counter after 10000 trials, C Loop 3611476
+cumulative counter after 10000 trials, SMC 554427644
+cumulative counter after 10000 trials, C 2992932
+cumulative counter after 10000 trials, SMC Loop 238102960
+cumulative counter after 10000 trials, Dyn SMC Loop 237927193
+cumulative counter after 10000 trials, C Loop 6222801
+vector 2 R 3 24: gen_asm (AsmJit dynamic unrolled)
+TPComp (asm, single site)            pass 36 fail 0
+TPCompC (C emulation)                pass 36 fail 0
+TPCompLoop (asm, static unrolled)    pass 36 fail 0
+TPCompCLoop (C emulation)            pass 36 fail 0
+gen_asm (AsmJit dynamic unrolled)    pass 36 fail 0
+vectors: 36

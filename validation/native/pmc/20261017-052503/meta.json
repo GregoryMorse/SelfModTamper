@@ -1,0 +1,20 @@
+{
+  "time": "20261017-052503",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "python": "3.14.5",
+  "command": [
+    "D:\\Source\\Repos\\SelfModTamper\\validation\\.build\\pmc\\Release\\smc_pmc_probe.exe",
+    "--iters",
+    "100000",
+    "--reps",
+    "7",
+    "--json",
+    "D:\\Source\\Repos\\SelfModTamper\\validation\\native\\pmc\\20261017-052503\\probe.json",
+    "--pawnio-lib",
+    "PawnIOLib.dll",
+    "--pawnio-module",
+    "D:\\Source\\Repos\\SelfModTamper\\validation\\.build\\pmc\\AMDFamily17.bin"
+  ],
+  "exit": 0
+}

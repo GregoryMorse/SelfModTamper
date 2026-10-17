@@ -31,6 +31,8 @@ using std::min;
 #define __cdecl __attribute__((ms_abi))  // TP.asm follows the Windows x64 convention (RCX, RDX, R8)
 #define __int64 long long
 #define NULL_HANDLE nullptr
+#define MAXCHAR 0x7f
+static inline int fopen_s(FILE** f, const char* name, const char* mode) { *f = fopen(name, mode); return *f ? 0 : errno; }
 
 typedef uint8_t BYTE, *PBYTE, *LPBYTE;
 typedef uint32_t DWORD;
