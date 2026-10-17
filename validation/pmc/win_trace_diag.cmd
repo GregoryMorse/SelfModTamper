@@ -15,7 +15,7 @@ if not exist validation\.build\pmc\Release\smc_pmc_probe.exe (
 %XP% -stop > nul 2>&1
 %XP% -stop -d > nul 2>&1
 echo starting the trace
-%XP% -on PROC_THREAD+LOADER -Pmc MACHINE_CLEARS.SMC CSWITCH strict -f %OUT%\kernel.etl
+%XP% -on PROC_THREAD+LOADER+CSWITCH -Pmc MACHINE_CLEARS.SMC CSWITCH strict -f %OUT%\kernel.etl
 if errorlevel 1 (echo xperf -on failed & exit /b 1)
 validation\.build\pmc\Release\smc_pmc_probe.exe --iters 200000 --reps 5 > %OUT%\probe.txt 2>&1
 echo stopping the trace
