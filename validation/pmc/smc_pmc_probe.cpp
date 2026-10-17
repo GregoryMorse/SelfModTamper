@@ -85,6 +85,7 @@ struct Counter {
   virtual bool start() = 0;
   virtual bool stop(uint64_t& v) = 0;
   virtual std::string name() const = 0;
+  virtual std::string why() const { return ""; }
 };
 
 // Event selection: raw x86 PMU encoding event[7:0] | umask << 8 | event[11:8] << 32 (AMD).
@@ -221,13 +222,22 @@ struct EtwCounter : Counter {
     label = "windows-thread-profiling (source id " + std::to_string(sid) + " '" + want + "', per thread)";
     return true;
   }
+  std::string lastErr;
   bool rd(PERFORMANCE_DATA& d) {
     memset(&d, 0, sizeof d);
     d.Size = sizeof d;
     d.Version = PERFORMANCE_DATA_VERSION;
-    return ReadThreadProfilingData(h, READ_THREAD_PROFILING_FLAG_HARDWARE_COUNTERS | READ_THREAD_PROFILING_FLAG_DISPATCHING, &d) == ERROR_SUCCESS && d.HwCountersCount >= 1;
+    DWORD rc = ReadThreadProfilingData(h, READ_THREAD_PROFILING_FLAG_HARDWARE_COUNTERS, &d);
+    if (rc != ERROR_SUCCESS) { lastErr = "ReadThreadProfilingData error " + std::to_string(rc); return false; }
+    if (d.HwCountersCount < 1) {
+      lastErr = "ReadThreadProfilingData succeeded but returned HwCountersCount=" + std::to_string(d.HwCountersCount) + " (ctx switches " +
+                std::to_string(d.ContextSwitchCount) + ", cycle time " + std::to_string((unsigned long long)d.CycleTime) + ")";
+      return false;
+    }
+    return true;
   }
   bool start() override { return rd(a); }
+  std::string why() const override { return lastErr; }
   bool stop(uint64_t& v) override {
     if (!rd(b)) return false;
     v = b.HwCounters[0].Value - a.HwCounters[0].Value;
@@ -458,6 +468,7 @@ int main(int argc, char** argv) {
       code.run();
       auto t1 = std::chrono::steady_clock::now();
       if (cok && !ctr->stop(c0)) cok = false;
+      if (ctr && !cok && r == 0 && !ctr->why().empty()) printf("  counter read failed: %s\n", ctr->why().c_str());
       ns.push_back(std::chrono::duration<double, std::nano>(t1 - t0).count() / iters);
       if (cok) cnt.push_back((double)c0);
     }

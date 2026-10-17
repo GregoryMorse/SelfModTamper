@@ -1,0 +1,8 @@
+cpu: vendor=GenuineIntel family=06h model=B7h stepping=1 hypervisor=yes
+counter: windows-thread-profiling (source id 38 'MACHINE_CLEARS.SMC', per thread), event Intel MACHINE_CLEARS.SMC (C3H/04H) (raw 0x4C3)
+store into the next executed instruction (+0)       117.64 ns/iter  (no counter)
+store 64 bytes ahead, same page                       0.37 ns/iter  (no counter)
+store 1024 bytes ahead, same page                     0.37 ns/iter  (no counter)
+store at the start of the next page                   0.37 ns/iter  (no counter)
+store two pages ahead                                 0.37 ns/iter  (no counter)
+result: counter measurements above are evidence about this machine only
