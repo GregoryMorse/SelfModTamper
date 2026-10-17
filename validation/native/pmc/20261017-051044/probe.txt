@@ -1,0 +1,13 @@
+cpu: vendor=GenuineIntel family=06h model=B7h stepping=1 hypervisor=yes
+counter: windows-thread-profiling (source id 38 'MACHINE_CLEARS.SMC', per thread), event Intel MACHINE_CLEARS.SMC (C3H/04H) (raw 0x4C3)
+  counter read failed: ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle time 137953099759)
+store into the next executed instruction (+0)       132.01 ns/iter  (no counter)
+  counter read failed: ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle time 138174928387)
+store 64 bytes ahead, same page                       0.39 ns/iter  (no counter)
+  counter read failed: ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle time 138175614739)
+store 1024 bytes ahead, same page                     0.39 ns/iter  (no counter)
+  counter read failed: ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle time 138176299132)
+store at the start of the next page                   0.39 ns/iter  (no counter)
+  counter read failed: ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle time 138176983736)
+store two pages ahead                                 0.39 ns/iter  (no counter)
+result: counter measurements above are evidence about this machine only

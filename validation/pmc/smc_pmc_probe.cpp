@@ -179,7 +179,7 @@ struct EtwCounter : Counter {
   PERFORMANCE_DATA a, b;
   DWORD ctxBefore = 0;
   unsigned long ctxSwitches = 0;
-  std::string label;
+  std::string label, lastErr;
   static std::string narrow(const wchar_t* w) {
     std::string r;
     for (; *w; w++) r += (*w < 128) ? (char)*w : '?';
@@ -217,12 +217,26 @@ struct EtwCounter : Counter {
     rc = TraceSetInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceConfigInfo, &sid, sizeof sid);
     if (rc != ERROR_SUCCESS) { why = "TraceSetInformation(profile source config) failed, error " + std::to_string(rc) + (rc == ERROR_ACCESS_DENIED || rc == ERROR_PRIVILEGE_NOT_HELD ? (priv ? " (run from an administrator prompt)" : " (SeSystemProfilePrivilege could not be enabled: run from an administrator prompt)") : ""); return false; }
     SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
-    rc = EnableThreadProfiling(GetCurrentThread(), 0x1, 1, &h);
-    if (rc != ERROR_SUCCESS) { why = "EnableThreadProfiling failed, error " + std::to_string(rc); return false; }
+    // Which bit of the HardwareCounters mask selects the configured source is not documented well; try the candidates and keep
+    // the first that makes ReadThreadProfilingData return a counter.
+    const DWORD64 masks[] = {1ull, 1ull << (sid & 63), ~0ull};
+    std::string tried;
+    bool got = false;
+    for (DWORD64 m : masks) {
+      rc = EnableThreadProfiling(GetCurrentThread(), 0x1, m, &h);
+      char t[64];
+      snprintf(t, sizeof t, " mask 0x%llX: enable=%lu", (unsigned long long)m, (unsigned long)rc);
+      tried += t;
+      if (rc != ERROR_SUCCESS) { h = nullptr; continue; }
+      if (rd(a)) { got = true; break; }
+      tried += " read=" + lastErr.substr(0, 90) + ";";
+      DisableThreadProfiling(h);
+      h = nullptr;
+    }
+    if (!got) { why = "EnableThreadProfiling gave no hardware counter:" + tried; return false; }
     label = "windows-thread-profiling (source id " + std::to_string(sid) + " '" + want + "', per thread)";
     return true;
   }
-  std::string lastErr;
   bool rd(PERFORMANCE_DATA& d) {
     memset(&d, 0, sizeof d);
     d.Size = sizeof d;

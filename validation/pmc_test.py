@@ -145,6 +145,7 @@ def main():
     ap.add_argument("--iters", type=int, default=100000)
     ap.add_argument("--reps", type=int, default=7)
     ap.add_argument("--pawnio-lib")
+    ap.add_argument("--with-wpr", action="store_true", help="Windows, admin: keep a WPR session with the registered source running while the probe runs")
     ap.add_argument("--register-wpr", action="store_true", help="Windows, admin: register MACHINE_CLEARS.SMC as a Windows hardware-counter profile source")
     a = ap.parse_args()
 
@@ -163,7 +164,15 @@ def main():
             cmd += ["--pawnio-module", str(fetch_amd_module())]
         except Exception as e:  # network or hash problem: the probe falls back to timing only
             print("PawnIO module not available:", e)
-    r = run(cmd)
+    wpr = BUILD / "smc.wprp"
+    if a.with_wpr and wpr.exists():
+        w = run(["wpr", "-start", str(wpr), "-filemode"])
+        print("wpr -start ->", w.returncode, (w.stdout + w.stderr).strip()[:300])
+    try:
+        r = run(cmd)
+    finally:
+        if a.with_wpr and wpr.exists():
+            run(["wpr", "-cancel"])
     (outdir / "probe.txt").write_text(r.stdout + r.stderr, encoding="utf-8")
     meta = {"time": stamp, "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0],
             "command": cmd, "exit": r.returncode}
