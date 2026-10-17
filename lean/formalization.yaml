@@ -4,24 +4,27 @@ project:
   name: "Tamper-proofing with self-modifying code: a Lean formalization of the threat model"
   description: >-
     Formalizes Gregory Morse and Tamas Kozsik's paper "Tamper-Proofing with Self-Modifying Code" (arXiv:2604.12407v1).
-    The selected statement is an abstract threat model for checksum units whose opcode state lives in the memory
-    they checksum: a system of units with regions and code, a timeline of write, execute, check, split-view and DMA
-    events, adversary levels L0-L4, a cost contract with lower bounds on emulation, forgery and mediation, and eight
-    structural assumptions A1-A8 (none of the form "the attacker is detected"). An effective alarm needs a unit with a
-    response code (at least one response byte, all of it unmodified) and either a value mismatch or a positive number k
-    of consecutive timing failures; A6 therefore includes k > 0 and A7 includes that every unit has a response byte.
-    The development proves that under A1-A8 an adversary never executes a modified protected byte without an effective
-    alarm (T1), that a faithful split-view run must mediate every iteration with a non-zero toggle and that this is a
-    timing failure under the timing gap (T2), that each of the eleven assumptions is necessary by an explicit winning
-    adversary that satisfies all the others (T3, including a three-quadword forgery of the checksum and the proof that
-    two quadwords do not suffice), and what each adversary level gives and loses (T4: below L2 with the inline timer
-    A1, A4 and A5 hold; L1 with an operating-system timer, L2 and L4 each admit a winning adversary against a system
-    satisfying every other assumption). The paper's Harvard/von Neumann observation (C01, C02) is proved in the
-    development but is not part of the selected statement: it is a general fact about observation-preserving simulation,
-    and its time bound assumes the per-read charge it uses. Supporting material, not part of the selected statement, covers the x86-64 model of the kernels, the
-    static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level and at the instruction level, the byte layout against
-    assembler output, a clear-count contract checked against the paper's tables, timers, the noise estimator, the
-    detection predicate and the data ratios, together with native test vectors for the corrected sources.
+    The selected statement (PalomarSMT.mathematical_result, four results T1-T4) is an abstract threat model for checksum
+    units whose opcode state lives in the memory they checksum: a system of units with regions and code, a timeline of
+    write, execute, check, split-view and DMA events, adversary levels L0-L4, a cost contract with lower bounds on
+    emulation, forgery and mediation, and eight structural assumptions A1-A8 (none of the form "the attacker is
+    detected"). An effective alarm needs a unit with a response code (at least one response byte, all of it unmodified)
+    and either a value mismatch or a positive number k of consecutive timing failures; A6 therefore includes k > 0 and
+    A7 includes that every unit has a response byte. The four selected results are: under A1-A8 an adversary never
+    executes a modified protected byte without an effective alarm (T1); in a faithful split-view run every iteration
+    with a non-zero toggle (apart from the last) is mediated, and under A3 and A5 a faithful mediated check with such
+    an iteration is a timing failure (T2); each of the eleven assumptions is necessary, by an explicit winning adversary
+    against a system that satisfies all the others (T3); and below L2 with the inline timer A1, A4 and A5 hold, while
+    L1 with an operating-system timer, L2 and L4 each admit a winning adversary against a system satisfying every other
+    assumption (T4).
+    Proved in the same development but NOT part of this record (they are not in the Comparator configuration): the
+    paper's Harvard/von Neumann observation (C01, C02), a general fact about observation-preserving simulation whose time
+    bound assumes the per-read charge it uses; the three-quadword forgery of the checksum and the proof that two
+    quadwords do not suffice (the selected T3 witness for A8 is a single two-quadword collision pair); the x86-64 model
+    of the kernels, the static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level and at
+    the instruction level, the byte layout against assembler output, a clear-count contract checked against the paper's
+    tables, timers, the noise estimator, the detection predicate and the data ratios, and native test vectors for the
+    corrected sources.
   authors: ["Gregory Morse"]
   responsible_maintainers: ["Gregory Morse"]
   license: "MIT"
@@ -60,8 +63,9 @@ related_formalizations: []
 status:
   scope: >-
     The selected Palomar record is PalomarSMT.mathematical_result: security under the structural assumptions A1-A8 (T1),
-    the mediation cost of split views (T2), the necessity of each assumption (T3) and the level matrix (T4). The
-    Harvard/von Neumann observation (C01, C02) is proved in the development and is not selected. The model is abstract: every dependence on a processor, hypervisor or operating system
+    the mediation cost of split views (T2), the necessity of each assumption (T3) and the level matrix (T4). Proved
+    elsewhere in the development and not selected: the Harvard/von Neumann observation (C01, C02) and the three-quadword
+    forgery theorem with its two-quadword impossibility. The model is abstract: every dependence on a processor, hypervisor or operating system
     is a field of the cost contract, the level capabilities or the well-formedness structure, and no theorem says that any
     real system satisfies it. The x86-64 model, the static and unrolled kernel theorems, the layout against assembler
     bytes, the clear contract checked against Table 6, the timer and noise contract and the detection predicate are
