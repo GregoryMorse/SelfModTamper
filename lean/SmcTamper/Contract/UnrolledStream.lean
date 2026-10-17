@@ -8,7 +8,7 @@ namespace SmcTamper
 
 /-! ## The executed-instruction stream of the unrolled kernel (steady state)
 
-Per pass: `I` intro instructions (abstract: addresses inside the 92-byte intro, no stores modelled; the intro's and tail's
+Per pass: `I` intro instructions (the real value is `I = 3`, proved in `Unrolled/IntroCount`; no stores; the intro's and tail's
 own stores are bounded separately in `UnrolledClears`), `148` units of eight instructions, the five padding `NOP`s,
 `148` units, and the final `jmp L0`.  The stream is periodic with period `I + 2374`. The unit instructions are those of
 `unitAt` (lengths 3,3,3,3,2,3,6,4); the seventh is the `XOR BYTE PTR [rip+d], DL` that stores into the opcode byte of unit
@@ -23,8 +23,22 @@ def slotLen : Nat → Nat
 def unitEv (base u s : Nat) : Ev :=
   ⟨base + unitStart u + slotOff s, slotLen s, if s = 6 then some (base + opOff ((u + perPage) % numUnits), 1) else none⟩
 
+/-- The executed intro instructions of a steady-state pass, as the Level-2 proof finds them (`Unrolled/IntroCount`):
+`sub rdi,2368` at 9 (7 bytes), `jg` at 16 (2 bytes, taken), `clc` at 94 (1 byte); none of them stores. -/
+def introEv (base r : Nat) : Ev :=
+  if r = 0 then ⟨base + 9, 7, none⟩ else if r = 1 then ⟨base + 16, 2, none⟩ else ⟨base + 94, 1, none⟩
+
+theorem introEv_facts (base r : Nat) :
+    base + 9 ≤ (introEv base r).pc ∧ (introEv base r).pc + (introEv base r).len ≤ base + 95 ∧ 1 ≤ (introEv base r).len ∧
+      (introEv base r).store = none := by
+  unfold introEv; split <;> (try split) <;> simp
+
+theorem introEv_base (base r : Nat) :
+    (introEv base r).pc = base + (introEv 0 r).pc ∧ (introEv base r).len = (introEv 0 r).len := by
+  unfold introEv; split <;> (try split) <;> simp [Nat.add_comm]
+
 def evR (base I r : Nat) : Ev :=
-  if r < I then ⟨base + 3 + r % 92, 1, none⟩
+  if r < I then introEv base r
   else if r - I < 1184 then unitEv base ((r - I) / 8) ((r - I) % 8)
   else if r - I < 1189 then ⟨base + 4091 + (r - I - 1184), 1, none⟩
   else if r - I < 2373 then unitEv base (148 + (r - I - 1189) / 8) ((r - I - 1189) % 8)
@@ -82,6 +96,7 @@ theorem evR_hit (base I r v : Nat) (hr : r < periodOf I) (hv : v < 296)
   · simp only [c0, ite_true] at h
     rw [granHit_one] at h
     simp only [opOff] at h
+    have := introEv_facts base r
     by_cases c2 : 148 ≤ v <;> simp only [c2, ite_true, ite_false] at hu2 <;> omega
   · simp only [c0, ite_false] at h
     by_cases c1 : r - I < 1184

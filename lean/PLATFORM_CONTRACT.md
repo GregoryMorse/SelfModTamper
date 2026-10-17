@@ -28,8 +28,8 @@ Final (R14).
 - **Theorems that use it:** `static_clears_ge` (C12, `g ≥ 1`, `W ≥ 4`), `pass_clears_byte` (C24), `pass_clears_page` (C13),
   `false_positive` (C14), `no_clear_of_disjoint` (C42).
 - **Not claimed:** that real processors follow this rule; an exact `W`; behaviour for self-modification of code on a different
-  logical processor; that the intro's abstract instructions (`Contract/UnrolledStream`) have the real executed count `I`
-  (`pass_clears_byte` needs `I ≥ 4`; `pass_clears_page` holds for every `I`).
+  logical processor; that the machine executes the stream `Contract/UnrolledStream` as modelled. The intro count is derived, not assumed: the Level-2 run of a pass
+  executes `passLen = periodOf 3` instructions (`Unrolled/IntroCount`), so `I = 3` and `pass_clears_byte_real` holds for windows `W ≤ 1181`.
 
 ## 3. Timer contract (`Contract/Timers.lean`)
 
@@ -75,8 +75,7 @@ Final (R14).
 
 - The unrolled kernel is verified at Level 1 (an abstract machine whose opcode state lives in the memory the kernel reads), the byte
   layout against the assembler output, and at Level 2: `unrolled_refines` runs the x86-64 model on the image bytes (patch and restoration included)
-  and gets `callUnrolled`, under the hypotheses of GAPS G01 (the qword count of the final pass is not a multiple of 148). Not claimed: the
-  executed count `I` of the abstract intro stream (G03); that a real processor executes these instructions as the model does (the model is
+  and gets `callUnrolled`, under the hypotheses of GAPS G01 (the qword count of the final pass is not a multiple of 148). Not claimed: that a real processor executes these instructions as the model does (the model is
   the contract of section 1).
 - Exact machine-clear counts are not proved (only the upper bounds and the consistency checks against Table 6, G04); no line-granule
   (g = 64) figure is claimed (G05).

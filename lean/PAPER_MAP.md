@@ -70,8 +70,8 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 | C10 MSVC inline assembly x86-only; `/SECTION:.text,RWE` | learn.microsoft.com/en-us/cpp/assembler/inline/inline-assembler (x64 not supported), /cpp/build/reference/section-specify-section-attributes | consistent with the text |
 | C10 Linux `clock_gettime` clocks (`CLOCK_REALTIME`, `CLOCK_MONOTONIC`, `CLOCK_BOOTTIME` since 2.6.39), `mmap`, `perf_event_open` | man7.org man pages clock_gettime(2), mmap(2), perf_event_open(2) | consistent with the text |
 | C10 "AVR32, SPARC V9, PowerPC, ARMv7, ARMv8 provide counter-style instructions" | not checked | class X (passing remark, nothing depends on it) |
-| C15 Intel: MSR 0x38F, 0x186, 0xC1; event C3H / umask 04H `MACHINE_CLEARS.SMC` | Linux perf JSON (tools/perf/pmu-events/arch/x86/skylake/pipeline.json: EventCode 0xC3, UMask 0x4, MACHINE_CLEARS.SMC); MSR numbers IA32_PERF_GLOBAL_CTRL 38FH, IA32_PERFEVTSEL0 186H, IA32_PMC0 0C1H (Intel SDM Vol. 4) from the author's knowledge, not re-fetched | event values verified; MSR numbers standard |
-| C15 AMD: MSR C000_0301, C001_0000, C001_0004; PMCx021 | Linux perf JSON for amdzen1-5 has no self-modifying-code event; AMD PPR text for PMCx021 could not be retrieved | OPEN (P14, ask-author): the AMD column is unverified; the author's 2012 copy of AMD64 APM Vol. 2 (rev 3.21) confirms MSRs C001_0000 PerfEvtSel0 and C001_0004 PerfCtr0 but contains neither C000_0301 nor event 0x21 (the paper cites the January 2023 revision, not available here); BKDG/PPR downloads failed. Earlier note: (event 0x21 is named as a Family 10h-era event; Table 1's caption says "representative supported microarchitectures"). The author asked that unreferenced data be corrected: needs the 2023 APM or a PPR/BKDG. See QUESTIONS.md |
+| C15 Intel: MSR 0x38F, 0x186, 0xC1; event C3H / umask 04H `MACHINE_CLEARS.SMC` | Linux perf JSON (tools/perf/pmu-events/arch/x86/skylake/pipeline.json: EventCode 0xC3, UMask 0x4, MACHINE_CLEARS.SMC); MSR numbers IA32_PERF_GLOBAL_CTRL 38FH, IA32_PERFEVTSEL0 186H, IA32_PMC0 0C1H read in the Intel SDM Vol. 4 (order number 325462-093US, combined volumes; MSR tables) | event values verified; MSR numbers verified in the SDM |
+| C15 AMD: MSR C000_0301, C001_0000, C001_0004; PMCx021 | AMD64 APM Vol. 2 (24593) rev 3.40, January 2023 (the revision the paper cites): MSR index lists C000_0301 PerfCntrGlobalCtl (section 13.2.1, Figure 13-12; counters per CPUID Fn8000_0022_EBX), C001_0000h PerfEvtSel0, C001_0004h PerfCtr0. PMCx021 "Pipeline Restart Due to Self-Modifying Code": AMD Family 10h BKDG 31116 rev 3.62 (EventSelect 021h) and Family 15h Models 00h-0Fh BKDG 42301 rev 3.14 (PMCx021) | verified; P14 withdrawn. Scope note: C000_0301 exists only on parts with PerfMonV2; PMCx021 is documented for families 10h/15h; the Zen programming references were not read |
 | C18 Table 2 LAT/RCP | uops.info measurements for the r64,m64 forms (Skylake, Zen 3); AsmGrid (interactive page, not readable here) | CMP LAT 0.2/0.25 is not a latency (uops.info: 1 cycle); ADD r64,m64 throughput measures 1.0 on Skylake, the printed RCP 0.25 describes another form. Recorded as P07 (confirmed by the author: CMP LAT = 1) |
 
 ## Notes from the R1 scan for further quantitative errors
@@ -83,7 +83,7 @@ obligations are listed at the end). `Declaration / evidence` is filled as rounds
 
 ## Open obligations
 
-* C15 AMD column (P14): primary source for MSR C000_0301 and PMCx021 not yet found.
+* C15 AMD column (P14): verified against the AMD primary documents (see the C15 AMD row); P14 withdrawn.
 
 R2 also proved (support for C21, R4): SmcTamper.cSubst_eq_setByte (the Fig. 3 `preserve`/shift substitution replaces exactly byte j by `opcodeOf op`), rd64_wr8_outside / rd64_wr8_inside / rd64_wr8_aligned (Bits/Bytes.lean).
 
@@ -92,4 +92,4 @@ R11b (threat model I): T1 `Threat/Security.lean` `security` (no win under A1–A
 
 R11c rows: C46 sec 10 -> P11 text in `edits.json` (Threat.Security/T3/Matrix); C49 sec 10 A1 -> `nec_A1`, `faithful_needs_med` (T2 scoped, see THREAT_MODEL section 3); C50 sec 10 A2 -> `nec_A2cov`, `nec_A2intact`;
 C51 sec 10 A3 -> `nec_A3`; C52 sec 10 A4 -> `nec_A4`; C53 sec 1 prior work -> `T4`, `ext_clock_detects`; C54 sec 1 synthetic clock -> `nec_A5` (P13); C55 sec 1 external inputs -> `injected_code_outside_goal`, `nec_A6` (P12);
-C56 sec 5 collisions -> `nec_A8` (P04 pair). Open obligations: A2 code/connectivity and A7 necessity witnesses; 3-qword forgery theorem; SDM VMX/EPT/DR facts to be read from primary text before the v2 manuscript cites them.
+C56 sec 5 collisions -> `nec_A8` (P04 pair). Open obligations: A2 code/connectivity and A7 necessity witnesses; 3-qword forgery theorem; the SDM VMX/EPT/DR/TSD facts have been read from the primary text (THREAT_MODEL, section on platform facts).

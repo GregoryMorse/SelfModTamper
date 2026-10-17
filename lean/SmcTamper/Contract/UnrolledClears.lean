@@ -14,7 +14,7 @@ theorem evR_store (base I r a w : Nat) (hr : r < periodOf I) (h : (evR base I r)
   unfold periodOf at hr
   unfold evR at h
   by_cases c0 : r < I
-  · simp only [c0, ite_true] at h; cases h
+  · simp only [c0, ite_true, (introEv_facts base r).2.2.2] at h; cases h
   · simp only [c0, ite_false] at h
     by_cases c1 : r - I < 1184
     · simp only [c1, ite_true, unitEv] at h
@@ -36,11 +36,11 @@ theorem evR_store (base I r a w : Nat) (hr : r < periodOf I) (h : (evR base I r)
           · simp only [c6, ite_false] at h; cases h
         · simp only [c4, ite_false] at h; cases h
 
-/-- **C24 (clears can disappear).**  At byte granularity (`g = 1`), with an intro of at least four executed instructions, no
+/-- **C24 (clears can disappear).**  At byte granularity (`g = 1`), with an intro of `I` executed instructions and a window `W <= I + 1178` (the real `I` is 3, so `W <= 1181`), no
 unit store of the unrolled kernel causes a clear as long as the window is at most `1182` instructions: the nearest refetch of
 a stored opcode byte is 1183 instructions later (148 units of eight instructions plus the five padding `NOP`s, less the
 store's own position in its unit), and `I + 1179` instructions later for the stores of page 2 (through `jmp L0` and the intro). -/
-theorem g1_no_unit_clear (base I W : Nat) (hI : 4 ≤ I) (hW : W ≤ 1182) (t : Nat) :
+theorem g1_no_unit_clear (base I W : Nat) (hW : W ≤ 1182) (hWI : W ≤ I + 1178) (t : Nat) :
     streamClear 1 W (ulEv base I) t = false := by
   unfold streamClear
   cases hs : (ulEv base I t).store with
@@ -89,6 +89,8 @@ theorem evR_pagehit0 (I r v : Nat) (hr : r < periodOf I) (hv : v < 296)
   unfold evR at g1 g2
   by_cases c0 : r < I
   · simp only [c0, ite_true] at g1 g2
+    have := introEv_facts 0 r
+    have := unitStart_range v hv
     omega
   · simp only [c0, ite_false] at g1 g2
     by_cases c1 : r - I < 1184
@@ -113,7 +115,7 @@ theorem evR_base (base I r : Nat) :
     (evR base I r).pc = base + (evR 0 I r).pc ∧ (evR base I r).len = (evR 0 I r).len := by
   unfold evR unitEv
   by_cases c0 : r < I
-  · simp [c0]; omega
+  · simp only [c0, ite_true]; exact introEv_base base r
   · by_cases c1 : r - I < 1184
     · simp [c0, c1]; omega
     · by_cases c3 : r - I < 1189
@@ -138,7 +140,7 @@ theorem slotLen_pos (s : Nat) : 2 ≤ slotLen s := by
 theorem evR_len_pos (I r : Nat) : 1 ≤ (evR 0 I r).len := by
   unfold evR unitEv
   by_cases c0 : r < I
-  · simp [c0]
+  · simp only [c0, ite_true]; exact (introEv_facts 0 r).2.2.1
   · by_cases c1 : r - I < 1184
     · simp [c0, c1]; have := slotLen_pos ((r - I) % 8); omega
     · by_cases c3 : r - I < 1189
@@ -252,10 +254,10 @@ theorem pass_clears_page (B I W : Nat) (hW : W ≤ 2000) : passUnitClears 4096 W
   exact decide_eq_true (page4096_clear B I W u hW hu' h)
 
 /-- C24 for whole passes: at byte granularity no unit store clears (hence only the intro's and tail's own stores can). -/
-theorem pass_clears_byte (base I W : Nat) (hI : 4 ≤ I) (hW : W ≤ 1182) : passUnitClears 1 W base I = 0 := by
+theorem pass_clears_byte (base I W : Nat) (hW : W ≤ 1182) (hWI : W ≤ I + 1178) : passUnitClears 1 W base I = 0 := by
   unfold passUnitClears
   rw [List.countP_eq_zero]
   intro u _
-  simp [g1_no_unit_clear base I W hI hW]
+  simp [g1_no_unit_clear base I W hW hWI]
 
 end SmcTamper

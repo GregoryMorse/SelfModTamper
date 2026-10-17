@@ -109,6 +109,8 @@ returns true for the unmodified protected code (when its timing lies within the 
 
 **Source:** Sections 1 and 9
 
+**Lean:** `SmcTamper.forgery_value`, `SmcTamper.two_not_enough`
+
 ## P04.2 — Section 9, first paragraph (p. 10; Lean; certain)
 
 **Before:**
@@ -328,7 +330,7 @@ The checksum is deliberately not collision resistant, so A8 is an assumption abo
 \paragraph{Results.}
 (T1) Under A1--A8 and the platform contract, no adversary achieves the goal.
 (T2) With separate fetch and data views, a run that follows the SMC kernel's opcode trajectory needs one mirroring event per opcode-changing iteration, each costing at least the mirroring bound of A3; a plain checksum without opcode state can be blind to split views.
-(T3) Each of A1, A2 (coverage and one unmodified unit), A3, A4, A5, A6 and A8 is necessary: for each there is a system and an adversary that satisfies all the others and wins.
+(T3) Each of A1, A2 (coverage, unit code protected, strong connectivity, one unmodified unit), A3, A4, A5, A6, A7 and A8 is necessary: for each there is a system and an adversary that satisfies all the others and wins.
 (T4) With the inline time-stamp counter, levels L0 and L1 satisfy A1, A4 and A5; an operating-system timer interface can be hooked at L1; L2 breaks A1 and A5; L4 breaks A4.
 With a time source outside the adversary's control, of resolution $r$ and jitter $j$, slowdowns of at least $j+2r$ are detected by a threshold calibrated on native runs.
 
@@ -343,7 +345,7 @@ The mechanism is a local runtime-integrity technique intended to raise attacker 
 
 **Source:** Section 10; plan D11
 
-**Lean:** `SmcTamper.security`, `SmcTamper.witness_secure`, `SmcTamper.faithful_needs_med`, `SmcTamper.mediated_timefail`, `SmcTamper.T3`, `SmcTamper.T4`, `SmcTamper.tsc_low_level`, `SmcTamper.ext_clock_detects`, `SmcTamper.injected_code_outside_goal`
+**Lean:** `SmcTamper.security`, `SmcTamper.witness_secure`, `SmcTamper.faithful_needs_med`, `SmcTamper.mediated_timefail`, `SmcTamper.T3`, `SmcTamper.T4`, `SmcTamper.tsc_low_level`, `SmcTamper.ext_clock_detects`, `SmcTamper.injected_code_outside_goal`, `SmcTamper.T3_full`
 
 ## P12 — Section 1, paragraph "External inputs" (p. 2; Lean; certain)
 
@@ -394,7 +396,7 @@ An attacker who controls the time source need not model the processor at all: re
 
 **Lean:** `SmcTamper.necessary_A5`, `SmcTamper.nec_A5_osApi`, `SmcTamper.T4`, `SmcTamper.ext_clock_detects`
 
-## P14 — Table 1, AMD64 column (counter global control MSR and SMC event) (p. 5; editorial, open; inferred)
+## P14 — Table 1, AMD64 column (counter global control MSR and SMC event) (p. 5; editorial, open; certain)
 
 **Before:**
 
@@ -405,12 +407,12 @@ Perf. Counter Global Control & 0x38F & 0xC0000301
 **After:**
 
 ```tex
-(pending research: cite the AMD document that defines MSR C000_0301 and PMCx021 for the microarchitectures covered, or correct the cells)
+(no change: the cells are correct)
 ```
 
-**Reason:** The AMD cells have no primary source in the paper's references that was found: the 2012 copy of the AMD64 APM Vol. 2 (rev 3.21) confirms MSRs C001_0000 (PerfEvtSel0) and C001_0004 (PerfCtr0) but contains neither C000_0301 nor event 0x21.
+**Reason:** Withdrawn: all four AMD cells are confirmed by AMD's primary documents. MSR C000_0301 (PerfCntrGlobalCtl, 'Core Performance Global Control Register', Figure 13-12, present only where CPUID Fn8000_0022 reports it), C001_0000 (PerfEvtSel0) and C001_0004 (PerfCtr0) are in the AMD64 APM Vol. 2 rev 3.40 (January 2023), the revision the paper cites; PMCx021 'Pipeline Restart Due to Self-Modifying Code' is in the AMD Family 10h BKDG (31116 rev 3.62) and Family 15h Models 00h-0Fh BKDG (42301 rev 3.14).
 
-**Evidence:** Searched: AMD64 APM Vol. 2 rev 3.21 (March 2012; the author's OneDrive copy; the paper cites the January 2023 revision, not available here); Linux perf JSON for amdzen1-5 (no self-modifying-code event); AMD BKDG/PPR downloads failed. Intel column verified (Linux perf skylake pipeline.json: C3H/04H MACHINE_CLEARS.SMC). To be settled by the author supplying the AMD revision or by research in a later session.
+**Evidence:** Read: AMD64 APM Vol. 2, 24593 rev 3.40 (kib.kiev.ua/x86docs/AMD/AMD64/24593_APM_v2-r3.40.pdf): MSR index table lists C000_0301 PerfCntrGobalCtl (sic) -> section 13.2.1, Figure 13-12, and C001_0000h PerfEvtSel0, C001_0004h PerfCtr0. AMD Family 10h BKDG 31116 rev 3.62 'EventSelect 021h Pipeline Restart Due to Self-Modifying Code'; Family 15h BKDG 42301 rev 3.14 'PMCx021 Pipeline Restart Due to Self-Modifying Code' (amd.com archived-tech-docs). Scope note, not an error: C000_0301 exists only on parts with PerfMonV2 (APM Vol. 2 ties the count of counters to CPUID Fn8000_0022_EBX); PMCx021 is documented for families 10h/15h; the Zen processor programming references were not read, so the paper's phrase 'representative supported microarchitectures' is not contradicted.
 
 **Source:** Table 1; AMD APM Vol. 2
 

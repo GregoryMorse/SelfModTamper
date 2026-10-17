@@ -64,11 +64,14 @@ Verified this session (primary pages fetched):
 * `SetThreadContext` — needs `THREAD_SET_CONTEXT`; "do not try to set the context for a running thread, suspend first": register tampering at L1.
 * `CreateRemoteThread` — needs `PROCESS_CREATE_THREAD`, `PROCESS_QUERY_INFORMATION`, `PROCESS_VM_OPERATION`, `PROCESS_VM_WRITE`, `PROCESS_VM_READ`;
   the documentation says it "changes the timing and memory layout of the process": thread injection at L1.
-* `CR4.TSD` — when set, `RDTSC` is restricted to privilege level 0 (#GP(0) otherwise) (Intel SDM RDTSC page, via a mirror; secondary source).
+* `CR4.TSD` — when set, `RDTSC` is restricted to privilege level 0 (#GP(0) otherwise) (Intel SDM, combined volumes, order number 325462-093US: Vol. 3A section 2.5 "CR4.TSD ... Restricts the execution of the RDTSC instruction to procedures running at privilege level 0 when set; allows RDTSC instruction to be executed at any privilege level when clear. This bit also applies to the RDTSCP instruction"; Vol. 2B RDTSC and RDTSCP "Operation": `IF (CR4.TSD = 0) or (CPL = 0) or (CR0.PE = 0) THEN EDX:EAX := TimeStampCounter ELSE #GP(0)`).
 
-**Not verified this session (named only, no claim depends on their text):** VMX "RDTSC exiting" / "use TSC offsetting" controls (SDM Vol. 3C ch. 25),
-EPT execute-only pages, debug registers DR0–DR7 and #DB. They justify the `Level.forgesReading` / `Level.allows` entries for L2 and above. Before the
-v2 manuscript cites them, read the SDM sections directly (open obligation).
+**Read from the primary text (Intel SDM, combined volumes, order number 325462-093US, September 2026 edition; section numbers are of that edition and
+differ in older ones):** VMX "RDTSC exiting" and "use TSC offsetting" (Vol. 3C section 27.6.2, Processor-Based VM-Execution Controls: bit 12 "RDTSC exiting ...
+whether executions of RDTSC and RDTSCP cause VM exits"; section 27.6.5, Time-Stamp Counter Offset and Multiplier); EPT execute-only translations (Vol. 3C
+section 31.3.3.2 "EPT Violations" and the IA32_VMX_EPT_VPID_CAP capability MSR: "If bit 0 is read as 1, the processor supports execute-only translations by EPT");
+debug registers DR0-DR7 (Vol. 3B section 20.2, Debug Registers; DR7 section 20.2.4). They justify the `Level.forgesReading` / `Level.allows` entries for L2 and above;
+no theorem depends on their wording.
 
 ## 5. Literature (DOIs, titles, authors, venues and years verified against Crossref this session; text of the papers not re-read)
 

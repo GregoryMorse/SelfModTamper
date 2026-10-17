@@ -88,5 +88,7 @@ public import SmcTamper.Unrolled.L2Post
 public import SmcTamper.Unrolled.L2Fin1
 public import SmcTamper.Unrolled.L2Fin2
 public import SmcTamper.Unrolled.L2Main
+public import SmcTamper.Unrolled.IntroCount
+public import SmcTamper.Contract.Calibration
 public import SmcTamper.Spec.Paper
 public import SmcTamper.Paper
