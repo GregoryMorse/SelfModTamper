@@ -10,7 +10,7 @@ validation/native/winring0/<timestamp>/ :
   <variant>/out.txt    the RDTSCP samples the product writes;  <variant>/func.asm  the dynamically generated kernel listing
   summary.json         exit codes, durations, whether the event counter was non-zero, the per-kernel table
 Send me the folder (or its summary.json and sysinfo.json).  The product is run from a copy in that folder, never from the repository
-root, so nothing is left behind there.  The driver must be a copy of WinRing0x64.sys (scripts\\Get-WinRing0.ps1 downloads it); if it is
+root, so nothing is left behind there.  The driver WinRing0x64.sys is built from source by scripts/Build-WinRing0.cmd (CMake, MSBuild, WDK; unsigned); if it is
 blocked by Windows the product still runs and the event counters read 0 - sysinfo.json records why.
 
 'pre' is the product built from the commit before the R12 fixes (git worktree ../SelfModTamper-prefix at 2e1b36c), 'post' is this tree.
@@ -84,9 +84,9 @@ def find_driver() -> Path:
 def ensure_driver() -> Path:
     d = find_driver()
     if not d.exists():
-        script = ROOT / "scripts/Get-WinRing0.ps1"
-        print("WinRing0x64.sys not found; running", script)
-        subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], cwd=ROOT)
+        script = ROOT / "scripts/Build-WinRing0.cmd"
+        print("WinRing0x64.sys not found; building it from source with", script)
+        subprocess.run(["cmd", "/c", str(script)], cwd=ROOT)
         d = find_driver()
     return d
 

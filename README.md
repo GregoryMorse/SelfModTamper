@@ -35,7 +35,7 @@ The manuscript is available as the preprint [arXiv:2604.12407](https://arxiv.org
 | Privileges | **Administrator** required at runtime (kernel driver for MSR access) |
 | Build system | CMake ≥ 3.21 + [vcpkg](https://vcpkg.io/) (recommended) **or** `.vcxproj` directly |
 | External library | [AsmJit](https://github.com/asmjit/asmjit) — auto-resolved by vcpkg, or manual build |
-| Kernel driver | [WinRing0 v1.2](http://openlibsys.org/) — `WinRing0x64.sys` (digitally signed) |
+| Kernel driver | [WinRing0](https://github.com/GermanAizek/WinRing0) built from a pinned commit — `WinRing0x64.sys` (unsigned; see below) |
 
 > **Note:** The performance-counter features (MSR read/write via `IOCTL_OLS_*`) are accessed through the WinRing0 kernel driver.  Without it the process skips counter setup gracefully but the `MACHINE_CLEARS.SMC` columns will show zero.
 
@@ -69,22 +69,25 @@ of the property sheet is required.
 
 ### WinRing0
 
-The digitally signed kernel driver `WinRing0x64.sys` is required to read hardware performance
-counters (`MACHINE_CLEARS.SMC`).  Without it the benchmark still runs but counter columns show zero.
+The kernel driver `WinRing0x64.sys` is required to read hardware performance counters (`MACHINE_CLEARS.SMC`).
+Without it the benchmark still runs but counter columns show zero.
 
-Run the provided download script **once** before your first build:
+No binary is downloaded.  The driver is built from source: `cmake/winring0/` fetches a pinned commit of the open-source
+[GermanAizek/WinRing0](https://github.com/GermanAizek/WinRing0) repository (GPL-3.0, a maintained fork of the OpenLibSys
+WinRing0 1.2 sources; same device name `WinRing0_1_2_0`) and builds it with MSBuild and the Windows Driver Kit (WDK):
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\Get-WinRing0.ps1
+```bat
+scripts\Build-WinRing0.cmd
 ```
 
-This downloads `WinRing0_1_2_0.zip` from [openlibsys.org](http://openlibsys.org/), extracts
-`WinRing0x64.sys` into the repository root, and CMake copies it next to the executable
-automatically.  The file is excluded from version control via `.gitignore`.
+This needs Visual Studio (or Build Tools) with the C++ workload and the matching WDK; it writes `WinRing0x64.sys` into the
+repository root (excluded from version control) and CMake copies it next to the executable.
 
-> If the download fails, download `WinRing0_1_2_0.zip` manually from
-> [http://openlibsys.org/](http://openlibsys.org/), extract `WinRing0x64.sys`, and place it
-> in the repository root before running cmake.
+**The result is unsigned.**  Windows loads kernel drivers only when they are signed, so on a machine with Secure Boot, Memory
+integrity (HVCI) or the vulnerable-driver blocklist the product runs but the counters read zero.  On a dedicated test machine
+`scripts\Build-WinRing0.cmd -DWINRING0_TESTSIGN=ON` test-signs the driver with a self-made certificate; Windows then loads it only
+in test-signing mode (`bcdedit /set testsigning on`, which needs Secure Boot and Memory integrity off).  Nothing here changes boot
+or security settings.
 
 The executable registers and starts the driver as a Windows service on each run and
 stops/deletes it cleanly on exit.
@@ -112,8 +115,8 @@ Set `VCPKG_ROOT` permanently if you have not already:
 AsmJit is installed automatically from `vcpkg.json`.
 
 ```bat
-REM 1. Download the WinRing0 driver (one-time setup)
-powershell -ExecutionPolicy Bypass -File scripts\Get-WinRing0.ps1
+REM 1. Build the WinRing0 driver from source (one-time setup, needs the WDK)
+scripts\Build-WinRing0.cmd
 
 REM 2. Configure (installs AsmJit via vcpkg, generates Visual Studio project files in build\)
 cmake --preset windows-x64
@@ -136,7 +139,7 @@ Output: `build\Release\SelfModTamper.exe` / `build\Debug\SelfModTamper.exe`
 Visual Studio 2022 and later detect `CMakeLists.txt` and `CMakePresets.json` when you use
 **File → Open → Folder**.
 
-1. Run `scripts\Get-WinRing0.ps1` once (see above).
+1. Run `scripts\Build-WinRing0.cmd` once (see above).
 2. **File → Open → Folder** — select the repository root.
 3. Visual Studio configures CMake and restores vcpkg packages automatically.
 4. Select the **x64-Release** or **x64-Debug** target and build.
@@ -161,7 +164,7 @@ vcpkg integrate install
 Or set `VCPKG_ROOT` and restart Visual Studio — `Directory.Build.props` and `PropertySheet.props`
 automatically bridge it to MSBuild, install packages from `vcpkg.json`, and copy `asmjit.dll` to the output.
 
-Run `scripts\Get-WinRing0.ps1` once to place `WinRing0x64.sys` in the repository root (the
+Run `scripts\Build-WinRing0.cmd` once to build and place `WinRing0x64.sys` in the repository root (the
 build copies it next to the executable automatically).  Then open `SelfModTamper.sln`, select
 **x64 | Debug** or **x64 | Release**, and build.
 
@@ -213,7 +216,7 @@ SelfModTamper/
 ├── CMakePresets.json          # Build presets — windows-x64 (Release/Debug)
 ├── vcpkg.json                 # vcpkg manifest — declares AsmJit dependency
 ├── scripts/
-│   └── Get-WinRing0.ps1       # Downloads WinRing0x64.sys to repository root
+│   └── Build-WinRing0.cmd     # Builds WinRing0x64.sys from source (cmake/winring0)
 ├── SelfModTamper.sln          # Visual Studio solution (legacy .vcxproj build)
 ├── SelfModTamper/
 │   ├── SelfModTamper.cpp      # Main source: timer classes, C reference implementations,

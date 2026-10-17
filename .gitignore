@@ -13,7 +13,7 @@ vcpkg_installed/
 # User-local CMake overrides (machine-specific, must not be committed)
 CMakeUserPresets.json
 
-# WinRing0 kernel driver binary (downloaded by scripts/Get-WinRing0.ps1)
+# WinRing0 kernel driver binary (built from source by scripts/Build-WinRing0.cmd)
 WinRing0x64.sys
 
 # User-specific files

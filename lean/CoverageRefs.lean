@@ -154,7 +154,6 @@ import SmcTamper.Paper
 #check @SmcTamper.opcode_qwords_distinct
 #check @SmcTamper.opOff_sep
 #check @SmcTamper.unit_xor_other_page
-#check @SmcTamper.XOR
 #check @SmcTamper.perPage_148
 #check @SmcTamper.page1_fill
 #check @SmcTamper.patch_target

@@ -76,7 +76,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <!-- Copy WinRing0x64.sys from the repository root to the output directory.
-       Run scripts\Get-WinRing0.ps1 once to place the file in the repository root. -->
+       Run scripts\Build-WinRing0.cmd once to build and place the file in the repository root. -->
   <Target Name="CopyWinRing0Driver" AfterTargets="Build"
           Condition="'$(Platform)'=='x64' and Exists('$(MSBuildThisFileDirectory)..\WinRing0x64.sys')">
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\WinRing0x64.sys"

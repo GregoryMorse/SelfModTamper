@@ -28,3 +28,8 @@ product itself needs administrator rights and the WinRing0 driver and is never r
   comparison with the paper's Tables 4-5 only; no results are regenerated.
 * Build: the Visual Studio 2026 solution (`SelfModTamper.sln`, toolset v145) is authoritative; `CMakePresets.json` now defaults to the `Visual Studio 18 2026`
   generator with a `windows-x64-vs2022` preset (CMake route not exercised here).
+* WinRing0 driver (2026-10-17): `scripts/Get-WinRing0.ps1` (a binary download from openlibsys.org, which now redirects and fails) is replaced by
+  `cmake/winring0/` + `scripts/Build-WinRing0.cmd`, which fetch the pinned commit d567440 of the open-source github.com/GermanAizek/WinRing0 (GPL-3.0; device name
+  `WinRing0_1_2_0` as the product expects) and build it with MSBuild and the WDK. The result is unsigned: it loads only in test-signing mode (`-DWINRING0_TESTSIGN=ON`
+  test-signs it). The build step was configured here but not run: the WDK is not installed on this machine, and the cmake configure stops with that message.
+

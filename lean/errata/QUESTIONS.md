@@ -9,3 +9,9 @@ Asked in R1 (2026-10-15) and answered:
   if it is not in the manual it is an erratum. Research notes and outcome: `PAPER_MAP.md` (R-class table) and P14 in `edits.json`.
 
 Still to ask: repository tag name (suggested `palomar-v1`), in R15/R16.
+
+* WinRing0 reference (not an erratum, for the author): the paper (Section on Windows/Linux access control) cites the OpenLibSys.org manual page for WinRing0.
+  The page still resolves, and "a signed kernel driver such as WinRing0" is accurate, so no `confirmed` item exists. Suggestion for the author's other texts and
+  v2: also cite the open-source repository the development now builds from (github.com/GermanAizek/WinRing0, pinned commit d567440), since the signed
+  1.2.0 binary is no longer downloadable from openlibsys.org. Apply only if the author agrees.
+
