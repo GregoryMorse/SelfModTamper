@@ -14,7 +14,7 @@ project:
     three-quadword forgery of the checksum and the proof that two quadwords do not suffice), what each adversary level
     gives and loses (T4), and that a Harvard machine reproducing a von Neumann machine must read every sensitive byte
     (C01, C02). Supporting material, not part of the selected statement, covers the x86-64 model of the kernels, the
-    static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level, the byte layout against
+    static kernel against its C emulation, the 296-unit unrolled kernel at an abstract level and at the instruction level, the byte layout against
     assembler output, a clear-count contract checked against the paper's tables, timers, the noise estimator, the
     detection predicate and the data ratios, together with native test vectors for the corrected sources.
   authors: ["Gregory Morse"]
@@ -38,9 +38,8 @@ sources:
       threat model is formalized as an abstract model: the cost contract, the level capabilities and the eight assumptions
       are hypotheses, and no theorem says that a given processor, hypervisor or operating system satisfies them. Not
       modeled and not claimed: any processor's pipeline, caches, machine-clear behavior, timers or handling of
-      self-modifying code, and the measured tables (consistency checks only). Instruction-level execution of the unrolled
-      kernel is not proved; the unrolled kernel is verified at an abstract level plus a byte comparison with the assembler
-      output. The original paper remains a separately cited source.
+      self-modifying code, and the measured tables (consistency checks only). The unrolled kernel is verified at an abstract level, at the instruction level
+      on the x86-64 model (final pass not a multiple of 148 qwords) and by a byte comparison with the assembler output. The original paper remains a separately cited source.
   - title: "Intel 64 and IA-32 Architectures Software Developer's Manual"
     authors: ["Intel Corporation"]
     type: "other"
@@ -92,7 +91,7 @@ fidelity:
     P14 (AMD cells of Table 1) is open. Corrections to the code are L01-L07 and D01-D03 (CODE_FIXES.md), including the
     crash when the qword count is a multiple of 148 (L07). The threat model is relative to its cost contract and
     assumptions; T2 does not claim that all split-view attacks are detected. The unrolled kernel is verified at an abstract
-    level, not at the instruction level. No further mismatch is claimed absent after an unspecified universal review.
+    level and at the instruction level on the x86-64 model, for a final pass that is not a multiple of 148 qwords. No further mismatch is claimed absent after an unspecified universal review.
 review:
   status: "agent-reviewed"
   reviewers: ["Claude Code (automated source and proof audit)"]

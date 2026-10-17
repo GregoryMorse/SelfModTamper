@@ -73,8 +73,11 @@ Final (R14).
 
 ## 6. Non-claims (gap register G01-G05)
 
-- The unrolled kernel is verified at Level 1 (an abstract machine whose opcode state lives in the memory the kernel reads), plus the byte
-  layout against the assembler output; instruction-level (Level 2) execution of the 296-unit kernel is not proved (G01, G03, G13).
+- The unrolled kernel is verified at Level 1 (an abstract machine whose opcode state lives in the memory the kernel reads), the byte
+  layout against the assembler output, and at Level 2: `unrolled_refines` runs the x86-64 model on the image bytes (patch and restoration included)
+  and gets `callUnrolled`, under the hypotheses of GAPS G01 (the qword count of the final pass is not a multiple of 148). Not claimed: the
+  executed count `I` of the abstract intro stream (G03); that a real processor executes these instructions as the model does (the model is
+  the contract of section 1).
 - Exact machine-clear counts are not proved (only the upper bounds and the consistency checks against Table 6, G04); no line-granule
   (g = 64) figure is claimed (G05).
 - The kernels crash when the qword count is a multiple of 148 (defect L07); the product guards it (CODE_FIXES L07) and the native vectors avoid those sizes. No Lean theorem models the crash.

@@ -31,5 +31,5 @@ that the kernel state of the checksum pulls in.
   emulation (C19-C22), the byte layout of the unrolled kernel against the assembler output (C25, C27, C29), the unrolled kernel at
   Level 1 (C04, C28), the clear contract and its consistency with Table 6 (C12-C14, C24, C36), the timer and noise contract and the
   estimator (C07-C09, C35, C43), the detection predicate, policy and reset (C03, C05, C44, C45), and the data-ratio checks
-  (C30-C33, C37, C39). Instruction-level (Level 2) execution of the 296-unit kernel is **not proved** (gap G01).
+  (C30-C33, C37, C39). The unrolled kernel is also proved at the instruction level (`unrolled_refines`, relative to the x86-64 model and the conditions of gap G01); the abstract intro event count `I` is not derived (G03).
 * Native tests, the MASM listing and AsmJit dumps, and the timing runs of `validation/native/` are evidence, never proof.

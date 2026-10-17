@@ -301,7 +301,7 @@ The mathematical, algorithmic and quantitative statements of arXiv:2604.12407v1 
 `leanprover/lean4:v4.35.0-rc3`, no Mathlib), unconditionally or relative to an explicitly stated platform contract, with corrections
 listed in the errata; platform facts are cited and empirical observations are listed as such. This is not a proof of the paper as a
 whole: `lean/PAPER_MAP.md` gives every claim, its class and its status, `lean/PLATFORM_CONTRACT.md` lists every hypothesis about the
-platform, and `lean/GAPS.md` records what is not proved (notably the instruction-level execution of the unrolled kernel).
+platform, and `lean/GAPS.md` records what is not proved (notably the abstract intro event count of the unrolled kernel, exact clear counts and the author-side items).
 
 * Selected statement (`lean/SmcTamper/Spec/Paper.lean`): security under the structural assumptions A1-A8 (T1), the mediation cost of
   split views (T2), the necessity of each assumption (T3), the level matrix (T4) and the Harvard separation (C01, C02).

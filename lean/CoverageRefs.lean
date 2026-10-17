@@ -76,6 +76,19 @@ import SmcTamper.Threat.LevelMono
 import SmcTamper.Unrolled.Sites
 import SmcTamper.Threat.EmulBound
 import SmcTamper.Unrolled.Reset
+import SmcTamper.Unrolled.L2Decode
+import SmcTamper.Unrolled.L2Unit
+import SmcTamper.Unrolled.L2Mem
+import SmcTamper.Unrolled.L2Chain
+import SmcTamper.Unrolled.L2Pass
+import SmcTamper.Unrolled.L2Patch
+import SmcTamper.Unrolled.L2Tab
+import SmcTamper.Unrolled.L2Arith
+import SmcTamper.Unrolled.L2Intro
+import SmcTamper.Unrolled.L2Post
+import SmcTamper.Unrolled.L2Fin1
+import SmcTamper.Unrolled.L2Fin2
+import SmcTamper.Unrolled.L2Main
 import SmcTamper.Spec.Paper
 import SmcTamper.Paper
 
@@ -90,6 +103,7 @@ import SmcTamper.Paper
 #check @SmcTamper.constant_flow
 #check @SmcTamper.tpCompTrace
 #check @SmcTamper.unrolled_emulation
+#check @SmcTamper.unrolled_refines
 #check @SmcTamper.value_frame
 #check @SmcTamper.storage_tamper_detected
 #check @SmcTamper.split_differs_from_vn
@@ -140,6 +154,7 @@ import SmcTamper.Paper
 #check @SmcTamper.opcode_qwords_distinct
 #check @SmcTamper.opOff_sep
 #check @SmcTamper.unit_xor_other_page
+#check @SmcTamper.XOR
 #check @SmcTamper.perPage_148
 #check @SmcTamper.page1_fill
 #check @SmcTamper.patch_target

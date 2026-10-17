@@ -13,5 +13,5 @@
 
 Notes: AI assistance (Claude) is disclosed in formalization.yaml. `Challenge.lean` is about 800 lines / 38 KB (hard limit 1000 / 100 KiB;
 preferred 300 / 32 KiB, exceeded). The model is abstract; the platform contract is in PLATFORM_CONTRACT.md. Open obligations are in GAPS.md
-(Level-2 refinement of the unrolled kernel G01/G03/G13, exact clear counts G04/G05, primary-source reading G20-G22, errata item P14, table
+(the intro event count I of the abstract stream G03, exact clear counts G04/G05, primary-source reading G20-G22, errata item P14, table
 label order G24, and the author's review of the errata PDF).

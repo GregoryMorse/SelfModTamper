@@ -30,7 +30,7 @@ $ErrorActionPreference = 'Stop'
 $dest = Join-Path $DestinationDir 'WinRing0x64.sys'
 
 if (Test-Path $dest) {
-    Write-Host "WinRing0x64.sys already present at '$dest' — nothing to do." `
+    Write-Host "WinRing0x64.sys already present at '$dest' - nothing to do." `
         -ForegroundColor Green
     exit 0
 }

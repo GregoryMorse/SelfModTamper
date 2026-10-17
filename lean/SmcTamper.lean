@@ -77,5 +77,16 @@ public import SmcTamper.Threat.EmulBound
 public import SmcTamper.Unrolled.Reset
 public import SmcTamper.Unrolled.L2Decode
 public import SmcTamper.Unrolled.L2Unit
+public import SmcTamper.Unrolled.L2Mem
+public import SmcTamper.Unrolled.L2Chain
+public import SmcTamper.Unrolled.L2Pass
+public import SmcTamper.Unrolled.L2Patch
+public import SmcTamper.Unrolled.L2Tab
+public import SmcTamper.Unrolled.L2Arith
+public import SmcTamper.Unrolled.L2Intro
+public import SmcTamper.Unrolled.L2Post
+public import SmcTamper.Unrolled.L2Fin1
+public import SmcTamper.Unrolled.L2Fin2
+public import SmcTamper.Unrolled.L2Main
 public import SmcTamper.Spec.Paper
 public import SmcTamper.Paper
