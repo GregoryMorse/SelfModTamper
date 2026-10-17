@@ -17,8 +17,10 @@ def vcvars(toolset) -> Path:
     cmd = [str(VSWHERE), "-property", "installationPath"]
     cmd += ["-version", MAJOR[toolset]] if toolset in MAJOR else ["-latest"]
     out = subprocess.run(cmd, capture_output=True, text=True).stdout.strip().splitlines()
+    if not out:  # the toolset may be an optional component of another major version: try the latest install, the build then decides
+        out = subprocess.run([str(VSWHERE), "-latest", "-property", "installationPath"], capture_output=True, text=True).stdout.strip().splitlines()
     if not out:
-        sys.exit("no Visual Studio install for toolset %s" % toolset)
+        sys.exit("no Visual Studio install found")
     return Path(out[0]) / r"VC\Auxiliary\Build\vcvarsall.bat"
 
 
