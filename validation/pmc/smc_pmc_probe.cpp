@@ -401,6 +401,14 @@ const Case kCases[] = {
     {"store two pages ahead", 8192},
 };
 
+static void markerSleep() {
+#ifdef _WIN32
+  Sleep(5);
+#else
+  usleep(5000);
+#endif
+}
+
 double median(std::vector<double> v) {
   std::sort(v.begin(), v.end());
   return v[v.size() / 2];
@@ -412,7 +420,7 @@ int main(int argc, char** argv) {
   uint32_t iters = 100000;
   int reps = 7;
   long long evOverride = -1;
-  bool selftest = false;
+  bool selftest = false, traceMarkers = false;
   std::string jsonPath, lib = "PawnIOLib.dll", blob = "AMDFamily17.bin", source = "MACHINE_CLEARS.SMC";
   bool listSources = false;
   for (int i = 1; i < argc; i++) {
@@ -425,10 +433,11 @@ int main(int argc, char** argv) {
     else if (a == "--pawnio-lib") lib = next();
     else if (a == "--pawnio-module") blob = next();
     else if (a == "--selftest") selftest = true;
+    else if (a == "--trace-markers") traceMarkers = true;
     else if (a == "--pmc-source") source = next();
     else if (a == "--list-sources") listSources = true;
     else {
-      fprintf(stderr, "usage: smc_pmc_probe [--iters N] [--reps R] [--event RAWCFG] [--json FILE] [--pawnio-lib DLL] [--pawnio-module BIN] [--pmc-source NAME] [--list-sources] [--selftest]\n");
+      fprintf(stderr, "usage: smc_pmc_probe [--iters N] [--reps R] [--event RAWCFG] [--json FILE] [--pawnio-lib DLL] [--pawnio-module BIN] [--pmc-source NAME] [--list-sources] [--trace-markers] [--selftest]\n");
       return 2;
     }
   }
@@ -465,6 +474,13 @@ int main(int argc, char** argv) {
   if (ctr) printf("counter: %s, event %s (raw 0x%llX)\n", ctr->name().c_str(), ev.why.c_str(), (unsigned long long)ev.cfg);
   else printf("counter: none (%s); timing only\n", selftest ? "selftest" : why.c_str());
 
+  if (traceMarkers) {
+#ifdef _WIN32
+    printf("trace-markers: thread id %lu; each repetition is bracketed by a 5 ms sleep (a context switch the kernel trace records)\n", (unsigned long)GetCurrentThreadId());
+    SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
+#endif
+    fflush(stdout);
+  }
   Code code;
   std::string cw;
   if (!code.alloc(cw)) {
@@ -482,11 +498,13 @@ int main(int argc, char** argv) {
     for (int r = 0; r < reps; r++) {
       code.set(iters, kCases[ci].target);
       uint64_t c0 = 0;
+      if (traceMarkers) markerSleep();
       bool cok = ctr && ctr->start();
       auto t0 = std::chrono::steady_clock::now();
       code.run();
       auto t1 = std::chrono::steady_clock::now();
       if (cok && !ctr->stop(c0)) cok = false;
+      if (traceMarkers) markerSleep();
       if (ctr && !cok && r == 0 && !ctr->why().empty()) printf("  counter read failed: %s\n", ctr->why().c_str());
       ns.push_back(std::chrono::duration<double, std::nano>(t1 - t0).count() / iters);
       if (cok) cnt.push_back((double)c0);

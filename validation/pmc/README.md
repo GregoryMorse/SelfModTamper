@@ -23,6 +23,10 @@ Windows, once, from an administrator prompt: `python validation/pmc_test.py --re
 `registered: YES` when `MACHINE_CLEARS.SMC` then appears in the Windows source list); afterwards `python validation/pmc_test.py`
 reads it per thread, and the probe prints the thread's context-switch count while counting.
 
+On Windows/Intel the in-process thread-profiling read returned no counter (`HwCountersCount=0`) although the kernel trace shows Windows
+counting the registered source per thread, so `python validation/pmc_trace.py` (administrator prompt) takes the counts from a kernel trace:
+the probe sleeps 5 ms around each repetition and the script reads the per-thread cumulative counter at those context switches.
+
 Measured so far (evidence about one machine, not proof): AMD EPYC 7542 (Zen2, Linux 5.14, bare metal),
 `validation/native/pmc/20261017-linux-amd-epyc7542-zen2/`: with `ic_cache_inval.fill_invalidated` a store into the next
 executed instruction gives 2.0 counted invalidations per iteration and stores 64 bytes or more ahead give about 0.0002.
