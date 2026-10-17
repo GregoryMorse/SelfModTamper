@@ -1,0 +1,8 @@
+cpu: vendor=GenuineIntel family=06h model=B7h stepping=1 hypervisor=yes
+counter: none (PawnIO's stock IntelMSR module permits only power/thermal MSRs; Intel PMU MSRs are denied, so no counter is available on Windows/Intel); timing only
+store into the next executed instruction (+0)       130.22 ns/iter  (no counter)
+store 64 bytes ahead, same page                       0.39 ns/iter  (no counter)
+store 1024 bytes ahead, same page                     0.39 ns/iter  (no counter)
+store at the start of the next page                   0.39 ns/iter  (no counter)
+store two pages ahead                                 0.39 ns/iter  (no counter)
+result: timing only; no counter was available

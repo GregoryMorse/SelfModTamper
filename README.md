@@ -67,6 +67,13 @@ cmake --build build_vs2022_x64 --config Release
 `SelfModTamper\PropertySheet.props` reads `$(ASMJIT_DIR)` automatically; no manual editing
 of the property sheet is required.
 
+### Portable counter probe (recommended)
+
+`python validation/pmc_test.py` builds `validation/pmc/` with CMake and measures self-modifying-code machine clears around a small
+self-modifying loop on Linux (Intel and AMD, via `perf_event_open`, no driver), Windows/AMD (the signed official PawnIO driver and its
+signed `AMDFamily17` module) and, timing only, Windows/Intel and macOS.  No driver is built, test-signed or excluded from Defender.
+See `validation/pmc/README.md` for coverage and how to get bare-metal runs.  The WinRing0 route below is legacy and is not used for new results.
+
 ### WinRing0
 
 The kernel driver `WinRing0x64.sys` is required to read hardware performance counters (`MACHINE_CLEARS.SMC`).

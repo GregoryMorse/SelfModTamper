@@ -1,0 +1,491 @@
+{
+  "sysinfo": "sysinfo.json",
+  "runs": [
+    {
+      "variant": "post",
+      "exe_sha256": "f2e8ee53d637ab67ae66a6395aa4b16ea3b880423884ddc3157e61fb53156189",
+      "exit_code": 0,
+      "seconds": 8.0,
+      "lines": 50056,
+      "kernels": [
+        {
+          "kernel": "C",
+          "timing_rows": [
+            [
+              41602,
+              27123,
+              160569
+            ],
+            [
+              41593,
+              27118,
+              160599
+            ],
+            [
+              171,
+              112,
+              664
+            ],
+            [
+              171,
+              112,
+              665
+            ],
+            [
+              171,
+              113,
+              665
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "SMC",
+          "timing_rows": [
+            [
+              1480074,
+              1367919,
+              4581573
+            ],
+            [
+              1480069,
+              1367903,
+              4581578
+            ],
+            [
+              6118,
+              5654,
+              18938
+            ],
+            [
+              6118,
+              5654,
+              18939
+            ],
+            [
+              6118,
+              5654,
+              18939
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "C Loop",
+          "timing_rows": [
+            [
+              240811,
+              219116,
+              428725
+            ],
+            [
+              240814,
+              219144,
+              428723
+            ],
+            [
+              995,
+              905,
+              1773
+            ],
+            [
+              995,
+              906,
+              1773
+            ],
+            [
+              995,
+              906,
+              1774
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "Dyn SMC Loop",
+          "timing_rows": [
+            [
+              50013,
+              45600,
+              178400
+            ],
+            [
+              49996,
+              45597,
+              178428
+            ],
+            [
+              206,
+              188,
+              739
+            ],
+            [
+              206,
+              189,
+              739
+            ],
+            [
+              206,
+              189,
+              740
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "SMC Loop",
+          "timing_rows": [
+            [
+              52271,
+              46574,
+              183766
+            ],
+            [
+              52246,
+              46547,
+              183746
+            ],
+            [
+              215,
+              192,
+              760
+            ],
+            [
+              215,
+              192,
+              759
+            ],
+            [
+              215,
+              192,
+              760
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        }
+      ],
+      "out.txt": true,
+      "func.asm": true
+    },
+    {
+      "variant": "pre",
+      "exe_sha256": "c9b83e8215d710e56502689c6375946f22b824ac5b4bbd97c7dbe4b2025f1b7a",
+      "exit_code": 0,
+      "seconds": 7.6,
+      "lines": 50056,
+      "kernels": [
+        {
+          "kernel": "C",
+          "timing_rows": [
+            [
+              26748,
+              22501,
+              158313
+            ],
+            [
+              26760,
+              22506,
+              158354
+            ],
+            [
+              110,
+              93,
+              655
+            ],
+            [
+              110,
+              93,
+              655
+            ],
+            [
+              110,
+              93,
+              656
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "SMC",
+          "timing_rows": [
+            [
+              1485919,
+              1323380,
+              3393389
+            ],
+            [
+              1485931,
+              1323372,
+              3393401
+            ],
+            [
+              6142,
+              5471,
+              14062
+            ],
+            [
+              6143,
+              5470,
+              14062
+            ],
+            [
+              6143,
+              5470,
+              14063
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "C Loop",
+          "timing_rows": [
+            [
+              182588,
+              159439,
+              1168134
+            ],
+            [
+              182599,
+              159447,
+              1168134
+            ],
+            [
+              755,
+              659,
+              4829
+            ],
+            [
+              755,
+              659,
+              4830
+            ],
+            [
+              755,
+              659,
+              4829
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "SMC Loop",
+          "timing_rows": [
+            [
+              62296,
+              52644,
+              181287
+            ],
+            [
+              62305,
+              52644,
+              181303
+            ],
+            [
+              257,
+              217,
+              750
+            ],
+            [
+              258,
+              217,
+              750
+            ],
+            [
+              258,
+              218,
+              750
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        },
+        {
+          "kernel": "Dyn SMC Loop",
+          "timing_rows": [
+            [
+              61383,
+              50632,
+              181956
+            ],
+            [
+              61393,
+              50640,
+              181967
+            ],
+            [
+              254,
+              209,
+              752
+            ],
+            [
+              254,
+              209,
+              753
+            ],
+            [
+              254,
+              209,
+              753
+            ],
+            [
+              0,
+              0,
+              16
+            ],
+            [
+              0,
+              0,
+              2
+            ]
+          ],
+          "total": 0,
+          "trials": 10000,
+          "nonzero_trials": 0,
+          "per_trial_min": 0,
+          "per_trial_max": 0,
+          "per_trial_mean": 0.0
+        }
+      ],
+      "out.txt": true,
+      "func.asm": true
+    }
+  ],
+  "service_after": {
+    "post": "absent",
+    "pre": "absent"
+  }
+}

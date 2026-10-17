@@ -59,3 +59,24 @@ jobs:
         run: |
           python validation/native.py --toolset v143
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+  pmc-probe:
+    # Builds the portable counter probe and runs its --selftest (the self-modifying loop executes; no counter is read).
+    # Hosted runners are virtual machines without a PMU, so real counter data comes from bare-metal runs (validation/pmc/README.md).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Configure, build, self-test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S validation/pmc -B pmc-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build pmc-build --config Release
+          exe=$(find pmc-build -type f \( -name smc_pmc_probe -o -name smc_pmc_probe.exe \) | head -1)
+          "$exe" --selftest --iters 20000 --reps 3

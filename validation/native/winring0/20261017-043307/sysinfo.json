@@ -1,0 +1,19 @@
+{
+  "time": "2026-10-17T04:33:09",
+  "admin": true,
+  "os": "Microsoft Windows 11 Education 10.0.26200 build 26200",
+  "cpu": "Intel(R) Core(TM) i9-14900HX / 24 cores / 32 threads",
+  "hypervisor_present": "True",
+  "memory_integrity_hvci_enabled": "1",
+  "vulnerable_driver_blocklist_enabled": "1",
+  "secure_boot": "True",
+  "device_guard": "{\"SecurityServicesRunning\":[1,2],\"SecurityServicesConfigured\":[2]}",
+  "driver_file": "D:\\Source\\Repos\\SelfModTamper\\validation\\.build\\winring0-signed\\WinRing0x64.sys",
+  "driver_sha256": "11bd2c9f9e2397c9a16e0990e4ed2cf0679498fe0fd418a3dfdac60b5c160ee5",
+  "driver_size": 14544,
+  "driver_signature": "Valid / E=hiyohiyo@crystalmark.info, CN=Noriyuki MIYAZAKI, C=JP",
+  "driver_service": "[SC] EnumQueryServicesStatus:OpenService FAILED 1060:\n\nThe specified service does not exist as an installed service.",
+  "code_integrity_events_winring0": "2026-10-17T04:04:11 id=3004 Windows is unable to verify the image integrity of the file \\Device\\HarddiskVolume6\\Source\\Repos\\SelfModTamper\\validation\\native\\winring0\\20261017-040356\\pre\\WinRing0x64.sys because file hash could not be found on the system. A recent hardware or software change might have installed a file that is signed incorrectly or damaged, or that might be malicious software from an unknown source.\n2026-10-17T04:04:02 id=3004 Windows is unable to verify the image integrity of the file \\Device\\HarddiskVolume6\\Source\\Repos\\SelfModTamper\\validation\\native\\winring0\\20261017-040356\\post\\WinRing0x64.sys because file hash could not be found on the system. A recent hardware or software change might have installed a file that is signed incorrectly or damaged, or that might be malicious software from an unknown source.",
+  "driver_kind": "signed",
+  "driver_service_after": "absent"
+}
