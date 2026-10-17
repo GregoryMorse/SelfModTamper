@@ -11,7 +11,8 @@ import re
 import sys
 
 
-def main(src, dst):
+def main(src, dst, macho=False):
+    pre = "_" if macho else ""
     out = [".intel_syntax noprefix", ".text"]
     uses = []
     selfn = 0
@@ -27,7 +28,7 @@ def main(src, dst):
         if m:
             name = m.group(1)
             uses = m.group(2).replace(",", " ").split()
-            out += [".globl " + name, ".type " + name + ", @function", name + ":"] + ["push " + r for r in uses]
+            out += [".globl " + pre + name] + ([] if macho else [".type " + name + ", @function"]) + [pre + name + ":"] + ["push " + r for r in uses]
             continue
         if re.match(r"\w+\s+endp$", s, re.I):
             continue
@@ -45,11 +46,12 @@ def main(src, dst):
         else:
             s = re.sub(r"\[(\w+)([+-]\d+)?\]", lambda mm: "[rip + %s%s]" % (mm.group(1), mm.group(2) or "") if re.match(r"[A-Za-z_]\w*$", mm.group(1)) and mm.group(1).lower() not in REGS else mm.group(0), s)
         out.append(s)
-    out.append(".size TPCompLoop, .-TPCompLoop")
+    if not macho:
+        out.append(".size TPCompLoop, .-TPCompLoop")
     open(dst, "w", encoding="utf-8", newline="\n").write("\n".join(out) + "\n")
 
 
 REGS = set("rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15 eax ebx ecx edx esi edi ebp esp".split())
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], "--macho" in sys.argv[3:])

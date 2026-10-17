@@ -1,4 +1,4 @@
-"""Build and run the evidence harness validation/native/smc_harness.cpp (cl.exe + the vcpkg AsmJit of this repository),
+"""Build and run the evidence harness validation/native/smc_harness.cpp (cl.exe + the asmjit sources fetched into build/deps),
 then write validation/layout/dyn_x64.json from the dumped bytes of `gen_asm` (the AsmJit-generated dynamic kernel).
 Usage (under the memory guard): python validation/limited_run.py -- python validation/native_harness.py
 Evidence, not proof: the bytes are what this AsmJit version emitted on this machine."""
@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 B = ROOT / "validation/.build/native"
 B.mkdir(parents=True, exist_ok=True)
 VSWHERE = Path(r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe")
-VC = ROOT / "vcpkg_installed/x64-windows/x64-windows"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import asmjit_dep  # noqa: E402
+ASM = asmjit_dep.cl_args()
 NL = chr(13) + chr(10)
 
 
@@ -35,13 +37,12 @@ def build(cfg: str) -> int:
     if r.returncode:
         print(r.stdout[-1500:], r.stderr[-800:])
         return r.returncode
-    cl = (f'cl /nologo /EHsc /permissive- {opt} /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG /I "{VC / "include"}" "{ROOT / "validation/native/smc_harness.cpp"}" '
-          f'TP.obj /Fe:{out} /link {inc} /SECTION:.text,RWE /LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
+    cl = (f'cl /nologo /EHsc /permissive- {opt} /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG {ASM} "{ROOT / "validation/native/smc_harness.cpp"}" '
+          f'TP.obj /Fe:{out} /link {inc} /SECTION:.text,RWE kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
     r = runbat("cl.bat", [cl])
     if r.returncode:
         print(r.stdout[-2500:], r.stderr[-800:])
         return r.returncode
-    shutil.copy(VC / "bin/asmjit.dll", B / "asmjit.dll")
     return 0
 
 
@@ -54,8 +55,8 @@ def prefix_release() -> dict:
     src = subprocess.run(["git", "show", f"{ref}:SelfModTamper/SelfModTamper.cpp"], cwd=ROOT, capture_output=True).stdout
     (pre / "SelfModTamper.cpp").write_bytes(src)
     cl = (f'cl /nologo /EHsc /permissive- /O1 /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG /DPRODUCT_CPP=\\"{(pre / "SelfModTamper.cpp").as_posix()}\\" '
-          f'/I "{VC / "include"}" "{ROOT / "validation/native/smc_harness.cpp"}" TP.obj /Fe:pre_release.exe /link /INCREMENTAL:NO /SECTION:.text,RWE '
-          f'/LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
+          f'{ASM} "{ROOT / "validation/native/smc_harness.cpp"}" TP.obj /Fe:pre_release.exe /link /INCREMENTAL:NO /SECTION:.text,RWE '
+          f'kernel32.lib user32.lib Mincore.lib Winmm.lib psapi.lib')
     rec = {"ref": ref}
     r = runbat("clp.bat", [cl])
     rec["build_ok"] = r.returncode == 0
@@ -101,13 +102,12 @@ def main() -> int:
     print(r.stdout[-1500:], r.stderr[-800:])
     if r.returncode:
         return r.returncode
-    cl = (f'cl /nologo /EHsc /permissive- /O1 /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG /I "{VC / "include"}" "{ROOT / "validation/native/smc_harness.cpp"}" '
-          f'TP.obj /Fe:smc_harness.exe /link /LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib Mincore.lib Winmm.lib')
+    cl = (f'cl /nologo /EHsc /permissive- /O1 /MD /DUNICODE /D_UNICODE /D_CONSOLE /DNDEBUG {ASM} "{ROOT / "validation/native/smc_harness.cpp"}" '
+          f'TP.obj /Fe:smc_harness.exe /link kernel32.lib user32.lib Mincore.lib Winmm.lib')
     r = runbat("cl.bat", [cl])
     print(r.stdout[-2500:], r.stderr[-800:])
     if r.returncode:
         return r.returncode
-    shutil.copy(VC / "bin/asmjit.dll", B / "asmjit.dll")
     r = subprocess.run([str(B / "smc_harness.exe"), "--dump-dyn", "dyn.bin"], cwd=B, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-500:], r.returncode)
     if r.returncode:

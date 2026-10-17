@@ -10,7 +10,7 @@ validation/native/winring0/<timestamp>/ :
   <variant>/out.txt    the RDTSCP samples the product writes;  <variant>/func.asm  the dynamically generated kernel listing
   summary.json         exit codes, durations, whether the event counter was non-zero, the per-kernel table
 Send me the folder (or its summary.json and sysinfo.json).  The product is run from a copy in that folder, never from the repository
-root, so nothing is left behind there.  The driver WinRing0x64.sys is built from source by scripts/Build-WinRing0.cmd (CMake, MSBuild, WDK; unsigned); if it is
+root, so nothing is left behind there.  The driver build/winring0/WinRing0x64.sys is built from source by scripts/Build-WinRing0.cmd (CMake, MSBuild, WDK; unsigned); if it is
 blocked by Windows the product still runs and the event counters read 0 - sysinfo.json records why.
 
 'pre' is the product built from the commit before the R12 fixes (git worktree ../SelfModTamper-prefix at 2e1b36c), 'post' is this tree.
@@ -147,10 +147,10 @@ def defender_exclude(paths):
 
 
 def find_built() -> Path:
-    for p in [ROOT / "WinRing0x64.sys", BUILD / "WinRing0x64.sys", ROOT / "x64/Release/WinRing0x64.sys"]:
+    for p in [ROOT / "build/winring0/WinRing0x64.sys"]:
         if p.exists():
             return p
-    return ROOT / "WinRing0x64.sys"
+    return ROOT / "build/winring0/WinRing0x64.sys"
 
 
 def ensure_driver(kind: str, testsign: bool = False) -> Path:
@@ -174,7 +174,7 @@ def ensure_build(variant: str, rebuild: bool) -> Path:
         subprocess.run(["git", "worktree", "add", str(src), PRE_REF], cwd=ROOT)
     r = subprocess.run([sys.executable, str(ROOT / "validation/build_product.py"), str(src), str(BUILD / f"product_{variant}")], cwd=ROOT)
     if r.returncode or not exe.exists():
-        raise SystemExit(f"could not build the {variant} product (needs Visual Studio with the C++ workload and vcpkg_installed)")
+        raise SystemExit(f"could not build the {variant} product (needs Visual Studio with the C++ workload)")
     return exe
 
 
@@ -182,7 +182,6 @@ def run_variant(variant: str, exe: Path, driver: Path, dest: Path, timeout: int)
     wd = dest / variant
     wd.mkdir(parents=True, exist_ok=True)
     shutil.copy(exe, wd / "SelfModTamper.exe")
-    shutil.copy(exe.parent / "asmjit.dll", wd / "asmjit.dll")
     if driver.exists():
         shutil.copy(driver, wd / "WinRing0x64.sys")
     print(f"\n=== {variant}: {exe} ===", flush=True)

@@ -1,0 +1,22 @@
+# Script mode: cmake -DDEST=<dir> -P cmake/fetch_asmjit.cmake
+# Downloads the pinned asmjit archive, checks its SHA-512 and unpacks it to <dir> (src/asmjit/... below it).  Used by the Visual
+# Studio project and the validation scripts, which compile the sources themselves.  Does nothing if <dir> already holds this commit.
+include(${CMAKE_CURRENT_LIST_DIR}/asmjit_pin.cmake)
+if(NOT DEFINED DEST)
+    message(FATAL_ERROR "pass -DDEST=<directory>")
+endif()
+set(stamp "${DEST}/.asmjit-${ASMJIT_COMMIT}")
+if(EXISTS "${stamp}" AND EXISTS "${DEST}/src/asmjit/asmjit.h")
+    return()
+endif()
+file(REMOVE_RECURSE "${DEST}")
+file(MAKE_DIRECTORY "${DEST}")
+file(DOWNLOAD "${ASMJIT_URL}" "${DEST}/asmjit.tar.gz" EXPECTED_HASH SHA512=${ASMJIT_SHA512} TLS_VERIFY ON)
+file(ARCHIVE_EXTRACT INPUT "${DEST}/asmjit.tar.gz" DESTINATION "${DEST}/x")
+file(GLOB top "${DEST}/x/asmjit-*")
+file(RENAME "${top}" "${DEST}/src_root")
+file(REMOVE_RECURSE "${DEST}/x")
+file(RENAME "${DEST}/src_root/src" "${DEST}/src")
+file(REMOVE_RECURSE "${DEST}/src_root")
+file(REMOVE "${DEST}/asmjit.tar.gz")
+file(WRITE "${stamp}" "${ASMJIT_COMMIT}\n")

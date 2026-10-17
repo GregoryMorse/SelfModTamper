@@ -11,7 +11,7 @@ Key contributions:
 - A static hand-written MASM variant (`TP.asm`) and a fully dynamic variant generated at runtime via [AsmJit](https://asmjit.com/).
 - Precise C reference implementations (`TPCompC`, `TPCompCLoop`) that emulate the SMC behavior for correctness validation and performance comparison.
 - Timing benchmarks using every available Windows high-resolution timer (RDTSC, RDTSCP, Interrupt Time, Performance Counter, UTC, Tick Count, Multimedia).
-- Hardware performance-counter measurement of `MACHINE_CLEARS.SMC` (Intel) via the WinRing0 kernel driver to quantify pipeline-clear events.
+- Hardware performance-counter measurement of `MACHINE_CLEARS.SMC` (Intel and AMD; `perf_event_open` on Linux, see `validation/pmc/README.md` for Windows) to quantify pipeline-clear events.
 
 ## Paper Abstract
 
@@ -33,39 +33,20 @@ The manuscript is available as the preprint [arXiv:2604.12407](https://arxiv.org
 | Compiler | Visual Studio 2019 or later (MSVC + MASM/ml64) |
 | Architecture | x86-64 only |
 | Privileges | **Administrator** required at runtime (kernel driver for MSR access) |
-| Build system | CMake ≥ 3.21 + [vcpkg](https://vcpkg.io/) (recommended) **or** `.vcxproj` directly |
-| External library | [AsmJit](https://github.com/asmjit/asmjit) — auto-resolved by vcpkg, or manual build |
-| Kernel driver | [WinRing0](https://github.com/GermanAizek/WinRing0) built from a pinned commit — `WinRing0x64.sys` (unsigned; see below) |
+| Build system | CMake >= 3.21 (Windows, Linux, macOS x86-64), or the Visual Studio solution (2022 / v143 and 2026 / v145) |
+| External library | [AsmJit](https://github.com/asmjit/asmjit), downloaded by the build from a pinned, SHA-512-checked archive (no vcpkg, no manual step) |
+| Kernel driver | none. The counter is read with `perf_event_open` on Linux; on Windows see `validation/pmc/README.md` |
 
-> **Note:** The performance-counter features (MSR read/write via `IOCTL_OLS_*`) are accessed through the WinRing0 kernel driver.  Without it the process skips counter setup gracefully but the `MACHINE_CLEARS.SMC` columns will show zero.
+> **Note:** hardware counters are optional. Without one (virtual machines, hosted CI runners, macOS) the `MACHINE_CLEARS.SMC` columns read zero and the timing results are unaffected.
 
 ## Dependencies
 
 ### AsmJit
 
-**Recommended — vcpkg (automatic):** `vcpkg.json` already declares the `asmjit` dependency.
-When you configure with CMake (see [Building](#building)), vcpkg installs AsmJit into
-`vcpkg_installed/` automatically — no separate clone or build step is needed.
-
-**Alternative — manual build with `ASMJIT_DIR`:** If you prefer to build AsmJit yourself
-and use the `.vcxproj` directly without vcpkg, set the `ASMJIT_DIR` environment variable to
-the root of your AsmJit checkout (the directory containing the `src` subfolder), then build:
-
-```bat
-git clone https://github.com/asmjit/asmjit.git C:\path\to\asmjit
-cd C:\path\to\asmjit
-cmake -B build_vs2022_x64 -G "Visual Studio 17 2022" -A x64
-cmake --build build_vs2022_x64 --config Debug
-cmake --build build_vs2022_x64 --config Release
-```
-
-```powershell
-# Set ASMJIT_DIR permanently for your user account
-[System.Environment]::SetEnvironmentVariable("ASMJIT_DIR", "C:\path\to\asmjit", "User")
-```
-
-`SelfModTamper\PropertySheet.props` reads `$(ASMJIT_DIR)` automatically; no manual editing
-of the property sheet is required.
+All routes (CMake on every platform, the Visual Studio solution, the validation scripts) fetch the same pinned AsmJit archive
+(`cmake/asmjit_pin.cmake`: commit, URL and SHA-512) and compile it statically with the program: CMake through `FetchContent`
+(`cmake/asmjit.cmake`), the Visual Studio project and the scripts through `cmake -P cmake/fetch_asmjit.cmake` into `build/deps/asmjit`.
+Nothing is installed system-wide and no environment variable is needed; the first build needs network access.
 
 ### Linux (x86-64)
 
@@ -73,7 +54,7 @@ The benchmark also builds and runs on Linux, with no driver: `cmake -S . -B buil
 `TP.asm` is translated to GNU as by `scripts/masm2gas.py` (so no separate assembler is needed), the Windows calls are replaced by
 `SelfModTamper/platform_posix.h`, and `MACHINE_CLEARS.SMC` is read with `perf_event_open` (user mode, this thread; Intel and AMD, needs
 `kernel.perf_event_paranoid <= 2` or root and bare metal).  On AMD Zen the counter is the instruction-cache invalidation count
-`ic_cache_inval.fill_invalidated`, a proxy, not a pipeline-restart count; set `SMC_EVENT` to use another raw event.  asmjit is fetched and built by CMake from a pinned, SHA-512-checked archive (`cmake/asmjit.cmake`; `-DSMC_WITH_ASMJIT=OFF` skips the dynamic variant); the Windows CMake route uses the same file, so no vcpkg is needed there either (the Visual Studio project still uses its vcpkg manifest).  The evidence harness is built as
+`ic_cache_inval.fill_invalidated`, a proxy, not a pipeline-restart count; set `SMC_EVENT` to use another raw event.  asmjit is fetched and built by CMake from a pinned, SHA-512-checked archive (`cmake/asmjit.cmake`; `-DSMC_WITH_ASMJIT=OFF` skips the dynamic variant); Windows uses the same pin (CMake and the Visual Studio project), so no vcpkg is needed anywhere.  The evidence harness is built as
 well: `./build/smc_harness --vectors validation/native/vectors.txt` replays the Lean-generated vectors against the static kernels.
 The GNU-as encodings of a few register moves differ from MASM's (same length); the self-modified bytes and the layout the Lean model uses are the same.
 Measured so far: `validation/native/runs/linux-amd-epyc7542-zen2/`.
@@ -85,141 +66,56 @@ self-modifying loop on Linux (Intel and AMD, via `perf_event_open`, no driver), 
 signed `AMDFamily17` module) and, timing only, Windows/Intel and macOS.  No driver is built, test-signed or excluded from Defender.
 See `validation/pmc/README.md` for coverage and how to get bare-metal runs.  The WinRing0 route below is legacy and is not used for new results.
 
-### WinRing0
+### Legacy WinRing0 driver
 
-The kernel driver `WinRing0x64.sys` is required to read hardware performance counters (`MACHINE_CLEARS.SMC`).
-Without it the benchmark still runs but counter columns show zero.
-
-No binary of the driver is downloaded.  `cmake/winring0/` clones a pinned commit of the open-source
-[GermanAizek/WinRing0](https://github.com/GermanAizek/WinRing0) repository (a maintained fork of the OpenLibSys WinRing0 1.2
-sources; same device name `WinRing0_1_2_0`), takes the kernel-mode headers and libraries from Microsoft's pinned
-`Microsoft.Windows.WDK.x64` NuGet package (SHA-256 checked; no WDK installer, no administrator rights) and compiles it with the
-MSVC tools of Visual Studio / Build Tools:
-
-```bat
-scripts\Build-WinRing0.cmd
-```
-
-It writes `WinRing0x64.sys` into the repository root (excluded from version control) and CMake copies it next to the executable.
-`python validation\winring0_test.py` runs this automatically when the file is missing.
-
-**The source build is unsigned.**  Windows loads kernel drivers only when they are signed, so on a machine with Secure Boot, Memory
-integrity (HVCI) or the vulnerable-driver blocklist an unsigned build does not load and the counters read zero (`-DWINRING0_TESTSIGN=ON`
-test-signs it, which Windows accepts only in test-signing mode).
-
-**Measurement runs use the signed 1.2.0 driver instead** (`python validation\winring0_test.py`, option `--driver signed`, the default): the
-file committed to the xmrig repository is downloaded from a pinned commit and checked against its git blob id before it is written.
-WinRing0 1.2.0 is a **known vulnerable driver** (CVE-2020-14979, CVE-2021-41285) on Microsoft's blocklist, so the runner stops and deletes its
-service after each run, and again at the end, also when a run fails, and removes its copies.  Defender may delete the file on download;
-`--defender-exclusion` excludes only the download directory for the duration of the run.  Use `--driver build` for the source build.
-
-The executable registers and starts the driver as a Windows service on each run and
-stops/deletes it cleanly on exit.
+Earlier versions read the counter through the WinRing0 kernel driver. That driver is a known vulnerable driver
+(CVE-2020-14979, CVE-2021-41285), no binary of it is kept in the repository, and no result of this work depends on it.  The program
+still contains the optional code path that uses it when a `WinRing0x64.sys` is placed next to the executable by the user;
+`cmake/winring0/` and `scripts/Build-WinRing0.cmd` build it from source into `build/winring0/` and `validation/winring0_test.py` is the
+historic runner.  Use the portable probe above for new measurements.
 
 ## Building
 
-### Prerequisites
+Every build product goes under `build/`; the source folders stay clean (`build/msbuild/<toolset>/` for Visual Studio,
+`build/cmake-vs2026/`, `build/cmake-vs2022/` or the path you pass for CMake).
 
-| Tool | How to get |
-|---|---|
-| Visual Studio 2019+ | [visualstudio.microsoft.com](https://visualstudio.microsoft.com/) — Desktop Development with C++ workload |
-| CMake ≥ 3.21 | Bundled with Visual Studio, or [cmake.org](https://cmake.org/download/) |
-| vcpkg | [github.com/microsoft/vcpkg](https://github.com/microsoft/vcpkg) — clone and set `VCPKG_ROOT` |
+### CMake (Windows, Linux, macOS x86-64)
 
-Set `VCPKG_ROOT` permanently if you have not already:
-
-```powershell
-[System.Environment]::SetEnvironmentVariable("VCPKG_ROOT", "C:\path\to\vcpkg", "User")
+```
+cmake -S . -B build/cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build build/cmake --config Release
 ```
 
----
+or on Windows `cmake --preset windows-x64` then `cmake --build --preset release` (`--preset windows-x64-vs2022` for Visual Studio 2022).
+macOS builds the portable probe and the harness' non-counter parts only if the Mach-O port is present; the CI grid shows what is built where.
 
-### Option A — CMake + vcpkg (recommended)
+### Visual Studio solution
 
-AsmJit is installed automatically from `vcpkg.json`.
+Open `SelfModTamper.sln` (Visual Studio 2022 or 2026, x64 only, Debug or Release), or from a developer prompt:
 
-```bat
-REM 1. Build the WinRing0 driver from source (one-time setup, needs the WDK)
-scripts\Build-WinRing0.cmd
-
-REM 2. Configure (installs AsmJit via vcpkg, generates Visual Studio project files in build\)
-cmake --preset windows-x64
-
-REM 3. Build
-cmake --build --preset release
-REM  or for Debug:
-cmake --build --preset debug
+```
+msbuild SelfModTamper.sln /p:Configuration=Release /p:Platform=x64
+msbuild SelfModTamper.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+python validation\native.py --toolset v145     # builds Debug and Release with the matching Visual Studio install
 ```
 
-Output: `build\Release\SelfModTamper.exe` / `build\Debug\SelfModTamper.exe`
-
-> The default preset uses the **Visual Studio 18 2026** generator; use `--preset windows-x64-vs2022` for Visual Studio 2022. The
-> Visual Studio solution (`SelfModTamper.sln`) is the authoritative build; CMake is the secondary route.
-
----
-
-### Option B — Visual Studio IDE (Open Folder)
-
-Visual Studio 2022 and later detect `CMakeLists.txt` and `CMakePresets.json` when you use
-**File → Open → Folder**.
-
-1. Run `scripts\Build-WinRing0.cmd` once (see above).
-2. **File → Open → Folder** — select the repository root.
-3. Visual Studio configures CMake and restores vcpkg packages automatically.
-4. Select the **x64-Release** or **x64-Debug** target and build.
-
-> Ensure `VCPKG_ROOT` is set in your user environment *before* opening Visual Studio.
-
----
-
-### Option C — Visual Studio `.vcxproj` (legacy)
-
-The original `SelfModTamper.sln` / `.vcxproj` remain for users who prefer the MSBuild
-workflow.  AsmJit paths are resolved via `PropertySheet.props`.
-
-**Providing AsmJit via vcpkg (required):**
-
-Either run `vcpkg integrate install` once (applies vcpkg to all VS projects on this machine):
-
-```bat
-vcpkg integrate install
-```
-
-Or set `VCPKG_ROOT` and restart Visual Studio — `Directory.Build.props` and `PropertySheet.props`
-automatically bridge it to MSBuild, install packages from `vcpkg.json`, and copy `asmjit.dll` to the output.
-
-Run `scripts\Build-WinRing0.cmd` once to build and place `WinRing0x64.sys` in the repository root (the
-build copies it next to the executable automatically).  Then open `SelfModTamper.sln`, select
-**x64 | Debug** or **x64 | Release**, and build.
-
-**Using a manual AsmJit build (without vcpkg):**
-
-Set `ASMJIT_DIR` as described in [Dependencies → AsmJit](#asmjit) and restart Visual Studio.
-`PropertySheet.props` picks up the variable automatically.
-
-> Only the **x64** platform is supported.  The static SMC in `TP.asm` uses 64-bit registers
-> and RIP-relative addressing; the dynamic generator in `SelfModTamper.cpp` targets x86-64
-> exclusively.
->
-> The `.text` section must be writable for the static SMC variants.  This is controlled via
-> the linker flag `/SECTION:.text,RWE` already present in the project.
+The output is `build\msbuild\<toolset>\x64\<Configuration>\SelfModTamper.exe`. AsmJit is downloaded into `build\deps\asmjit` on the first
+build. The `.text` section is writable (`/SECTION:.text,RWE`) because the static variants modify their own code; only x64 is supported
+(`TP.asm` uses 64-bit registers and RIP-relative addressing).
 
 ## Running
 
 ```bat
-REM Must be run from an elevated (Administrator) command prompt
-REM CMake build output:    build\Release\SelfModTamper.exe
-REM .vcxproj build output: x64\Release\SelfModTamper.exe
-build\Release\SelfModTamper.exe
+REM from a command prompt; run it from a scratch folder, it writes out.txt and func.asm into the current directory
+build\msbuild\v145\x64\Release\SelfModTamper.exe
 ```
 
 The program:
 1. Pins itself to logical processor 0 and raises its priority to real-time.
-2. Loads/starts the WinRing0 driver and configures `IA32_PERFEVTSEL0` to count `MACHINE_CLEARS.SMC` events.
+2. Where a counter is available, configures it to count `MACHINE_CLEARS.SMC` events (otherwise those columns read zero).
 3. Iterates over five checksum variants × all seven timers for 10 000 trials each.
 4. Prints average / min / max times and total `MACHINE_CLEARS.SMC` count per variant.
 5. Writes RDTSCP samples for the static SMC variant to `out.txt`.
-6. Unloads the driver cleanly on exit.
 
 Sample output (Intel Core i7-9750H, Windows 10):
 
@@ -236,19 +132,19 @@ Number of pages: 2  Unrolled loop size per page: 148  Intro bytes: 0x5F  Code si
 
 ```
 SelfModTamper/
-├── CMakeLists.txt             # Primary CMake build (recommended)
-├── CMakePresets.json          # Build presets — windows-x64 (Release/Debug)
-├── vcpkg.json                 # vcpkg manifest — declares AsmJit dependency
-├── scripts/
-│   └── Build-WinRing0.cmd     # Builds WinRing0x64.sys from source (cmake/winring0)
-├── SelfModTamper.sln          # Visual Studio solution (legacy .vcxproj build)
+├── CMakeLists.txt             # CMake build (all platforms)
+├── CMakePresets.json          # Windows presets
+├── cmake/                     # asmjit pin, FetchContent and script-mode fetch, POSIX build, legacy WinRing0 build
+├── scripts/                   # masm2gas.py (TP.asm -> GNU as), legacy driver scripts
+├── SelfModTamper.sln          # Visual Studio solution (x64; output under build/msbuild)
 ├── SelfModTamper/
 │   ├── SelfModTamper.cpp      # Main source: timer classes, C reference implementations,
 │   │                          #   dynamic SMC generator (AsmJit), benchmarking loop
 │   ├── TP.asm                 # Static hand-written MASM SMC checksum (TPComp, TPCompLoop)
-│   ├── Directory.Build.props  # MSBuild early hook — sets VcpkgManifestRoot before vcpkg.props runs
-│   ├── PropertySheet.props    # MSBuild property sheet — bridges VCPKG_ROOT; Option C ASMJIT_DIR
+│   ├── platform_posix.h       # Linux/macOS shim for the Windows calls
 │   └── SelfModTamper.vcxproj  # Project file
+├── validation/                # Native evidence, counter probe (pmc/), audits
+├── lean/                      # The Lean development
 ├── .gitignore
 ├── .gitattributes
 ├── LICENSE

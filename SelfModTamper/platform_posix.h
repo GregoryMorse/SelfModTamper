@@ -1,4 +1,4 @@
-// POSIX (Linux, x86-64) shim for SelfModTamper.cpp: the small part of the Windows API the benchmark uses, plus the hardware
+// POSIX (Linux and macOS, x86-64) shim for SelfModTamper.cpp: the small part of the Windows API the benchmark uses, plus the hardware
 // counter (perf_event_open, user mode, per thread) in place of the WinRing0 driver.  No driver is involved.
 // The Windows build does not include this file.
 #pragma once
@@ -13,16 +13,21 @@
 #include <vector>
 
 #include <cpuid.h>
-#include <elf.h>
 #include <fcntl.h>
-#include <link.h>
-#include <linux/perf_event.h>
 #include <pthread.h>
-#include <sched.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/syscall.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <mach-o/getsect.h>
+#include <mach-o/ldsyms.h>
+#else
+#include <elf.h>
+#include <link.h>
+#include <linux/perf_event.h>
+#include <sched.h>
+#include <sys/syscall.h>
+#endif
 #include <x86intrin.h>
 
 using std::max;
@@ -67,10 +72,12 @@ static inline void timeEndPeriod(int) {}
 
 static inline void GetSystemInfo(SYSTEM_INFO* si) { si->dwPageSize = (DWORD)sysconf(_SC_PAGESIZE); }
 static inline void smc_pin_thread() {
+#ifndef __APPLE__
   cpu_set_t set;
   CPU_ZERO(&set);
   CPU_SET(0, &set);  // the Windows build pins to logical processor 0 as well
   pthread_setaffinity_np(pthread_self(), sizeof set, &set);
+#endif  // macOS has no thread affinity to a given processor
 }
 
 #define MEM_RESERVE 1
@@ -88,6 +95,33 @@ template <class T> static inline bool VirtualFree(T p, size_t, int) { return tru
 // The code segment: the executable PT_LOAD segment of this program, made writable (the kernels modify themselves and the
 // benchmark checksums the whole segment).  The size is rounded down to a multiple of 8 and moved off a multiple of 148 qwords
 // (the kernels' preconditions, which main() checks).
+#ifdef __APPLE__
+// macOS: the __TEXT,__text section of this executable; the linker is told to give __TEXT rwx protection (cmake/posix.cmake).
+static inline void GetCodeSegmentBaseSize(PBYTE& base, DWORD& size) {
+  unsigned long n = 0;
+  base = (PBYTE)getsectiondata(&_mh_execute_header, "__TEXT", "__text", &n);
+  size_t m = n & ~(size_t)7;
+  if (m && (m / 8) % 148 == 0) m -= 8;
+  size = (DWORD)m;
+}
+__attribute__((constructor)) static void smc_text_writable() {
+  unsigned long n = 0;
+  uintptr_t t = (uintptr_t)getsectiondata(&_mh_execute_header, "__TEXT", "__text", &n);
+  long pg = sysconf(_SC_PAGESIZE);
+  uintptr_t b0 = t & ~(uintptr_t)(pg - 1);
+  size_t len = ((t + n + pg - 1) & ~(uintptr_t)(pg - 1)) - b0;
+  if (mprotect((void*)b0, len, PROT_READ | PROT_WRITE | PROT_EXEC) != 0)
+    fprintf(stderr, "mprotect of the code segment failed: %s (the self-modifying kernels will fault)\n", strerror(errno));
+}
+// No hardware counter on macOS: the machine-clear columns read 0 (timing only).
+static inline HANDLE enablePerfCounters(const std::wstring&, const std::wstring&) {
+  printf("No performance counter on macOS; machine-clear counts will read 0\n");
+  return nullptr;
+}
+static inline void disablePerfCounters(const std::wstring&, HANDLE) {}
+static inline bool zeroSMCCount(HANDLE) { return false; }
+static inline unsigned long long getSMCCount(HANDLE) { return 0; }
+#else
 static int smc_phdr_cb(struct dl_phdr_info* info, size_t, void* data) {
   if (info->dlpi_name && info->dlpi_name[0]) return 0;  // the main program is the first entry, with an empty name
   auto* out = (std::pair<PBYTE, size_t>*)data;
@@ -174,3 +208,4 @@ static inline unsigned long long getSMCCount(HANDLE) {
   if (smc_perf_fd < 0 || read(smc_perf_fd, &v, sizeof v) != (ssize_t)sizeof v) return 0;
   return v;
 }
+#endif  // __APPLE__

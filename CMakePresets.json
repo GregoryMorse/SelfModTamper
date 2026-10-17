@@ -9,8 +9,8 @@
     {
       "name": "windows-x64",
       "displayName": "Windows x64",
-      "description": "Uses the Visual Studio 2026 generator; the preset windows-x64-vs2022 uses Visual Studio 2022. The Visual Studio solution is the authoritative build; CMake is the secondary route.",
-      "binaryDir": "${sourceDir}/build",
+      "description": "Uses the Visual Studio 2026 generator; the preset windows-x64-vs2022 uses Visual Studio 2022. Build products go under build/.",
+      "binaryDir": "${sourceDir}/build/cmake-vs2026",
       "generator": "Visual Studio 18 2026",
       "architecture": {
         "value": "x64",
@@ -25,8 +25,8 @@
     {
       "name": "windows-x64-vs2022",
       "inherits": "windows-x64",
-      "displayName": "Windows x64 (vcpkg, Visual Studio 2022)",
-      "binaryDir": "${sourceDir}/build-vs2022",
+      "displayName": "Windows x64 (Visual Studio 2022)",
+      "binaryDir": "${sourceDir}/build/cmake-vs2022",
       "generator": "Visual Studio 17 2022"
     }
   ],

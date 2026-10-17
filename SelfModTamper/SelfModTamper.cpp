@@ -781,7 +781,11 @@ int main()
 #pragma const_seg(push, ".text")
 #define SMC_EXTRA_DATA const char* extraData =
 #else
+#ifdef __APPLE__
+#define SMC_EXTRA_DATA const char extraData[] __attribute__((section("__TEXT,__text"))) =
+#else
 #define SMC_EXTRA_DATA const char extraData[] __attribute__((section(".text"))) =
+#endif
 #endif
 SMC_EXTRA_DATA "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"

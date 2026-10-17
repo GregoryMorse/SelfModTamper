@@ -6,7 +6,7 @@
 #  * headers and import libraries: Microsoft's Windows Driver Kit NuGet package Microsoft.Windows.WDK.x64 (pinned version, SHA-256 checked,
 #    only the kernel-mode headers and x64 libraries are extracted), so the WDK installer is not needed;
 #  * compiler and linker: the MSVC tools of the installed Visual Studio / Build Tools (found with vswhere).
-# The driver is plain WDM (ntddk.h), so cl + link suffice.  Output: <repo>/WinRing0x64.sys (override with -DWINRING0_OUT=...).
+# The driver is plain WDM (ntddk.h), so cl + link suffice.  Output: <repo>/build/winring0/WinRing0x64.sys (override with -DWINRING0_OUT=...).
 #
 # The result is UNSIGNED.  Windows loads a kernel driver only if it is signed:  -DWINRING0_TESTSIGN=ON signs it with a self-made
 # certificate (signtool from the Windows SDK), which Windows then accepts only in test-signing mode (`bcdedit /set testsigning on`,
@@ -20,7 +20,7 @@ set(WDK_NUPKG_VERSION "10.0.26100.6584")
 set(WDK_NUPKG_SHA256  "c393d03dfb640b5c92f546b32f6770ef68cd3aaf691956e7d66d8e2c28a1b55e")
 set(WDK_INC_VERSION   "10.0.26100.0")   # directory name inside the package
 get_filename_component(_repo_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
-set(WINRING0_OUT "${_repo_root}" CACHE PATH "Directory that receives WinRing0x64.sys")
+set(WINRING0_OUT "${_repo_root}/build/winring0" CACHE PATH "Directory that receives WinRing0x64.sys")
 option(WINRING0_TESTSIGN "Test-sign the driver with a generated self-signed certificate" OFF)
 
 set(_work "${CMAKE_BINARY_DIR}")

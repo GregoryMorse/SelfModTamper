@@ -42,19 +42,3 @@ target_link_options(SelfModTamper PRIVATE "/SECTION:.text,RWE")
 
 # asmjit is linked statically (cmake/asmjit.cmake), so there are no runtime DLLs to copy.
 
-# ── WinRing0 driver (optional) ────────────────────────────────────────────────
-# Place WinRing0x64.sys in the repository root (run scripts/Build-WinRing0.cmd)
-# before running cmake; it will then be copied next to the executable.
-if(EXISTS "${CMAKE_SOURCE_DIR}/WinRing0x64.sys")
-    add_custom_command(TARGET SelfModTamper POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/WinRing0x64.sys"
-            "$<TARGET_FILE_DIR:SelfModTamper>/WinRing0x64.sys"
-        COMMENT "Copying WinRing0x64.sys"
-    )
-else()
-    message(STATUS
-        "WinRing0x64.sys not found in repository root. "
-        "Run  scripts/Build-WinRing0.cmd  and re-run cmake to enable "
-        "MACHINE_CLEARS.SMC performance-counter features.")
-endif()

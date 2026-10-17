@@ -1,5 +1,5 @@
 """Compile the benchmark product (SelfModTamper.cpp + TP.asm) from a source tree into an output directory, with cl.exe and ml64,
-the AsmJit of this repository's vcpkg_installed and the flags of the Release|x64 project (/O2, /MD, /SECTION:.text,RWE).
+the asmjit sources fetched into build/deps (validation/asmjit_dep.py) and the flags of the Release|x64 project (/O2, /MD, /SECTION:.text,RWE).
 
   python validation/build_product.py <source-root> <out-dir>
 
@@ -10,7 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VSWHERE = Path(r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe")
-VC = ROOT / "vcpkg_installed/x64-windows/x64-windows"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import asmjit_dep  # noqa: E402
+ASM = asmjit_dep.cl_args()
 
 
 def vcvars() -> Path:
@@ -25,15 +27,14 @@ def build(src: Path, out: Path) -> int:
         "@echo off", f'call "{vcvars()}" x64 >nul',
         f'ml64 /nologo /c /Fo TP.obj /Fl"TP.lst" /Sa "{src / "SelfModTamper/TP.asm"}"',
         "if errorlevel 1 exit /b 1",
-        f'cl /nologo /EHsc /permissive- /O2 /MD /DUNICODE /D_UNICODE /DNDEBUG /D_CONSOLE /I "{VC / "include"}" '
+        f'cl /nologo /EHsc /permissive- /O2 /MD /DUNICODE /D_UNICODE /DNDEBUG /D_CONSOLE {ASM} '
         f'"{src / "SelfModTamper/SelfModTamper.cpp"}" TP.obj /Fe:SelfModTamper.exe /link /INCREMENTAL:NO /SECTION:.text,RWE '
-        f'/LIBPATH:"{VC / "lib"}" asmjit.lib kernel32.lib user32.lib advapi32.lib Mincore.lib Winmm.lib psapi.lib',
+        f'kernel32.lib user32.lib advapi32.lib Mincore.lib Winmm.lib psapi.lib',
     ]) + "\r\n")
     r = subprocess.run(["cmd", "/c", str(bat)], cwd=out, capture_output=True, text=True, stdin=subprocess.DEVNULL)
     if r.returncode:
         print(r.stdout[-3000:], r.stderr[-1000:])
         return r.returncode
-    shutil.copy(VC / "bin/asmjit.dll", out / "asmjit.dll")
     return 0
 
 
