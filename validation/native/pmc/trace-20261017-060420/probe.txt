@@ -1,0 +1,9 @@
+cpu: vendor=GenuineIntel family=06h model=B7h stepping=1 hypervisor=yes
+counter: none (Windows thread profiling: EnableThreadProfiling gave no hardware counter: mask 0x1: enable=0 read=ReadThreadProfilingData succeeded but returned HwCountersCount=0 (ctx switches 0, cycle ti; mask 0x4000000000: enable=87 mask 0xFFFFFFFFFFFFFFFF: enable=87; PawnIO's stock IntelMSR module denies the Intel PMU MSRs, so there is no fallback); timing only
+trace-markers: thread id 65124; each repetition is bracketed by a 5 ms sleep (a context switch the kernel trace records)
+store into the next executed instruction (+0)       132.94 ns/iter  (no counter)
+store 64 bytes ahead, same page                       0.38 ns/iter  (no counter)
+store 1024 bytes ahead, same page                     0.38 ns/iter  (no counter)
+store at the start of the next page                   0.38 ns/iter  (no counter)
+store two pages ahead                                 0.38 ns/iter  (no counter)
+result: timing only; no counter was available

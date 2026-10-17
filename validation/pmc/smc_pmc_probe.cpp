@@ -462,7 +462,7 @@ int main(int argc, char** argv) {
   EventChoice ev = chooseEvent(cpu, evOverride);
   std::unique_ptr<Counter> ctr;
   std::string why = ev.why;
-  if (ev.have && !selftest) {
+  if (ev.have && !selftest && !traceMarkers) {
 #if defined(__linux__) && SMC_X64
     ctr = openCounter(ev.cfg, why);
 #elif defined(_WIN32) && SMC_X64
@@ -472,6 +472,7 @@ int main(int argc, char** argv) {
 #endif
   }
   if (ctr) printf("counter: %s, event %s (raw 0x%llX)\n", ctr->name().c_str(), ev.why.c_str(), (unsigned long long)ev.cfg);
+  else if (traceMarkers) puts("counter: read from a kernel trace by validation/pmc_trace.py, not inside this process");
   else printf("counter: none (%s); timing only\n", selftest ? "selftest" : why.c_str());
 
   if (traceMarkers) {

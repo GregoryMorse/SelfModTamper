@@ -13,7 +13,7 @@ cmake -S validation/pmc -B b && cmake --build b --config Release   # by hand
 | Platform | Backend | Needs | Status |
 |---|---|---|---|
 | Linux, Intel or AMD | `perf_event_open`, user mode, per thread | `kernel.perf_event_paranoid <= 2` or root; bare metal (virtual machines usually have no PMU) | written; run on bare metal by the author |
-| Windows, Intel or AMD | Windows' own per-thread hardware-counter profiling (`EnableThreadProfiling`), with `MACHINE_CLEARS.SMC` registered once as a profile source by a WPR `MicroArchitecturalConfig` profile | administrator prompt, Windows 11 build 22453 or later; no driver | written; first Intel run pending (`--register-wpr`, below) |
+| Windows, Intel (and AMD) | Windows counts a registered `MACHINE_CLEARS.SMC` profile source per thread and writes the cumulative value into a kernel trace at each context switch; `validation/pmc_trace.py` brackets each repetition with sleeps and takes the difference. No driver | administrator prompt, Windows 11 build 22453 or later, `python validation/pmc_test.py --register-wpr` once | **run on Intel i9-14900HX**: `validation/native/pmc/trace-20261017-060420/`; AMD untested (needs `--event`) |
 | Windows, AMD (fallback) | PawnIO (Official, signed), module `AMDFamily17` (allows PerfEvtSel0 and PerfCtr0) | PawnIO installed, administrator prompt | written; untested (no AMD Windows host) |
 | macOS x86 | none | - | timing only (the probe builds and runs) |
 
@@ -27,7 +27,9 @@ On Windows/Intel the in-process thread-profiling read returned no counter (`HwCo
 counting the registered source per thread, so `python validation/pmc_trace.py` (administrator prompt) takes the counts from a kernel trace:
 the probe sleeps 5 ms around each repetition and the script reads the per-thread cumulative counter at those context switches.
 
-Measured so far (evidence about one machine, not proof): AMD EPYC 7542 (Zen2, Linux 5.14, bare metal),
+Measured so far (evidence about one machine, not proof): Intel i9-14900HX (Windows 11, hypervisor present), kernel-trace route:
+the store into the next executed instruction counts 399,987 for 200,000 iterations (1.9999 per iteration, five repetitions within 10 of each other);
+the four other cases count 0 to 38. AMD EPYC 7542 (Zen2, Linux 5.14, bare metal),
 `validation/native/pmc/20261017-linux-amd-epyc7542-zen2/`: with `ic_cache_inval.fill_invalidated` a store into the next
 executed instruction gives 2.0 counted invalidations per iteration and stores 64 bytes or more ahead give about 0.0002.
 `l2_request_g2.smc_inval` read 0 for this loop.

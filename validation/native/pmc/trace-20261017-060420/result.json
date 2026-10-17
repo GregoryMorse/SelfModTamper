@@ -1,0 +1,60 @@
+{
+ "iters": 200000,
+ "cases": [
+  {
+   "case": "store into the next executed instruction (+0)",
+   "count": 399987,
+   "reps": [
+    399987,
+    399987,
+    399992,
+    399985,
+    399985
+   ]
+  },
+  {
+   "case": "store 64 bytes ahead, same page",
+   "count": 2,
+   "reps": [
+    2,
+    1,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "case": "store 1024 bytes ahead, same page",
+   "count": 4,
+   "reps": [
+    1,
+    19,
+    1,
+    4,
+    10
+   ]
+  },
+  {
+   "case": "store at the start of the next page",
+   "count": 0,
+   "reps": [
+    38,
+    0,
+    0,
+    0,
+    11
+   ]
+  },
+  {
+   "case": "store two pages ahead",
+   "count": 2,
+   "reps": [
+    2,
+    8,
+    7,
+    0,
+    1
+   ]
+  }
+ ]
+}
