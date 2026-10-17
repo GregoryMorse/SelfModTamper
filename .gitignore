@@ -294,3 +294,5 @@ output/pdf/*.log
 validation/native/pmc/trace_diag/
 validation/native/pmc/trace-*/*.etl
 validation/native/pmc/trace-*/dumper.txt
+*.dll
+*.exe
