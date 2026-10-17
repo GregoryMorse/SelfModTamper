@@ -215,7 +215,12 @@ struct EtwCounter : Counter {
     ULONG sid = (ULONG)id;
     bool priv = enablePrivilege(L"SeSystemProfilePrivilege");
     rc = TraceSetInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceConfigInfo, &sid, sizeof sid);
-    if (rc != ERROR_SUCCESS) { why = "TraceSetInformation(profile source config) failed, error " + std::to_string(rc) + (rc == ERROR_ACCESS_DENIED || rc == ERROR_PRIVILEGE_NOT_HELD ? (priv ? " (run from an administrator prompt)" : " (SeSystemProfilePrivilege could not be enabled: run from an administrator prompt)") : ""); return false; }
+    std::string cfgNote;
+    if (rc != ERROR_SUCCESS) {
+      // With a WPR session already holding the profile sources (pmc_test.py --with-wpr) this reports 4206; the thread may still
+      // be given the session's counters, so carry on and let the read decide.
+      cfgNote = " (profile source config error " + std::to_string(rc) + (priv ? "" : ", privilege not enabled") + ")";
+    }
     SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
     // Which bit of the HardwareCounters mask selects the configured source is not documented well; try the candidates and keep
     // the first that makes ReadThreadProfilingData return a counter.
@@ -234,7 +239,7 @@ struct EtwCounter : Counter {
       h = nullptr;
     }
     if (!got) { why = "EnableThreadProfiling gave no hardware counter:" + tried; return false; }
-    label = "windows-thread-profiling (source id " + std::to_string(sid) + " '" + want + "', per thread)";
+    label = "windows-thread-profiling (source id " + std::to_string(sid) + " '" + want + "', per thread)" + cfgNote;
     return true;
   }
   bool rd(PERFORMANCE_DATA& d) {

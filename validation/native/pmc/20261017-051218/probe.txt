@@ -1,0 +1,8 @@
+cpu: vendor=GenuineIntel family=06h model=B7h stepping=1 hypervisor=yes
+counter: none (Windows thread profiling: TraceSetInformation(profile source config) failed, error 4206; PawnIO's stock IntelMSR module denies the Intel PMU MSRs, so there is no fallback); timing only
+store into the next executed instruction (+0)       121.26 ns/iter  (no counter)
+store 64 bytes ahead, same page                       0.36 ns/iter  (no counter)
+store 1024 bytes ahead, same page                     0.36 ns/iter  (no counter)
+store at the start of the next page                   0.36 ns/iter  (no counter)
+store two pages ahead                                 0.36 ns/iter  (no counter)
+result: timing only; no counter was available
