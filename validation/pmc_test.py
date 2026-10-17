@@ -9,6 +9,8 @@ Linux: no driver; if perf_event_open is refused the probe says which sysctl to c
 The output is measurement evidence about this machine, never proof.
 """
 import argparse
+import ctypes
+import re
 import hashlib
 import io
 import json
@@ -72,15 +74,83 @@ def pawnio_lib():
     return "PawnIOLib.dll"
 
 
+WPRP = """<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+<Profiles>
+    <SystemCollector Id="SystemCollector_SMC" Name="WPRSystemCollector">
+      <BufferSize Value="1024" />
+      <Buffers Value="64" />
+    </SystemCollector>
+    <SystemProvider Id="SystemProvider_SMC">
+      <Keywords>
+        <Keyword Value="Loader"/>
+        <Keyword Value="ProcessThread"/>
+        <Keyword Value="PmcProfile" />
+      </Keywords>
+    </SystemProvider>
+    <MicroArchitecturalConfig Id="CounterConfig_SMC">
+      <ProfileSources Architecture="{arch}" Family="{family}" Model="{model}" Stepping="{stepping}">
+         <ProfileSource Name="MACHINE_CLEARS.SMC" Event="{event}" Unit="{unit}" Interval="0x00010000" AllowsHalt="false" Persist="true"/>
+      </ProfileSources>
+    </MicroArchitecturalConfig>
+    <HardwareCounter Id="HardwareCounters_SMC">
+        <MicroArchitecturalConfigId Value="CounterConfig_SMC"></MicroArchitecturalConfigId>
+        <SampledCounters>
+          <SampledCounter Value="MACHINE_CLEARS.SMC" Interval="2147483647"/>
+        </SampledCounters>
+    </HardwareCounter>
+    <Profile Id="SMC.Verbose.File" LoggingMode="File" Name="SMC" DetailLevel="Verbose" Description="SMC machine clears">
+        <Collectors Operation="Add">
+            <SystemCollectorId Value="SystemCollector_SMC">
+                <SystemProviderId Value="SystemProvider_SMC"></SystemProviderId>
+                <HardwareCounterId Value="HardwareCounters_SMC"></HardwareCounterId>
+            </SystemCollectorId>
+        </Collectors>
+    </Profile>
+</Profiles>
+</WindowsPerformanceRecorder>
+"""
+
+
+def register_wpr(exe, event):
+    """Windows, administrator prompt: register MACHINE_CLEARS.SMC as a persistent hardware-counter profile source."""
+    if not ctypes.windll.shell32.IsUserAnAdmin():
+        sys.exit("--register-wpr needs an administrator prompt")
+    r = run([str(exe), "--selftest", "--iters", "1000", "--reps", "1"])
+    m = re.search(r"vendor=(\w+) family=([0-9A-F]+)h model=([0-9A-F]+)h stepping=(\d+)", r.stdout)
+    if not m:
+        sys.exit("cannot read the CPU identity from the probe:\n" + r.stdout + r.stderr)
+    vendor, fam, mod, step = m.group(1), int(m.group(2), 16), int(m.group(3), 16), int(m.group(4))
+    arch = "INTEL" if vendor == "GenuineIntel" else "AMD"
+    cfg = int(event, 0) if event else (0x04C3 if arch == "INTEL" else None)
+    if cfg is None:
+        sys.exit("AMD: no verified SMC event is built in; pass --event (see validation/pmc/README.md)")
+    xml = WPRP.format(arch=arch, family=fam, model=mod, stepping=step, event="0x%X" % ((cfg & 0xFF) | ((cfg >> 32 & 0xF) << 8)), unit="0x%X" % (cfg >> 8 & 0xFF))
+    path = BUILD / "smc.wprp"
+    path.write_text(xml, encoding="utf-8")
+    print("registering", arch, fam, mod, step, "event/unit", cfg)
+    for cmd in ([ "wpr", "-start", str(path), "-filemode"], ["wpr", "-cancel"]):
+        r = run(cmd)
+        print(" ".join(cmd), "->", r.returncode, (r.stdout + r.stderr).strip()[:400])
+    r = run([str(exe), "--list-sources"])
+    print(r.stdout)
+    ok = "MACHINE_CLEARS.SMC" in r.stdout
+    print("registered: YES" if ok else "registered: NO - send this output to the author")
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--event", help="raw event config override, e.g. 0x04C3")
     ap.add_argument("--iters", type=int, default=100000)
     ap.add_argument("--reps", type=int, default=7)
     ap.add_argument("--pawnio-lib")
+    ap.add_argument("--register-wpr", action="store_true", help="Windows, admin: register MACHINE_CLEARS.SMC as a Windows hardware-counter profile source")
     a = ap.parse_args()
 
     exe = build()
+    if a.register_wpr:
+        return register_wpr(exe, a.event)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     outdir = OUT / stamp
     outdir.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,10 @@
+cpu: vendor=AuthenticAMD family=17h model=31h stepping=0 hypervisor=no
+counter: linux-perf_event_open(user mode, per-thread), event AMD ic_cache_inval.fill_invalidated (8Ch/01h): instruction-cache lines invalidated, an SMC-induced proxy rather than a pipeline-restart count (raw 0x18C)
+store into the next executed instruction (+0)        33.42 ns/iter        400122 clears (median of 5) = 2.0006 per iteration
+store 64 bytes ahead, same page                       0.59 ns/iter            42 clears (median of 5) = 0.0002 per iteration
+store 1024 bytes ahead, same page                     0.59 ns/iter            51 clears (median of 5) = 0.0003 per iteration
+store at the start of the next page                   0.59 ns/iter            38 clears (median of 5) = 0.0002 per iteration
+store two pages ahead                                 0.59 ns/iter            40 clears (median of 5) = 0.0002 per iteration
+result: counter measurements above are evidence about this machine only
+Linux 5.14.0-687.36.1.el9_8.x86_64
+2

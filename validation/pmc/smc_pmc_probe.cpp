@@ -3,8 +3,11 @@
 // Backends (no kernel driver is built, bundled or test-signed by this repository):
 //   Linux   perf_event_open, per-thread, user mode only (Intel and AMD).  No driver; may need
 //           kernel.perf_event_paranoid <= 2 or root.  Not available in most virtual machines.
-//   Windows PawnIO (signed driver, official signed modules), AMD only: the module allows PerfEvtSel0 / PerfCtr0.
-//           Intel PMU MSRs are not permitted by any stock PawnIO module, so Intel/Windows runs timing only.
+//   Windows 1. Windows' own per-thread hardware-counter profiling (EnableThreadProfiling / ReadThreadProfilingData) on a
+//              profile source registered through a WPR MicroArchitecturalConfig profile (validation/pmc/wpr/); no driver.
+//              Intel and AMD; needs an administrator prompt (SeSystemProfilePrivilege) and Windows 11 build 22453 or later.
+//           2. PawnIO (signed driver, official signed modules), AMD only: the module allows PerfEvtSel0 / PerfCtr0.
+//              Intel PMU MSRs are not permitted by any stock PawnIO module.
 //   other   timing only.
 // Output is measurement evidence about one machine, never proof; see lean/PLATFORM_CONTRACT.md.
 #include <algorithm>
@@ -26,6 +29,7 @@
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#include <evntrace.h>
 #include <intrin.h>
 #else
 #include <sys/mman.h>
@@ -98,8 +102,11 @@ EventChoice chooseEvent(const Cpu& c, long long override_) {
       // BKDG 31116 / 42301: EventSelect 021h "Pipeline Restart Due to Self-Modifying Code".
       e.cfg = 0x0021; e.have = true; e.why = "AMD PMCx021 pipeline restart due to SMC (Family 10h/15h BKDG)"; return e;
     }
-    e.why = "no verified SMC event for AMD family " + std::to_string(c.family) +
-            "h in this repository; pass --event RAW (0x0461 is l2_request_g2.smc_inval in the Linux Zen3 table: an L2 SMC-invalidation proxy, not a pipeline restart)";
+    // Zen (17h and later): AMD's Linux event tables give ic_cache_inval.fill_invalidated (8Ch/01h), "IC line invalidated due to
+    // overwriting fill response"; a store into code being fetched invalidates the instruction-cache line. It is not a
+    // pipeline-restart counter. l2_request_g2.smc_inval (61h/04h) is also listed, but read 0 for this probe on a Zen2 host.
+    e.cfg = 0x018C; e.have = true;
+    e.why = "AMD ic_cache_inval.fill_invalidated (8Ch/01h): instruction-cache lines invalidated, an SMC-induced proxy rather than a pipeline-restart count";
     return e;
   }
   e.why = "unknown CPU vendor";
@@ -154,6 +161,70 @@ std::unique_ptr<Counter> openCounter(uint64_t cfg, std::string& why) {
   return c;
 }
 #elif defined(_WIN32) && SMC_X64
+struct EtwCounter : Counter {
+  HANDLE h = nullptr;
+  PERFORMANCE_DATA a, b;
+  DWORD ctxBefore = 0;
+  unsigned long ctxSwitches = 0;
+  std::string label;
+  static std::string narrow(const wchar_t* w) {
+    std::string r;
+    for (; *w; w++) r += (*w < 128) ? (char)*w : '?';
+    return r;
+  }
+  static bool ieq(const std::string& hay, const std::string& needle) {
+    auto low = [](std::string x) { for (auto& c : x) c = (char)tolower((unsigned char)c); return x; };
+    return low(hay).find(low(needle)) != std::string::npos;
+  }
+  bool init(const std::string& want, bool listOnly, std::string& why) {
+    std::vector<char> buf(1 << 16);
+    ULONG sz = 0;
+    ULONG rc = TraceQueryInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceListInfo, buf.data(), (ULONG)buf.size(), &sz);
+    if (rc == ERROR_INSUFFICIENT_BUFFER || rc == ERROR_MORE_DATA) {
+      buf.resize(sz);
+      rc = TraceQueryInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceListInfo, buf.data(), (ULONG)buf.size(), &sz);
+    }
+    if (rc != ERROR_SUCCESS) { why = "TraceQueryInformation(profile source list) failed, error " + std::to_string(rc); return false; }
+    long id = -1;
+    const PROFILE_SOURCE_INFO* e = (const PROFILE_SOURCE_INFO*)buf.data();
+    for (;;) {
+      std::string nm = narrow(e->Description);
+      if (listOnly) printf("  source %3lu  %s\n", (unsigned long)e->Source, nm.c_str());
+      if (id < 0 && ieq(nm, want)) id = (long)e->Source;
+      if (!e->NextEntryOffset) break;
+      e = (const PROFILE_SOURCE_INFO*)((const char*)e + e->NextEntryOffset);
+    }
+    if (listOnly) return false;
+    if (id < 0) {
+      why = "Windows has no profile source named '" + want + "'; register it once from an administrator prompt: python validation/pmc_test.py --register-wpr (see validation/pmc/README.md)";
+      return false;
+    }
+    ULONG sid = (ULONG)id;
+    rc = TraceSetInformation(0, (TRACE_INFO_CLASS)TraceProfileSourceConfigInfo, &sid, sizeof sid);
+    if (rc != ERROR_SUCCESS) { why = "TraceSetInformation(profile source config) failed, error " + std::to_string(rc) + (rc == ERROR_ACCESS_DENIED ? " (run from an administrator prompt)" : ""); return false; }
+    SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));
+    rc = EnableThreadProfiling(GetCurrentThread(), 0x1, 1, &h);
+    if (rc != ERROR_SUCCESS) { why = "EnableThreadProfiling failed, error " + std::to_string(rc); return false; }
+    label = "windows-thread-profiling (source id " + std::to_string(sid) + " '" + want + "', per thread)";
+    return true;
+  }
+  bool rd(PERFORMANCE_DATA& d) {
+    memset(&d, 0, sizeof d);
+    d.Size = sizeof d;
+    d.Version = PERFORMANCE_DATA_VERSION;
+    return ReadThreadProfilingData(h, READ_THREAD_PROFILING_FLAG_HARDWARE_COUNTERS | READ_THREAD_PROFILING_FLAG_DISPATCHING, &d) == ERROR_SUCCESS && d.HwCountersCount >= 1;
+  }
+  bool start() override { return rd(a); }
+  bool stop(uint64_t& v) override {
+    if (!rd(b)) return false;
+    v = b.HwCounters[0].Value - a.HwCounters[0].Value;
+    ctxSwitches += b.ContextSwitchCount - a.ContextSwitchCount;
+    return true;
+  }
+  std::string name() const override { return label; }
+  ~EtwCounter() override { if (h) DisableThreadProfiling(h); }
+};
+
 struct PawnIo {
   HMODULE dll = nullptr;
   HANDLE h = nullptr;
@@ -226,14 +297,18 @@ struct PawnCounter : Counter {
   std::string name() const override { return "windows-PawnIO AMDFamily17 (PerfEvtSel0/PerfCtr0, user mode, per-core)"; }
 };
 
-std::unique_ptr<Counter> openCounterWin(const Cpu& c, uint64_t cfg, const std::string& lib, const std::string& blob, std::string& why) {
+std::unique_ptr<Counter> openCounterWin(const Cpu& c, uint64_t cfg, const std::string& lib, const std::string& blob, const std::string& source, std::string& why) {
+  std::string whyEtw;
+  auto e = std::make_unique<EtwCounter>();
+  if (e->init(source, false, whyEtw)) return e;
   if (c.vendor != "AuthenticAMD") {
-    why = "PawnIO's stock IntelMSR module permits only power/thermal MSRs; Intel PMU MSRs are denied, so no counter is available on Windows/Intel";
+    why = "Windows thread profiling: " + whyEtw + "; PawnIO's stock IntelMSR module denies the Intel PMU MSRs, so there is no fallback";
     return nullptr;
   }
   auto p = std::make_unique<PawnCounter>();
   p->cfg = cfg;
-  if (!p->io.init(lib, blob, why)) return nullptr;
+  std::string whyPawn;
+  if (!p->io.init(lib, blob, whyPawn)) { why = "Windows thread profiling: " + whyEtw + "; PawnIO: " + whyPawn; return nullptr; }
   SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)1 << (GetCurrentProcessorNumber() & 63));  // per-core counter follows this thread
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
   return p;
@@ -296,7 +371,8 @@ int main(int argc, char** argv) {
   int reps = 7;
   long long evOverride = -1;
   bool selftest = false;
-  std::string jsonPath, lib = "PawnIOLib.dll", blob = "AMDFamily17.bin";
+  std::string jsonPath, lib = "PawnIOLib.dll", blob = "AMDFamily17.bin", source = "MACHINE_CLEARS.SMC";
+  bool listSources = false;
   for (int i = 1; i < argc; i++) {
     std::string a = argv[i];
     auto next = [&]() { return i + 1 < argc ? std::string(argv[++i]) : std::string(); };
@@ -307,8 +383,10 @@ int main(int argc, char** argv) {
     else if (a == "--pawnio-lib") lib = next();
     else if (a == "--pawnio-module") blob = next();
     else if (a == "--selftest") selftest = true;
+    else if (a == "--pmc-source") source = next();
+    else if (a == "--list-sources") listSources = true;
     else {
-      fprintf(stderr, "usage: smc_pmc_probe [--iters N] [--reps R] [--event RAWCFG] [--json FILE] [--pawnio-lib DLL] [--pawnio-module BIN] [--selftest]\n");
+      fprintf(stderr, "usage: smc_pmc_probe [--iters N] [--reps R] [--event RAWCFG] [--json FILE] [--pawnio-lib DLL] [--pawnio-module BIN] [--pmc-source NAME] [--list-sources] [--selftest]\n");
       return 2;
     }
   }
@@ -316,6 +394,15 @@ int main(int argc, char** argv) {
   Cpu cpu = cpuInfo();
   printf("cpu: vendor=%s family=%02Xh model=%02Xh stepping=%u hypervisor=%s\n", cpu.vendor.c_str(), cpu.family, cpu.model, cpu.stepping,
          cpu.hypervisor ? "yes" : "no");
+#ifdef _WIN32
+  if (listSources) {
+    printf("Windows hardware-counter profile sources:\n");
+    EtwCounter l;
+    std::string w;
+    l.init("", true, w);
+    return 0;
+  }
+#endif
   if (!SMC_X64) {
     printf("result: unsupported architecture (x86-64 only)\n");
     return selftest ? 0 : 3;
@@ -328,7 +415,7 @@ int main(int argc, char** argv) {
 #if defined(__linux__) && SMC_X64
     ctr = openCounter(ev.cfg, why);
 #elif defined(_WIN32) && SMC_X64
-    ctr = openCounterWin(cpu, ev.cfg, lib, blob, why);
+    ctr = openCounterWin(cpu, ev.cfg, lib, blob, source, why);
 #else
     why = "no counter backend on this operating system (timing only)";
 #endif

@@ -13,15 +13,24 @@ cmake -S validation/pmc -B b && cmake --build b --config Release   # by hand
 | Platform | Backend | Needs | Status |
 |---|---|---|---|
 | Linux, Intel or AMD | `perf_event_open`, user mode, per thread | `kernel.perf_event_paranoid <= 2` or root; bare metal (virtual machines usually have no PMU) | written; run on bare metal by the author |
-| Windows, AMD | PawnIO (Official, signed), module `AMDFamily17` (allows PerfEvtSel0 and PerfCtr0) | PawnIO installed, administrator prompt | written; untested (no AMD Windows host) |
-| Windows, Intel | none: PawnIO's stock `IntelMSR` module denies every PMU MSR | - | timing only |
+| Windows, Intel or AMD | Windows' own per-thread hardware-counter profiling (`EnableThreadProfiling`), with `MACHINE_CLEARS.SMC` registered once as a profile source by a WPR `MicroArchitecturalConfig` profile | administrator prompt, Windows 11 build 22453 or later; no driver | written; first Intel run pending (`--register-wpr`, below) |
+| Windows, AMD (fallback) | PawnIO (Official, signed), module `AMDFamily17` (allows PerfEvtSel0 and PerfCtr0) | PawnIO installed, administrator prompt | written; untested (no AMD Windows host) |
 | macOS x86 | none | - | timing only (the probe builds and runs) |
 
 Even without a counter the timing column separates the cases; that is evidence about one machine, not proof.
 
+Windows, once, from an administrator prompt: `python validation/pmc_test.py --register-wpr` registers the event (it prints
+`registered: YES` when `MACHINE_CLEARS.SMC` then appears in the Windows source list); afterwards `python validation/pmc_test.py`
+reads it per thread, and the probe prints the thread's context-switch count while counting.
+
+Measured so far (evidence about one machine, not proof): AMD EPYC 7542 (Zen2, Linux 5.14, bare metal),
+`validation/native/pmc/20261017-linux-amd-epyc7542-zen2/`: with `ic_cache_inval.fill_invalidated` a store into the next
+executed instruction gives 2.0 counted invalidations per iteration and stores 64 bytes or more ahead give about 0.0002.
+`l2_request_g2.smc_inval` read 0 for this loop.
+
 Events used (SDM / BKDG primary sources, see `lean/GAPS.md` G20 to G22): Intel `MACHINE_CLEARS.SMC` (C3H, umask 04H);
-AMD Family 10h/15h PMCx021. For AMD Zen no pipeline-restart event is verified in this repository: pass `--event`
-(for example `0x0461`, the Linux Zen3 table's `l2_request_g2.smc_inval`, an L2 invalidation proxy).
+AMD Family 10h/15h PMCx021. For AMD Zen no pipeline-restart event is verified in this repository: the default is `ic_cache_inval.fill_invalidated`
+(8Ch/01h, from the Linux Zen tables), an instruction-cache-invalidation proxy; `--event` overrides it.
 
 ## Getting full coverage
 
