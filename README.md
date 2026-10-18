@@ -239,8 +239,10 @@ listed in the errata; platform facts are cited and empirical observations are li
 whole: `lean/PAPER_MAP.md` gives every claim, its class and its status, `lean/PLATFORM_CONTRACT.md` lists every hypothesis about the
 platform, and `lean/GAPS.md` records what is not proved (notably the abstract intro event count of the unrolled kernel, exact clear counts and the author-side items).
 
-* Selected statement (`lean/SmcTamper/Spec/Paper.lean`): security under the structural assumptions A1-A8 (T1), the mediation cost of
-  split views (T2), the necessity of each assumption (T3), the level matrix (T4) and the Harvard separation (C01, C02).
+* Selected statement (`lean/SmcTamper/Spec/Paper.lean`, four results of an abstract threat model): T1, under the structural assumptions
+  A1-A8 an execution of a modified protected byte that is not an SMC opcode byte is accompanied by an effective alarm somewhere in the
+  timeline; T2, the mediation cost of split views; T3, the necessity of each assumption; T4, the level matrix. Proved in the development
+  but **not** selected: the Harvard separation (C01, C02), the three-quadword forgery, and the kernel, layout and timing material.
   `lean/Challenge.lean` is generated from the Spec modules; `lean/Solution.lean` proves it. Axioms: `propext`, `Quot.sound`,
   `Classical.choice` only.
 * Errata (paper text only) are in `lean/errata/ERRATA.md` and `output/pdf/smctamper-2026-errata.pdf`; fixes to the code, README and

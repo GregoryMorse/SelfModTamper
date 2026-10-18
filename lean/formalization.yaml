@@ -10,13 +10,15 @@ project:
     emulation, forgery and mediation, and eight structural assumptions A1-A8 (none of the form "the attacker is
     detected"). An effective alarm needs a unit with a response code (at least one response byte, all of it unmodified)
     and either a value mismatch or a positive number k of consecutive timing failures; A6 therefore includes k > 0 and
-    A7 includes that every unit has a response byte. The four selected results are: under A1-A8 an adversary never
-    executes a modified protected byte without an effective alarm (T1); in a faithful split-view run every iteration
-    with a non-zero toggle (apart from the last) is mediated, and under A3 and A5 a faithful mediated check with such
-    an iteration is a timing failure (T2); each of the eleven assumptions is necessary, by an explicit winning adversary
-    against a system that satisfies all the others (T3); and below L2 with the inline timer A1, A4 and A5 hold, while
-    L1 with an operating-system timer, L2 and L4 each admit a winning adversary against a system satisfying every other
-    assumption (T4).
+    A7 includes that every unit has a response byte. The four selected results are: for every well-formed timeline of
+    a system satisfying A1-A8, if a protected byte outside the SMC opcode bytes (which legitimately vary) is executed
+    while the fetch view differs from the original image, an effective alarm occurs somewhere in the timeline, not
+    necessarily before that execution (T1; executing a changed protected opcode byte is outside the goal); in a faithful split-view run every iteration
+    with a non-zero toggle (apart from the last) is mediated, and under A3 and A5 a faithful mediated check that the
+    cost contract admits, with such an iteration, is a timing failure (T2; not every split-view attack is claimed detected); each of the eleven assumptions is necessary, by an explicit winning adversary
+    against a system that satisfies all the others (T3); and every well-formed timeline at level L0 or L1 with the
+    inline timer satisfies A1, A4 and A5, while there are winning adversaries against systems satisfying every other
+    assumption at L1 with an operating-system timer, at L2 and at L4 (T4: the removed assumption is A5 at L1 with an operating-system timer and at L2, A1 at L2, A4 at L4).
     Proved in the same development but NOT part of this record (they are not in the Comparator configuration): the
     paper's Harvard/von Neumann observation (C01, C02), a general fact about observation-preserving simulation whose time
     bound assumes the per-read charge it uses; the three-quadword forgery of the checksum and the proof that two
@@ -40,15 +42,16 @@ sources:
     relationship: "adapts"
     author_endorsement: "participated"
     note: >-
-      arXiv:2604.12407v1. The selected results replace the informal Section 10 and the statements about memory splitting, with
-      exact minimal corrections P01-P13 (P14, the AMD event cells of Table 1, was checked against AMD primary documents and is
-      withdrawn), quoted from the arXiv v1 text in errata/ERRATA.md and errata/edits.json, and legacy source fixes L01-L07 and
-      D01-D03 (CODE_FIXES.md). The
-      threat model is formalized as an abstract model: the cost contract, the level capabilities and the eight assumptions
+      arXiv:2604.12407v1. The selected results (T1-T4) formalize and replace the informal Section 10 and the statements about
+      memory splitting. Separate deliverables, not part of the selected statement: the exact minimal corrections to the paper
+      text P01-P13 (P14, the AMD event cells of Table 1, was checked against AMD primary documents and is withdrawn), quoted from
+      the arXiv v1 text in errata/ERRATA.md and errata/edits.json, and the legacy source fixes L01-L07 and D01-D03 (CODE_FIXES.md).
+      The threat model is formalized as an abstract model: the cost contract, the level capabilities and the eight assumptions
       are hypotheses, and no theorem says that a given processor, hypervisor or operating system satisfies them. Not
       modeled and not claimed: any processor's pipeline, caches, machine-clear behavior, timers or handling of
-      self-modifying code, and the measured tables (consistency checks only). The unrolled kernel is verified at an abstract level, at the instruction level
-      on the x86-64 model (final pass not a multiple of 148 qwords) and by a byte comparison with the assembler output. The original paper remains a separately cited source.
+      self-modifying code, and the measured tables (consistency checks only). Supporting, not selected: the unrolled kernel is verified at an abstract
+      level, at the instruction level on the x86-64 model (final pass not a multiple of 148 qwords) and by a byte comparison with the assembler
+      output. The original paper remains a separately cited source.
   - title: "Intel 64 and IA-32 Architectures Software Developer's Manual"
     authors: ["Intel Corporation"]
     type: "other"
@@ -104,7 +107,9 @@ fidelity:
     (P08), notation (P09, P10), and the replacement of Section 10 by the threat model with its scope statements (P11-P13);
     P14 (AMD cells of Table 1) was checked against AMD primary documents and is withdrawn. Corrections to the code are L01-L07 and D01-D03 (CODE_FIXES.md), including the
     crash when the qword count is a multiple of 148 (L07). The threat model is relative to its cost contract and
-    assumptions; T2 does not claim that all split-view attacks are detected. The unrolled kernel is verified at an abstract
+    assumptions; T2 does not claim that all split-view attacks are detected; T1 concerns protected bytes outside the SMC opcode
+    bytes and an alarm that occurs somewhere in the timeline, so it does not claim that a changed executed opcode byte is detected
+    or that an alarm precedes the execution. The unrolled kernel (supporting, not selected) is verified at an abstract
     level and at the instruction level on the x86-64 model, for a final pass that is not a multiple of 148 qwords. No further mismatch is claimed absent after an unspecified universal review.
 review:
   status: "agent-reviewed"

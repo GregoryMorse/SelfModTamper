@@ -90,7 +90,7 @@ theorem core_alarm (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat →
     · exact absurd ⟨j, hj, e', r', h'⟩ hh
     · exact hf
 
-/-- **T1 (security).**  Under the cost contract and A1–A8, the adversary never wins: every executed modification of a protected
+/-- **T1 (security).**  Under the cost contract and A1–A8, the adversary never wins: every executed modification of a protected non-opcode
 byte is accompanied by an effective alarm. -/
 theorem security (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat → TEv) (sch : Sched S.n tl)
     (hwf : WF S C l t tl) (hA : Assumptions S C tl sch) : ¬ Wins S tl sch := by

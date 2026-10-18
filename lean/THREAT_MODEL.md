@@ -33,7 +33,7 @@ None mentions alarm, wins or detection (`validation/threat_audit.py`).
 
 ## 3. Results
 
-* **T1** `security` (`Threat/Security`): under `WF` and A1–A8, `¬ Wins`. Proof: `closure_detect` (a modification reaches an intact unit's
+* **T1** `security` (`Threat/Security`): under `WF` and A1–A8, `¬ Wins`: an execution of a protected non-opcode byte (outside `ops`) in modified form is always accompanied, somewhere in the timeline and not necessarily earlier, by an effective alarm; protected opcode bytes are outside the goal. Proof: `closure_detect` (a modification reaches an intact unit's
   region), `core_alarm` (first check after the write, A6 persistence, A8 value mismatch on the honest path, A3+A5 timing failure otherwise).
   `witness_secure` shows the hypotheses are jointly satisfiable.
 * **T2** `Threat/SplitMirror`: `faithful_needs_med` (a run following the Level-1 trajectory under split views needs a mediation at every

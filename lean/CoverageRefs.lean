@@ -98,6 +98,7 @@ import SmcTamper.Paper
 #check @SmcTamper.interp_simulates
 #check @SmcTamper.harvard_reads_sensitive
 #check @SmcTamper.harvard_time_bound
+#check @SmcTamper.Paper.harvard_separation
 #check @SmcTamper.P_complete
 #check @SmcTamper.P_sound_value
 #check @SmcTamper.P_sound_time

@@ -13,8 +13,10 @@ assumptions `A1`..`A8` (structural conditions on the timeline, never "the attack
 (mediation and emulation have a lower bound). Nothing here says anything about real hardware: platform behaviour enters only as the
 fields of `Cost`, `Level.allows` and the well-formedness structure `WF`. -/
 
-/-- T1 (security). Under the assumptions A1-A8, an adversary whose timeline respects the level, the cost contract and the
-well-formedness conditions never executes a modified protected byte without an effective alarm. -/
+/-- T1 (security). For every well-formed timeline (levels, cost contract, check paths) of a system that satisfies A1-A8: if a
+protected byte outside the SMC opcode bytes `ops` is ever executed while the fetch view differs from the original image at that
+byte (`ExecViolation`), then an effective alarm (`Alarm`) occurs somewhere in the infinite timeline, not necessarily before that
+execution. The SMC opcode bytes legitimately vary, so executing one in a changed state is outside the goal. -/
 def SecurityTheorem : Prop :=
   ∀ (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat → TEv) (sch : Sched S.n tl),
     WF S C l t tl → Assumptions S C tl sch → ¬ Wins S tl sch
@@ -46,7 +48,8 @@ def NecessaryAssumption (i : Nat) : Prop :=
   ∃ (S : Sys) (C : Cost) (l : Level) (t : TimerSrc) (tl : Nat → TEv) (sch : Sched S.n tl),
     WF S C l t tl ∧ OthersHold i S C tl sch ∧ Wins S tl sch ∧ ¬ HoldsAt i S C tl sch
 
-/-- T3: every one of the eleven assumptions is necessary. -/
+/-- T3: each of the eleven assumptions (A1, A2 coverage, A2 code protected, A2 connectivity, A2 intact unit, A3, A4, A5, A6, A7, A8)
+is necessary within this model: some well-formed system satisfies the other ten, has an adversary that wins, and violates it. -/
 def AssumptionsNecessary : Prop :=
   NecessaryAssumption 1 ∧ NecessaryAssumption 2 ∧ NecessaryAssumption 3 ∧ NecessaryAssumption 4 ∧ NecessaryAssumption 5 ∧
   NecessaryAssumption 6 ∧ NecessaryAssumption 7 ∧ NecessaryAssumption 8 ∧ NecessaryAssumption 12 ∧ NecessaryAssumption 13 ∧
@@ -61,7 +64,8 @@ def FaithfulRun (opAddr : Nat) (med : Nat → Bool) : Nat → Nat → VState →
   | i, n + 1, s => s.F opAddr = s.D opAddr ∧ FaithfulRun opAddr med (i + 1) n (vStep opAddr (med i) s)
 
 /-- T2: a faithful run mediates every iteration whose toggle is non-zero (apart from the last), and under A3 and A5 a faithful
-mediated check with such an iteration is a timing failure. -/
+mediated check that the cost contract admits, with such an iteration, is a timing failure (its reading exceeds the threshold).
+It does not say that every split-view attack is detected. -/
 def MediationTheorem : Prop :=
   (∀ (opAddr : Nat) (med : Nat → Bool) (n i : Nat) (s : VState), FaithfulRun opAddr med i n s → ∀ j, j + 1 < n →
       ToggleAt opAddr (vRun opAddr med i j s) ≠ 0 → med (i + j) = true) ∧
@@ -70,9 +74,10 @@ def MediationTheorem : Prop :=
       FaithfulRun (S.unit x).cu.opAddr med 0 ((S.unit x).cu.size / 8) s0 → ∀ j, j + 1 < (S.unit x).cu.size / 8 →
       ToggleAt (S.unit x).cu.opAddr (vRun (S.unit x).cu.opAddr med 0 j s0) ≠ 0 → timeFailAt S tl c x)
 
-/-- T4: what each level gives and loses. Below L2 with the inline timer, A1, A4 and A5 hold; each of L1 with an OS timer, L2, and L4
-admits a winning adversary against a system that satisfies every assumption except the one that level removes (`OthersHold`, as in
-T3), so the win is due to that capability alone. -/
+/-- T4: what each level gives and loses, as the model's level capabilities define them. Every well-formed timeline at level L0 or
+L1 with the inline timer satisfies A1, A4 and A5. Conversely there is a winning adversary against a system satisfying every
+assumption except one (`OthersHold`, as in T3): at L1 with an operating-system timer and at L2 the one is A5, at L2 also A1, at L4
+A4. The capabilities themselves are contract fields (`Level.allows`), not facts about a real system. -/
 def LevelMatrix : Prop :=
   (∀ (S : Sys) (C : Cost) (l : Level) (tl : Nat → TEv), WF S C l .tsc tl → l.rank < 2 → A1 S tl ∧ A4 tl ∧ A5 tl) ∧
   (∃ (S : Sys) (C : Cost) (tl : Nat → TEv) (sch : Sched S.n tl),
