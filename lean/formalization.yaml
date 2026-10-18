@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/99c678e569c7c4c0772db297c5ddd5e4c9b6322e/schema/v0.4.schema.json
 version: "v0.4"
 project:
-  name: "Tamper-proofing with self-modifying code: a Lean formalization of the threat model"
+  name: "Tamper-proofing with self-modifying code: threat model, security and necessity of the assumptions"
   description: >-
     Formalizes Gregory Morse and Tamas Kozsik's paper "Tamper-Proofing with Self-Modifying Code" (arXiv:2604.12407v1).
     The selected statement (PalomarSMT.mathematical_result, four results T1-T4) is an abstract threat model for checksum
