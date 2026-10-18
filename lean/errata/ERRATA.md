@@ -313,8 +313,9 @@ L1: user mode; may write to the protected process while it runs, single-step or 
 L2: kernel or hypervisor; additionally may give instruction fetch and data reads different views of memory and may trap or offset the time-stamp counter.
 L4: additionally has physical writers such as DMA devices.
 (L3 is reserved and has the capabilities of L2 in the model.)
-The \emph{goal} is that a protected byte other than a legitimately varying SMC opcode byte is executed in modified form while no alarm is effective.
-An alarm is effective when a checksum unit whose own response code is unmodified sees a wrong result, or $k$ consecutive checks of one unit exceed its time threshold $\tau$.
+The \emph{goal} is that a protected byte other than a legitimately varying SMC opcode byte is executed in modified form and no alarm is effective at any point of the (unbounded) run.
+An alarm is effective when a checksum unit with at least one response byte, all unmodified, sees a wrong result, or when $k\ge 1$ consecutive checks of one unit exceed its time threshold $\tau$.
+The SMC opcode bytes are reset by every check, so tampering with them is outside the goal.
 
 \paragraph{Assumptions.}
 A1 (coherence, replaces ``von Neumann architecture''): the fetch and data views are one image.
@@ -322,16 +323,16 @@ A2 (coverage, replaces ``cannot neutralize all functions''): every protected byt
 A3 (timing gap, replaces the non-existence of an equally fast non-SMC implementation): the native check time is at most $\tau$, and $\tau$ is below the lower bounds on emulation, on a debug trap, and on mirroring an opcode write.
 A4 (no physical writer): no device other than the protected thread writes the protected memory; a larger-area defense narrows the window between check and use but cannot close it.
 A5 (time integrity): every timer reading equals the elapsed time.
-A6 (persistence): a modification persists through the next $k$ scheduled checks of each unit that covers it.
-A7 (response coverage): each unit's alarm response code is part of its own protected code.
+A6 (persistence): $k\ge 1$, and a modification persists through the next $k$ scheduled checks of each unit that covers it.
+A7 (response coverage): each unit has at least one response byte, and its response bytes are part of its own protected code and are not SMC opcode bytes.
 A8 (non-compensation): a modification inside the region of a running unit changes the unit's result.
 The checksum is deliberately not collision resistant, so A8 is an assumption about the design, and it cannot be dropped: two modified quadwords can restore the final sum and opcode state.
 
 \paragraph{Results.}
-(T1) Under A1--A8 and the platform contract, no adversary achieves the goal.
-(T2) With separate fetch and data views, a run that follows the SMC kernel's opcode trajectory needs one mirroring event per opcode-changing iteration, each costing at least the mirroring bound of A3; a plain checksum without opcode state can be blind to split views.
-(T3) Each of A1, A2 (coverage, unit code protected, strong connectivity, one unmodified unit), A3, A4, A5, A6, A7 and A8 is necessary: for each there is a system and an adversary that satisfies all the others and wins.
-(T4) With the inline time-stamp counter, levels L0 and L1 satisfy A1, A4 and A5; an operating-system timer interface can be hooked at L1; L2 breaks A1 and A5; L4 breaks A4.
+(T1) Under A1--A8 and the platform contract, no adversary achieves the goal: if a protected non-opcode byte is ever executed in modified form, an effective alarm occurs somewhere in the run, not necessarily before that execution.
+(T2) With separate fetch and data views, a run that follows the SMC kernel's opcode trajectory needs one mirroring event per opcode-changing iteration (except the last), and under A3 and A5 a mediated check admitted by the cost contract that contains such an iteration is a timing failure.  This does not say that every split-view attack is detected.
+(T3) Each of the eleven items A1, A2 (coverage, unit code protected, strong connectivity, one unmodified unit), A3, A4, A5, A6, A7 and A8 is necessary within the model: for each there is a well-formed system and an adversary that satisfies the other ten and wins.
+(T4) With the inline time-stamp counter, every well-formed timeline at level L0 or L1 satisfies A1, A4 and A5.  Conversely there is a winning adversary against a system that satisfies every assumption except one: A5 at L1 with an operating-system timer interface and at L2, A1 at L2, A4 at L4.  The level capabilities are fields of the contract, not facts about real systems.
 With a time source outside the adversary's control, of resolution $r$ and jitter $j$, slowdowns of at least $j+2r$ are detected by a threshold calibrated on native runs.
 
 \paragraph{Scope.}

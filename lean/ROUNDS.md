@@ -275,3 +275,9 @@ handoff: done / next / open obligations / hazards / evidence file).
 - The first submission (commit 69a9d34) passed the mechanical gate and received a negative automated review. Fixed: `Alarm`/`A6` (`k > 0`), `RespIntact`/`A7` (a response byte), `LevelMatrix` (`OthersHold`), Harvard result removed from the selected statement, status notes made consistent. See GAPS section E.
 - Checks: `python validation/build_modules.py SmcTamper` green, `axiom_audit.py` 0 violations, `threat_audit.py`, `coverage_audit.py --build` (56 rows), `audit_errata.py`, `make_challenge.py --check`; Solution and Challenge compile.
 - Next: Palomar preflight on the new commit (needs the author's go-ahead), then the author submits a new submission.
+
+### R16: arXiv v2 manuscript, 2026-10-18
+- `lean/errata/edits.json` P11 re-aligned with the final Lean statements (k ≥ 1, response byte, T1 non-opcode scope and alarm anywhere, T4 others-hold); errata regenerated (3 pages).
+- `validation/apply_edits.py` builds `paper/SelfModifyingCodeTamperProofingManuscriptUpdated.tex` = v1 + the 16 confirmed items + Section 12 "Formal verification" (Palomar PALOMAR-2026-10-18-000004 v1, tag `palomar-v1`, commit 0a48a85) + AI disclosure + metadata block; `--check` verifies it; `paper/v1-v2.diff`.
+- Figure shipped as `Tamperproof.pdf` (epstopdf) so the extracted archive builds with pdflatex; the uncited `Mankowitz2023` entry is dropped from the v2 `.bib`.
+- The arXiv audit (arxiv-submission-auditor) lives outside the repository; open items: AI thinking modes and responsibility clause, license, citation ledgers, author visual check.

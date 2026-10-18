@@ -27,6 +27,24 @@
 \affil[1]{E\"{o}tv\"{o}s Lor\'{a}nd Tudom\'{a}nyegyetem / University (ELTE), Budapest, Hungary}
 \date{}
 
+\iffalse
+ARXIV-METADATA-BEGIN
+Title: Tamper-Proofing with Self-Modifying Code
+Authors: Gregory Morse (E\"otv\"os Lor\'and University), Tam\'as Kozsik (E\"otv\"os Lor\'and University)
+Abstract: Classical computability theory tells us that self-modifying code (SMC) on a deterministic universal Turing machine can be simulated by non-SMC code on the same model. That abstraction, however, omits the external timing inputs, concurrency, and microarchitectural state that dominate practical execution on modern processors. We argue that once timing, ordering, and self-introspective effects are treated as observables, a practically faithful non-SMC reproduction of timed SMC becomes detectably expensive on commodity systems. We present a tamper-proofing model that combines introspective and polymorphic SMC, reliable clocks, and runtime timing predicates to bind integrity checks to execution behavior. We distinguish static and dynamic SMC generation, characterize the timing semantics needed to avoid catastrophic pipeline clears, and give x86-64 design primitives for checksum-driven self-patching. We also report timer measurements, performance comparisons, and performance-monitoring counter evidence showing that careful engineering - especially loop unrolling and cross-page modification - substantially reduces the overhead of SMC while preserving its tamper-detection value. The paper concludes with an efficiency analysis, a threat model, and deployment guidance for trusted code executing in untrusted environments.
+Comments: 14 pages, 5 figures, 6 tables. Lean 4 formalization (Palomar entry PALOMAR-2026-10-18-000004 v1): https://github.com/GregoryMorse/SelfModTamper , tag palomar-v1
+Subjects: Cryptography and Security (cs.CR)
+MSC classes: 68M25 (Primary) 68M20, 68N30, 68Q60 (Secondary)
+ACM classes: D.4.6; D.4.8; D.2.0
+Report number: N/A -- leave blank
+Journal reference: N/A -- leave blank
+DOI: N/A -- leave blank
+License: Creative Commons Attribution 4.0 (CC BY 4.0) [unconfirmed; same as v1]
+Submitter is author: Yes
+External artifacts: GitHub https://github.com/GregoryMorse/SelfModTamper ; release/tag palomar-v1 ; commit 0a48a85e0f1884a50c6abdcf8617bd315a6b59c2 ; verified 2026-10-18
+AI disclosure: AI assistance disclosure (unnumbered section) -- Anthropic Claude Opus 5.5 and Claude Sonnet 5.5, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version. The Lean kernel checks the proofs; the author reviewed the formal statements, the corrections to the text and this manuscript, and assumes full responsibility for the final work.
+ARXIV-METADATA-END
+\fi
 \begin{document}
 \pagestyle{empty}
 \maketitle
@@ -86,16 +104,13 @@ signals such as mouse movement or event logs either feed entropy pools
 server-provided data can be incorporated as an external input, but replay and
 protocol attacks complicate correctness unless additional machinery is deployed;
 moreover, such channels do not protect code at the machine-architecture level
-against manual debugging, thread injection, or remote process-memory writes.  A
+against manual debugging, thread injection, or remote process-memory writes.  The mechanism proposed here does not prevent these either: it detects persistent modification of the checksummed bytes and interference inside timed intervals, but not injected code that leaves the checksummed bytes intact, register tampering outside timed intervals, or a modification that is undone before the next covering check (Section~\ref{sec:assumptions}).  A
 well-engineered network time source can, however, be a reliable UTC input.
 
 \paragraph{Practical stance.}
 For integrity checks that bind behavior to time, there is effectively no
 \emph{practically faithful} non-SMC equivalent that preserves both semantics and
-timing in the face of an adversary on contemporary systems.  An attacker could
-attempt to simulate execution under a synthetic time source and adapt the
-predicate accordingly, but this requires a deterministic, fully characterizable
-timing model.  Modern commodity processors do not satisfy this assumption.
+timing in the face of an adversary on contemporary systems.  An attacker who controls the time source need not model the processor at all: replaying readings recorded from native runs makes any threshold predicate on those readings pass.  Timing-based detection therefore requires a time source outside the adversary's control, for example \texttt{RDTSC}/\texttt{RDTSCP} read inside the protected code against a user-mode adversary, or an external source against a kernel-level adversary.  An adversary who must run the protected code under emulation with an honest clock needs a deterministic, fully characterizable timing model, and modern commodity processors do not admit one.
 Execution timing is influenced by partially undocumented microarchitectural
 state---branch predictors, caches, coherence protocols, speculative execution,
 microcode---together with concurrent activity and operating-system scheduling.
@@ -106,13 +121,12 @@ dynamic state, and doing so at practical speed is infeasible.
 \paragraph{Model.}
 We propose a tamper-proofing model in which SMC is (i) \emph{introspective}, in
 that it checksums its own code, and (ii) \emph{polymorphic}, in that it rewrites
-itself while executing.  The model uses constant-time algorithmic kernels to
+itself while executing.  The model uses algorithmic kernels whose control flow and instruction count are independent of the data to
 reduce unrelated timing leakage and may treat sensitive data as code
 (SMC-backed storage) to harden against data-only faults.  A virtualized SMC
 wrapper can dynamically generate an inner SMC layer.  Formally, we assume a
 timer $T(t)$ chosen per query $t$ for reliability and a checksum function $C(c)$
-over code or data $c$; the predicate $P(T,C)$ returns true if and only if the
-protected code remains unmodified.
+over code or data $c$; the predicate $P(T,C)$ returns true for the unmodified protected code (when its timing lies within the calibrated bounds) and false for every modification that changes the checksum state or violates the time bound.
 
 \paragraph{Relation to prior work.}
 Tamper-proofing via watermarking is well studied \cite{1027797}.  Self-check-
@@ -348,7 +362,7 @@ the checksum kernel less elegant.
 ADC & 0x13 & 2 & 1 & 1 \\ \hline
 ADD & 0x03 & 0 & 1 & 0.25 \\ \hline
 AND & 0x23 & 4 & 1 & 0.25 \\ \hline
-CMP & 0x3B & 7 & 0.2 / 0.25 & 0.2 / 0.25 \\ \hline
+CMP & 0x3B & 7 & 1 & 0.2 / 0.25 \\ \hline
 OR  & 0x0B & 1 & 1 & 0.25 \\ \hline
 SBB & 0x1B & 3 & 1 & 1 \\ \hline
 SUB & 0x2B & 5 & 1 & 0.25 \\ \hline
@@ -366,7 +380,7 @@ XOR & 0x33 & 6 & 1 & 0.25 \\ \hline
 ADC & Add with carry \\ \hline
 SBB & Subtract with borrow \\ \hline
 XOR & Exclusive OR \\ \hline
-SHL & Shift left (unsigned) \\ \hline
+SHL & Shift left (logical, same as SAL) \\ \hline
 LEA & Load effective address \\ \hline
 SETcc & Set byte on condition \\ \hline
 CMP & Compare operands \\ \hline
@@ -423,7 +437,7 @@ for (LPBYTE pEnd = (LPBYTE)pData + ulSize; (LPBYTE)pData < pEnd; pData++) {
         ((res & 0x8000000000000000ULL) != 0);
 }
 \end{lstlisting}
-\caption{Minimal C++ code to emulate the SMC checksum computation precisely.  The three arguments are the start address \lstinline|pData|, the protected length \lstinline|ulSize|, and the function start address \lstinline|pTPCompOffset|; \lstinline|sum| stores the checksum result.}
+\caption{Minimal C++ code to emulate the SMC checksum computation precisely.  The function arguments are the start address \lstinline|pData|, the protected length \lstinline|ulSize| (a multiple of 8 bytes) and the result address \lstinline|pResult|; \lstinline|pTPCompOffset| is the address of the body of the kernel \lstinline|TPComp| and is computed before the loop (not shown), \lstinline|sum| is stored to \lstinline|*pResult|, and \lstinline|op| is the persistent opcode state. The emulation is exact for an 8-byte-aligned region when \lstinline|op| equals the opcode state of the kernel at entry.}
 \label{fig:csmc}
 \end{figure}
 
@@ -502,7 +516,7 @@ For the basic static SMC model, the measured execution time is on average
 approximately $7.9\times$ slower than the non-SMC variant shown in Figure
 \ref{fig:csmc}; the measurements are given in Table \ref{tbl:staticresult}.
 Among the clocks tested, \texttt{RDTSCP} is the most informative and the most
-stable for fine-grained timing.  The minimum, average, and maximum values reveal
+stable for fine-grained timing.  Each timed interval also contained one console write and one performance-counter driver call, which add the same kind of overhead to every variant.  The minimum, average, and maximum values reveal
 heavy-tailed noise caused by infrequent context switches, but the central mass of
 the samples remains tight enough to support practical thresholding.
 
@@ -528,14 +542,14 @@ Precise UTC & 32045 & 28806 & 65803 & 4065 & 3704 & 42622 \\ \hline
 Tick Count & 3 & 0 & 16 & 0 & 0 & 16 \\ \hline
 Multimedia & 3 & 1 & 7 & 0 & 0 & 4 \\ \hline
 \end{tabular}
-\caption{$10{,}000$ runs on a hexa-core Intel Core i7-9750H with 16~GB RAM under Windows~10; the checksum covered the entire 220~KB code segment.}
+\caption{$10{,}000$ runs on a hexa-core Intel Core i7-9750H with 16~GB RAM under Windows~10; the checksum covered the entire 32.5~KiB (0x8200-byte) code segment.}
 \label{tbl:staticresult}
 \end{table}
 
 The dynamically generated SMC variant is substantially more competitive.  As
 shown in Table \ref{tbl:dynresult}, it is approximately $90.5\times$ faster than
-the semantics-faithful, timing-constrained non-SMC variant and about $2.5\times$
-faster than the static SMC implementation.  This version used two pages and wrote
+the semantics-faithful, timing-constrained non-SMC variant and about $17.8\times$
+faster than the basic static SMC implementation (Table~\ref{tbl:staticresult}).  This version used two pages and wrote
 to the corresponding offset in the opposite page; using three or four pages did
 not materially improve results.
 
@@ -543,13 +557,13 @@ The spread in the dynamic measurements also gives a rough sense of how often the
 operating system perturbs the benchmark.  Using the \texttt{RDTSCP} figures as a
 back-of-the-envelope estimate, the SMC variant yields
 \[
-\frac{10{,}000 \cdot (467{,}286 - 414{,}188)}{2{,}158{,}056} \approx 246,
+\frac{10{,}000 \cdot (467{,}286 - 414{,}188)}{2{,}158{,}056 - 414{,}188} \approx 304,
 \qquad
-\frac{246}{10{,}000} \approx 2.5\%,
+\frac{304}{10{,}000} \approx 3.0\%,
 \]
 which suggests that only a small fraction of runs suffer a substantial task-switch
 style disturbance.  Performing the same estimate for the semantics-faithful
-non-SMC variant gives roughly $3.6\%$.  The exact percentages should not be
+non-SMC variant gives roughly $7.8\%$ (Table~\ref{tbl:dynresult}, non-SMC columns, with the minimum subtracted in the same way).  The exact percentages should not be
 over-interpreted, but they reinforce the practical point: the dominant source of
 variance is scheduler noise, not instability in the SMC design itself.
 
@@ -592,8 +606,8 @@ naive SMC case is dramatic.
 C & 4514 \\ \hline
 SMC & 83198361 \\ \hline
 C Loop & 20986 \\ \hline
-SMC Loop & 4597855 \\ \hline
-Dyn SMC Loop & 4492871 \\ \hline
+SMC Loop & 4492871 \\ \hline
+Dyn SMC Loop & 4597855 \\ \hline
 \end{tabular}
 \caption{SMC pipeline-clear occurrences over $10{,}000$ runs.}
 \label{tbl:smcevents}
@@ -605,7 +619,7 @@ Any non-SMC reproduction of the mechanism must generally spend more space-time
 resource than its SMC counterpart.  Even when both are asymptotically linear, the
 relevant practical quantity is the constant factor: the goal is to engineer a
 large enough constant $c$ such that
-$c_{\text{non-SMC}}\,\mathcal{O}(n) \gg c_{\text{SMC}}\,\mathcal{O}(n)$.  A
+$c_{\text{non-SMC}}\,n \gg c_{\text{SMC}}\,n$.  A
 stronger checksum family might even force super-linear behavior in a faithful
 non-SMC emulation, though we do not rely on that here.
 
@@ -631,7 +645,7 @@ mitigated, though not eliminated, by adjusting process or thread priority.
 
 The model requires a timer $T(t)$ tailored for reliability at the $t$th query and
 a checksum function $C(c)$ over code or data $c$.  The tamper-proofing predicate
-$P(T,C)$ returns true if and only if the protected code has not been modified.
+$P(T,C)$ returns true for the unmodified protected code (when its timing lies within the calibrated bounds) and false for every modification that changes the checksum state or violates the time bound.
 In practice, security comes from deploying many checksum units so they cannot all
 be removed or overridden easily.  A state machine with precomputed validation
 states can implement $P(T,C)$ for a controlled subset of states, while a reset
@@ -646,24 +660,39 @@ thresholds are tuned together with code layout rather than in isolation.
 
 \section{Security assumptions and threat model}\label{sec:assumptions}
 
-The scope of the model is defined by four main assumptions.
-\begin{enumerate}
-  \item A von Neumann architecture is available; pure Harvard architectures fall
-  outside the intended deployment model.
-  \item An attacker cannot discover and neutralize all embedded checksum
-  functions.
-  \item There does not exist a semantics-faithful non-SMC implementation that is
-  as fast as, or faster than, the SMC version under the same timing constraints.
-  \item Specialized hardware with direct memory access, such as certain FPGA-based
-  platforms, would require a correspondingly larger-area defense strategy.
-\end{enumerate}
+We state the adversary, its goal, the assumptions the scheme needs, and what is proved.  The statements are formalised and checked in Lean (Section~\ref{sec:formal}); platform behaviour enters only as explicit contract fields (timing bounds, which capabilities a privilege level has), not as proved facts about hardware.
 
-These assumptions intentionally separate what is being claimed from what is not.
-For example, self-reconfigurable hardware effectively realizes SMC in another
-substrate and is therefore compatible with the model rather than excluded by it.
-Similarly, the mechanism is not claimed to be equivalent to cryptographic
-attestation; it is a local runtime-integrity technique intended to raise attacker
-cost substantially on commodity systems.
+\paragraph{Adversary levels.}
+L0: patches the protected bytes before execution.
+L1: user mode; may write to the protected process while it runs, single-step or breakpoint it, run it under emulation, and hook operating-system timer interfaces.
+L2: kernel or hypervisor; additionally may give instruction fetch and data reads different views of memory and may trap or offset the time-stamp counter.
+L4: additionally has physical writers such as DMA devices.
+(L3 is reserved and has the capabilities of L2 in the model.)
+The \emph{goal} is that a protected byte other than a legitimately varying SMC opcode byte is executed in modified form and no alarm is effective at any point of the (unbounded) run.
+An alarm is effective when a checksum unit with at least one response byte, all unmodified, sees a wrong result, or when $k\ge 1$ consecutive checks of one unit exceed its time threshold $\tau$.
+The SMC opcode bytes are reset by every check, so tampering with them is outside the goal.
+
+\paragraph{Assumptions.}
+A1 (coherence, replaces ``von Neumann architecture''): the fetch and data views are one image.
+A2 (coverage, replaces ``cannot neutralize all functions''): every protected byte lies in the region of some checksum unit, each unit's own code is protected, the coverage graph of the units (a unit covers another when its region contains the other's code) is strongly connected, and at least one unit is never modified.
+A3 (timing gap, replaces the non-existence of an equally fast non-SMC implementation): the native check time is at most $\tau$, and $\tau$ is below the lower bounds on emulation, on a debug trap, and on mirroring an opcode write.
+A4 (no physical writer): no device other than the protected thread writes the protected memory; a larger-area defense narrows the window between check and use but cannot close it.
+A5 (time integrity): every timer reading equals the elapsed time.
+A6 (persistence): $k\ge 1$, and a modification persists through the next $k$ scheduled checks of each unit that covers it.
+A7 (response coverage): each unit has at least one response byte, and its response bytes are part of its own protected code and are not SMC opcode bytes.
+A8 (non-compensation): a modification inside the region of a running unit changes the unit's result.
+The checksum is deliberately not collision resistant, so A8 is an assumption about the design, and it cannot be dropped: two modified quadwords can restore the final sum and opcode state.
+
+\paragraph{Results.}
+(T1) Under A1--A8 and the platform contract, no adversary achieves the goal: if a protected non-opcode byte is ever executed in modified form, an effective alarm occurs somewhere in the run, not necessarily before that execution.
+(T2) With separate fetch and data views, a run that follows the SMC kernel's opcode trajectory needs one mirroring event per opcode-changing iteration (except the last), and under A3 and A5 a mediated check admitted by the cost contract that contains such an iteration is a timing failure.  This does not say that every split-view attack is detected.
+(T3) Each of the eleven items A1, A2 (coverage, unit code protected, strong connectivity, one unmodified unit), A3, A4, A5, A6, A7 and A8 is necessary within the model: for each there is a well-formed system and an adversary that satisfies the other ten and wins.
+(T4) With the inline time-stamp counter, every well-formed timeline at level L0 or L1 satisfies A1, A4 and A5.  Conversely there is a winning adversary against a system that satisfies every assumption except one: A5 at L1 with an operating-system timer interface and at L2, A1 at L2, A4 at L4.  The level capabilities are fields of the contract, not facts about real systems.
+With a time source outside the adversary's control, of resolution $r$ and jitter $j$, slowdowns of at least $j+2r$ are detected by a threshold calibrated on native runs.
+
+\paragraph{Scope.}
+Not claimed: protection against code injected outside the checksummed bytes, against register tampering outside timed intervals, or against a modification that is undone before the next covering check; guarantees against L2 and above without an external clock; equivalence to cryptographic attestation.
+The mechanism is a local runtime-integrity technique intended to raise attacker cost on commodity systems, and the proofs cover the model above, not the hardware.
 
 \section{Summary and outlook}\label{sec:summary}
 
@@ -689,6 +718,24 @@ dynamic SMC, and validation on additional ISAs.
 Overall, polymorphic SMC paired with carefully engineered timing semantics offers
 a practical path to runtime integrity for trusted code executing in untrusted
 environments.
+
+\section{Formal verification}\label{sec:formal}
+
+\begin{sloppypar}
+The threat model of Section~\ref{sec:assumptions} is formalised and machine-checked in Lean~4 (toolchain \texttt{leanprover/lean4:v4.35.0-rc3}, no Mathlib)~\cite{smctamper-lean}.
+The Lean development is registered with the Palomar registry as entry \texttt{PALOMAR-2026-10-18-000004}, version~1, and is published at \url{https://github.com/GregoryMorse/SelfModTamper}, release tag \texttt{palomar-v1}, commit \path{0a48a85e0f1884a50c6abdcf8617bd315a6b59c2}.
+The registered statement consists of the four results T1--T4 of Section~\ref{sec:assumptions}, proved for the abstract model defined there (checksum units, adversary levels L0--L4, assumptions A1--A8, and a cost contract).
+Platform behaviour, that is, what a privilege level can do, which timing bounds hold, and what an operating system or processor provides, enters only as explicit fields of that model, not as a proved fact about real hardware or software.
+The same repository contains Lean checks of further statements of this paper (layout and timing arithmetic, checked as consistency of the reported numbers; the separation of Harvard and von Neumann architectures; a forgery of the checksum from three modified quadwords) that are not part of the registered statement.
+The repository file \texttt{lean/PAPER\_MAP.md} assigns each claim of the paper to a Lean declaration, a cited platform fact, or the class of observation.
+The Lean development is supporting material: the paper's measurements and listings do not depend on it, and what it checks is limited to the statements described above.
+The listings, native tests and measurements are evidence for the implementation, not proofs.
+The corrections to the text of the first version that this version makes were found while formalising the statements.
+\end{sloppypar}
+\section*{AI assistance disclosure}
+
+Anthropic Claude Opus 5.5 and Claude Sonnet 5.5, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version.
+The Lean kernel checks the proofs; the author reviewed the formal statements, the corrections to the text and this manuscript, and assumes full responsibility for the final work.
 
 \bibliographystyle{unsrt}
 \bibliography{biblio}
