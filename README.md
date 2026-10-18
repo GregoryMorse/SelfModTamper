@@ -249,7 +249,7 @@ platform, and `lean/GAPS.md` records what is not proved (notably the abstract in
   citation file are in `lean/CODE_FIXES.md`.
 * Native tests, assembler listings and timing runs under `validation/native/` are evidence, never proof.
 * Build: `python validation/build_modules.py SmcTamper` (memory-capped); CI does the cold build.
-* Palomar registration: not yet registered (see `lean/PALOMAR_SUBMISSION.md`).
+* Palomar registration: registered as PALOMAR-2026-10-18-000004, version 1 (https://palomar-registry.org/entry?id=PALOMAR-2026-10-18-000004&version=1); the registered commit is tagged `palomar-v1` (`0a48a85e0f1884a50c6abdcf8617bd315a6b59c2`). Notes in `lean/PALOMAR_SUBMISSION.md`.
 
 ## Citation
 
