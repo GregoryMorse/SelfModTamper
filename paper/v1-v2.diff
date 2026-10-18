@@ -8,24 +8,34 @@
 +ARXIV-METADATA-BEGIN
 +Title: Tamper-Proofing with Self-Modifying Code
 +Authors: Gregory Morse (E\"otv\"os Lor\'and University), Tam\'as Kozsik (E\"otv\"os Lor\'and University)
-+Abstract: Classical computability theory tells us that self-modifying code (SMC) on a deterministic universal Turing machine can be simulated by non-SMC code on the same model. That abstraction, however, omits the external timing inputs, concurrency, and microarchitectural state that dominate practical execution on modern processors. We argue that once timing, ordering, and self-introspective effects are treated as observables, a practically faithful non-SMC reproduction of timed SMC becomes detectably expensive on commodity systems. We present a tamper-proofing model that combines introspective and polymorphic SMC, reliable clocks, and runtime timing predicates to bind integrity checks to execution behavior. We distinguish static and dynamic SMC generation, characterize the timing semantics needed to avoid catastrophic pipeline clears, and give x86-64 design primitives for checksum-driven self-patching. We also report timer measurements, performance comparisons, and performance-monitoring counter evidence showing that careful engineering - especially loop unrolling and cross-page modification - substantially reduces the overhead of SMC while preserving its tamper-detection value. The paper concludes with an efficiency analysis, a threat model, and deployment guidance for trusted code executing in untrusted environments.
++Abstract: Classical computability theory tells us that self-modifying code (SMC) on a deterministic universal Turing machine can be simulated by non-SMC code on the same model. That abstraction, however, omits the external timing inputs, concurrency, and microarchitectural state that dominate practical execution on modern processors. We argue that once timing, ordering, and self-introspective effects are treated as observables, a practically faithful non-SMC reproduction of timed SMC becomes detectably expensive on commodity systems. We present a tamper-proofing model that combines introspective and polymorphic SMC, reliable clocks, and runtime timing predicates to bind integrity checks to execution behavior. We distinguish static and dynamic SMC generation, characterize the timing semantics needed to avoid catastrophic pipeline clears, and give x86-64 design primitives for checksum-driven self-patching. We also report timer measurements, performance comparisons, and performance-monitoring counter evidence showing that careful engineering - especially loop unrolling and cross-page modification - substantially reduces the overhead of SMC while preserving its tamper-detection value. The paper concludes with an efficiency analysis, a threat model, and deployment guidance for trusted code executing in untrusted environments. The threat model is formalised in Lean 4, relative to an explicit platform contract: the security theorem, the necessity of each assumption and which assumptions each adversary level satisfies or breaks are machine-checked, and the development is registered with the Palomar registry.
 +Comments: 14 pages, 5 figures, 6 tables. Lean 4 formalization (Palomar entry PALOMAR-2026-10-18-000004 v1): https://github.com/GregoryMorse/SelfModTamper , tag palomar-v1
-+Subjects: Cryptography and Security (cs.CR)
++Subjects: Cryptography and Security (cs.CR); Logic in Computer Science (cs.LO)
 +MSC classes: 68M25 (Primary) 68M20, 68N30, 68Q60 (Secondary)
-+ACM classes: D.4.6; D.4.8; D.2.0
++ACM classes: D.4.6; D.4.8; D.2.0; F.3.1
 +Report number: N/A -- leave blank
 +Journal reference: N/A -- leave blank
 +DOI: N/A -- leave blank
-+License: Creative Commons Attribution 4.0 (CC BY 4.0) [unconfirmed; same as v1]
++License: Creative Commons Attribution 4.0 (CC BY 4.0)
 +Submitter is author: Yes
 +External artifacts: GitHub https://github.com/GregoryMorse/SelfModTamper ; release/tag palomar-v1 ; commit 0a48a85e0f1884a50c6abdcf8617bd315a6b59c2 ; verified 2026-10-18
-+AI disclosure: AI assistance disclosure (unnumbered section) -- Anthropic Claude Opus 5.5 and Claude Sonnet 5.5, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version. The Lean kernel checks the proofs; the author reviewed the formal statements, the corrections to the text and this manuscript, and assumes full responsibility for the final work.
++AI disclosure: AI assistance disclosure (unnumbered section) -- Anthropic Claude Opus 5.5 in high thinking mode and Anthropic Claude Sonnet 5.5 in medium thinking mode, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version. The Lean kernel checks the proofs; the author reviewed the formal statements, the corrections to the text and this manuscript, and assumes full responsibility for the final work.
 +ARXIV-METADATA-END
 +\fi
  \begin{document}
  \pagestyle{empty}
  \maketitle
-@@ -86,16 +104,13 @@
+@@ -51,6 +69,9 @@
+ preserving its tamper-detection value.  The paper concludes with an efficiency
+ analysis, a threat model, and deployment guidance for trusted code executing in
+ untrusted environments.
++The threat model is formalised in Lean~4, relative to an explicit platform contract: the
++security theorem, the necessity of each assumption and which assumptions each adversary level
++satisfies or breaks are machine-checked, and the development is registered with the Palomar registry.
+ \end{abstract}
+ 
+ \noindent\textbf{Keywords:} x86, x86-64, assembly language, self-modifying code,
+@@ -86,16 +107,13 @@
  server-provided data can be incorporated as an external input, but replay and
  protocol attacks complicate correctness unless additional machinery is deployed;
  moreover, such channels do not protect code at the machine-architecture level
@@ -44,7 +54,7 @@
  Execution timing is influenced by partially undocumented microarchitectural
  state---branch predictors, caches, coherence protocols, speculative execution,
  microcode---together with concurrent activity and operating-system scheduling.
-@@ -106,13 +121,12 @@
+@@ -106,13 +124,12 @@
  \paragraph{Model.}
  We propose a tamper-proofing model in which SMC is (i) \emph{introspective}, in
  that it checksums its own code, and (ii) \emph{polymorphic}, in that it rewrites
@@ -60,7 +70,7 @@
  
  \paragraph{Relation to prior work.}
  Tamper-proofing via watermarking is well studied \cite{1027797}.  Self-check-
-@@ -348,7 +362,7 @@
+@@ -348,7 +365,7 @@
  ADC & 0x13 & 2 & 1 & 1 \\ \hline
  ADD & 0x03 & 0 & 1 & 0.25 \\ \hline
  AND & 0x23 & 4 & 1 & 0.25 \\ \hline
@@ -69,7 +79,7 @@
  OR  & 0x0B & 1 & 1 & 0.25 \\ \hline
  SBB & 0x1B & 3 & 1 & 1 \\ \hline
  SUB & 0x2B & 5 & 1 & 0.25 \\ \hline
-@@ -366,7 +380,7 @@
+@@ -366,7 +383,7 @@
  ADC & Add with carry \\ \hline
  SBB & Subtract with borrow \\ \hline
  XOR & Exclusive OR \\ \hline
@@ -78,7 +88,7 @@
  LEA & Load effective address \\ \hline
  SETcc & Set byte on condition \\ \hline
  CMP & Compare operands \\ \hline
-@@ -423,7 +437,7 @@
+@@ -423,7 +440,7 @@
          ((res & 0x8000000000000000ULL) != 0);
  }
  \end{lstlisting}
@@ -87,7 +97,7 @@
  \label{fig:csmc}
  \end{figure}
  
-@@ -502,7 +516,7 @@
+@@ -502,7 +519,7 @@
  approximately $7.9\times$ slower than the non-SMC variant shown in Figure
  \ref{fig:csmc}; the measurements are given in Table \ref{tbl:staticresult}.
  Among the clocks tested, \texttt{RDTSCP} is the most informative and the most
@@ -96,7 +106,7 @@
  heavy-tailed noise caused by infrequent context switches, but the central mass of
  the samples remains tight enough to support practical thresholding.
  
-@@ -528,14 +542,14 @@
+@@ -528,14 +545,14 @@
  Tick Count & 3 & 0 & 16 & 0 & 0 & 16 \\ \hline
  Multimedia & 3 & 1 & 7 & 0 & 0 & 4 \\ \hline
  \end{tabular}
@@ -114,7 +124,7 @@
  to the corresponding offset in the opposite page; using three or four pages did
  not materially improve results.
  
-@@ -543,13 +557,13 @@
+@@ -543,13 +560,13 @@
  operating system perturbs the benchmark.  Using the \texttt{RDTSCP} figures as a
  back-of-the-envelope estimate, the SMC variant yields
  \[
@@ -131,7 +141,7 @@
  over-interpreted, but they reinforce the practical point: the dominant source of
  variance is scheduler noise, not instability in the SMC design itself.
  
-@@ -592,8 +606,8 @@
+@@ -592,8 +609,8 @@
  C & 4514 \\ \hline
  SMC & 83198361 \\ \hline
  C Loop & 20986 \\ \hline
@@ -142,7 +152,7 @@
  \end{tabular}
  \caption{SMC pipeline-clear occurrences over $10{,}000$ runs.}
  \label{tbl:smcevents}
-@@ -605,7 +619,7 @@
+@@ -605,7 +622,7 @@
  resource than its SMC counterpart.  Even when both are asymptotically linear, the
  relevant practical quantity is the constant factor: the goal is to engineer a
  large enough constant $c$ such that
@@ -151,7 +161,7 @@
  stronger checksum family might even force super-linear behavior in a faithful
  non-SMC emulation, though we do not rely on that here.
  
-@@ -631,7 +645,7 @@
+@@ -631,7 +648,7 @@
  
  The model requires a timer $T(t)$ tailored for reliability at the $t$th query and
  a checksum function $C(c)$ over code or data $c$.  The tamper-proofing predicate
@@ -160,7 +170,7 @@
  In practice, security comes from deploying many checksum units so they cannot all
  be removed or overridden easily.  A state machine with precomputed validation
  states can implement $P(T,C)$ for a controlled subset of states, while a reset
-@@ -646,24 +660,39 @@
+@@ -646,24 +663,39 @@
  
  \section{Security assumptions and threat model}\label{sec:assumptions}
  
@@ -218,7 +228,7 @@
  
  \section{Summary and outlook}\label{sec:summary}
  
-@@ -690,6 +719,24 @@
+@@ -690,6 +722,24 @@
  a practical path to runtime integrity for trusted code executing in untrusted
  environments.
  
@@ -237,7 +247,7 @@
 +\end{sloppypar}
 +\section*{AI assistance disclosure}
 +
-+Anthropic Claude Opus 5.5 and Claude Sonnet 5.5, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version.
++Anthropic Claude Opus 5.5 in high thinking mode and Anthropic Claude Sonnet 5.5 in medium thinking mode, used through the Claude Code command-line agent, assisted with the Lean formalization (statement drafting, proof development and proof repair), the validation scripts, the repository documentation, the comparison of the first version with the formalization, and the drafting of the corrections made in this version.
 +The Lean kernel checks the proofs; the author reviewed the formal statements, the corrections to the text and this manuscript, and assumes full responsibility for the final work.
 +
  \bibliographystyle{unsrt}
