@@ -75,7 +75,7 @@ def metadata(tex):
         "Abstract: " + a,
         "Comments: %d pages, 5 figures, 6 tables. Lean 4 formalization (Palomar entry PALOMAR-2026-10-18-000004 v1): %s , tag %s" % (PAGES, REPO, TAG),
         "Subjects: Cryptography and Security (cs.CR); Logic in Computer Science (cs.LO)",
-        "MSC classes: 68M25 (Primary) 68M20, 68N30, 68Q60 (Secondary)",
+        "MSC classes: 68M25 (Primary) 68M20, 68N30, 68Q60, 68V15 (Secondary)",
         "ACM classes: D.4.6; D.4.8; D.2.0; F.3.1",
         "Report number: N/A -- leave blank", "Journal reference: N/A -- leave blank", "DOI: N/A -- leave blank",
         "License: Creative Commons Attribution 4.0 (CC BY 4.0)",
